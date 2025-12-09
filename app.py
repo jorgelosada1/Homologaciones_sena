@@ -189,7 +189,7 @@ def generar_mensaje(titulo_input):
                 f"➡ Semestres por cursar: <b>{faltantes}</b><br><br>"
             )
 
-        texto += "<br><b>¿Con cuál carrera te gustaría continuar?</b>"
+        texto += "<br><b>¿De cual de estas opciones te gustaria recibir mas informacion?</b>"
         return texto
 
     # Solo una opción
