@@ -174,7 +174,7 @@ def generar_mensaje(titulo_input):
     # Varias opciones
     if len(coincidencias) > 1:
         texto = (
-            f"<h3>Resultados para <b>{titulo_input}</b></h3>"
+            f"<h3><b>{titulo_input}</b></h3>"
             f"Con este título puedes homologar con las siguientes carreras:<br><br>"
         )
 
