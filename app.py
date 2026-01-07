@@ -191,8 +191,8 @@ def generar_mensaje(titulo_input):
 
         texto += (
             f"🔹 *{carrera}*\n"
-            f"➡ *Semestres homologados:* {homologados}\n"
-            f"➡ *Semestres por cursar:* {faltantes}\n\n"
+            f"➡ Semestres homologados: {homologados}\n"
+            f"➡ Semestres por cursar: {faltantes}\n\n"
         )
 
     texto += (
