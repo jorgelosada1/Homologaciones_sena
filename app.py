@@ -1,5 +1,6 @@
 import pandas as pd
-from mensajes_data import mensajes_programas
+from mensajes_data import mensajes_programas, mensajes_sena
+
 from flask import Flask, render_template, request, send_from_directory, session
 
 # =====================================================
@@ -240,6 +241,22 @@ def mensajes():
         mensajes=filtrados,
         filtro=filtro
     )
+
+@app.route("/sena")
+def sena():
+    q = request.args.get("q", "").lower()
+
+    filtrados = [
+        m for m in mensajes_sena
+        if q in m["titulo"].lower() or q in m["texto"].lower()
+    ]
+
+    return render_template(
+        "sena.html",
+        mensajes=filtrados,
+        q=q
+    )
+
 
 
 # =====================================================

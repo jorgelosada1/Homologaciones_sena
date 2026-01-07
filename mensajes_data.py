@@ -578,3 +578,71 @@ Actualiza tus competencias educativas con herramientas innovadoras 💚
 _Tenemos diferentes formas de financiación_ 👌"""
     }
 ]
+mensajes_sena = [
+    {
+        "titulo": "Administración de Empresas – Virtual",
+        "texto": """🎓 *Administración de Empresas – Modalidad Virtual*
+Beneficios Homologación SENA:
+
+📍 No pagas inscripción, ahorras $70.000
+📍 No pagas estudio de homologación, ahorras $450.000
+📍 Se te homologan *5 semestres* y te faltarían *3* para terminar 🥳
+📍 Valor del semestre con *20% de descuento*
+📍 Valor original: $2.710.000
+📍 Valor con descuento: *$2.168.000*
+✔ Inicia el 02 de febrero del 2026
+
+Contamos con diferentes formas de pago."""
+    },
+    {
+        "titulo": "Ingeniería Industrial – Virtual",
+        "texto": """🎓 *Ingeniería Industrial – Modalidad Virtual*
+Beneficios Homologación SENA:
+
+📍 No pagas inscripción, ahorras $70.000
+📍 No pagas estudio de homologación, ahorras $450.000
+📍 Se te homologan *4 semestres* y te faltarían *5* 🥳
+📍 Valor original: $2.850.000
+📍 Valor con descuento: *$2.280.000*
+✔ Inicia el 02 de febrero del 2026
+
+Contamos con diferentes formas de pago."""
+    },
+    {
+        "titulo": "Ingeniería de Sistemas – Virtual",
+        "texto": """🎓 *Ingeniería de Sistemas – Modalidad Virtual*
+Beneficios Homologación SENA:
+
+📍 No pagas inscripción, ahorras $70.000
+📍 No pagas estudio de homologación, ahorras $450.000
+📍 Se te homologan *4 semestres* y te faltarían *6* 🥳
+📍 Valor original: $3.010.000
+📍 Valor con descuento: *$2.408.000*
+📍 Clases sincrónicas después de las 6:00 p.m.
+✔ Inicia el 02 de febrero del 2026"""
+    },
+    {
+        "titulo": "Licenciatura en Educación Infantil – Virtual",
+        "texto": """🎓 *Licenciatura en Educación Infantil – Modalidad Virtual*
+Beneficios Homologación SENA:
+
+📍 No pagas inscripción, ahorras $70.000
+📍 No pagas estudio de homologación, ahorras $450.000
+📍 Se te homologan *3 semestres* y te faltarían *6* 🥳
+📍 Valor original: $2.750.000
+📍 Valor con descuento: *$2.200.000*
+✔ Inicia el 02 de febrero del 2026"""
+    },
+    {
+        "titulo": "Marketing de Negocios – Virtual",
+        "texto": """🎓 *Marketing de Negocios – Modalidad Virtual*
+Beneficios Homologación SENA:
+
+📍 No pagas inscripción, ahorras $70.000
+📍 No pagas estudio de homologación, ahorras $450.000
+📍 Se te homologan *4 semestres* y te faltarían *4* 🥳
+📍 Valor original: $2.730.000
+📍 Valor con descuento: *$2.184.000*
+✔ Inicia el 02 de febrero del 2026"""
+    }
+]
