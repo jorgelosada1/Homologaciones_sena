@@ -1,5 +1,12 @@
 import pandas as pd
-from flask import Flask, render_template_string, request, send_from_directory
+from mensajes_data import mensajes_programas
+from flask import Flask, render_template, request, send_from_directory, session
+
+# =====================================================
+# CONFIG
+# =====================================================
+app = Flask(__name__)
+app.secret_key = "homologaciones_secret"
 
 # =====================================================
 # CARGAR ACTAS
@@ -156,7 +163,7 @@ titulos_sena = [
 ]
 
 # =====================================================
-# FUNCIÓN PRINCIPAL
+# FUNCIÓN DE MENSAJE
 # =====================================================
 def generar_mensaje(titulo_input):
     titulo_norm = titulo_input.strip().upper()
@@ -169,149 +176,74 @@ def generar_mensaje(titulo_input):
     ]
 
     if coincidencias.empty:
-        return f"No encontré homologaciones para el título: {titulo_input}"
+        return f"No encontré homologaciones para el título *{titulo_input}*."
 
-    if len(coincidencias) > 1:
-        texto = (
-            f"<h3><b>{titulo_input}</b></h3>"
-            f"Con este título puedes homologar con las siguientes carreras:<br><br>"
-        )
-
-        for _, fila in coincidencias.iterrows():
-            carrera = str(fila['gest']).strip().upper()
-            homologados = int(fila['SEMTR HOMOLOGADOS'])
-            faltantes = int(fila['FALTANTES'])
-
-            texto += (
-                f"🔹 <b>{carrera}</b><br>"
-                f"➡ Semestres homologados: <b>{homologados}</b><br>"
-                f"➡ Semestres por cursar: <b>{faltantes}</b><br><br>"
-            )
-
-        texto += "<br><b>¿De cual de estas opciones te gustaria recibir mas informacion?</b>"
-        return texto
-
-    fila = coincidencias.iloc[0]
-    carrera = str(fila["gest"]).strip().upper()
-    homologados = int(fila["SEMTR HOMOLOGADOS"])
-    faltantes = int(fila["FALTANTES"])
-
-    return (
-        f"Puedes homologar el título <b>{titulo_input}</b> con <b>{carrera}</b>.<br>"
-        f"➡ Semestres homologados: <b>{homologados}</b><br>"
-        f"➡ Semestres por cursar: <b>{faltantes}</b><br><br>"
-        f"¿Qué tal te pareció esta información?"
+    texto = (
+        f"*{titulo_input}*\n"
+        "Con este título puedes homologar con las siguientes carreras:\n\n"
     )
 
+    for _, fila in coincidencias.iterrows():
+        carrera = str(fila["gest"]).upper()
+        homologados = int(fila["SEMTR HOMOLOGADOS"])
+        faltantes = int(fila["FALTANTES"])
+
+        texto += (
+            f"🔹 *{carrera}*\n"
+            f"➡ *Semestres homologados:* {homologados}\n"
+            f"➡ *Semestres por cursar:* {faltantes}\n\n"
+        )
+
+    texto += (
+        "¿De cual de estas opciones te gustaria recibir mas informacion?\n\n"
+        "💡 *Los egresados SENA cuentan con un 20% de descuento* en estas homologaciones."
+    )
+
+    return texto
+
+
 # =====================================================
-# SERVIDOR FLASK
+# RUTAS
 # =====================================================
-app = Flask(__name__)
-
-HTML = """
-<!DOCTYPE html>
-<html>
-<head>
-    <title>Homologaciones SENA</title>
-    <link rel="icon" type="image/jpeg" href="/logo.jpg">
-    <style>
-        body {
-            font-family: Arial;
-            background: #f4f6f9;
-            padding: 30px;
-        }
-        .container {
-            width: 550px;
-            margin: auto;
-            background: white;
-            padding: 25px;
-            border-radius: 12px;
-            box-shadow: 0px 2px 10px rgba(0,0,0,0.15);
-        }
-        input {
-            width: 100%;
-            padding: 12px;
-            font-size: 16px;
-            border-radius: 8px;
-            border: 1px solid #ccc;
-        }
-        button {
-            margin-top: 10px;
-            width: 100%;
-            padding: 12px;
-            background: #2563eb;
-            color: white;
-            border: none;
-            font-size: 18px;
-            border-radius: 8px;
-            cursor: pointer;
-        }
-        button:hover {
-            background: #1d4ed8;
-        }
-        .result {
-            margin-top: 20px;
-            padding: 20px;
-            background: #eef2ff;
-            border-radius: 10px;
-            border-left: 5px solid #3b82f6;
-        }
-        .copy-btn {
-            background: #10b981;
-            margin-top: 10px;
-        }
-        .copy-btn:hover {
-            background: #059669;
-        }
-    </style>
-</head>
-<body>
-
-<div class="container">
-    <h2>Buscador de Homologaciones SENA</h2>
-    <form method="POST">
-        <input list="titulos" name="titulo" placeholder="Escribe tu título aquí..." required>
-        <datalist id="titulos">
-            {% for t in titulos %}
-                <option value="{{ t }}">
-            {% endfor %}
-        </datalist>
-        <button type="submit">Buscar</button>
-    </form>
-
-    {% if resultado %}
-        <div class="result" id="resultado">{{ resultado|safe }}</div>
-        <button class="copy-btn" onclick="copiarTexto()">📋 Copiar</button>
-    {% endif %}
-</div>
-
-<script>
-function copiarTexto() {
-    const content = document.getElementById("resultado").innerText;
-    navigator.clipboard.writeText(content).then(() => {
-        alert("Mensaje copiado 👍");
-    });
-}
-</script>
-
-</body>
-</html>
-"""
-
 @app.route("/logo.jpg")
-def favicon():
+def logo():
     return send_from_directory(".", "logo.jpg")
 
+
 @app.route("/", methods=["GET", "POST"])
-def index():
-    resultado = None
+def homologaciones():
+    mensaje = None
 
     if request.method == "POST":
         titulo = request.form.get("titulo")
-        mensaje_base = generar_mensaje(titulo)
-        resultado = f"{mensaje_base}<br><br>💡 Los egresados SENA cuentan con un <b>20% de descuento</b> en estas homologaciones."
-    
-    return render_template_string(HTML, resultado=resultado, titulos=titulos_sena)
+        mensaje = generar_mensaje(titulo)
+        session["ultimo_mensaje"] = mensaje
 
+    return render_template(
+        "homologaciones.html",
+        titulos=titulos_sena,
+        mensaje=mensaje
+    )
+
+
+@app.route("/mensajes")
+def mensajes():
+    filtro = request.args.get("nivel", "pre")
+
+    filtrados = [
+        m for m in mensajes_programas
+        if m["nivel"] == filtro
+    ]
+
+    return render_template(
+        "mensajes.html",
+        mensajes=filtrados,
+        filtro=filtro
+    )
+
+
+# =====================================================
+# MAIN
+# =====================================================
 if __name__ == "__main__":
     app.run(debug=True, port=8000)

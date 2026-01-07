@@ -1,0 +1,121 @@
+{% extends "layout.html" %}
+{% block content %}
+
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
+
+.page {
+    display: flex;
+    justify-content: center;
+    margin-top: 40px;
+    font-family: 'Inter', sans-serif;
+}
+
+.card {
+    background: white;
+    width: 520px;
+    padding: 30px;
+    border-radius: 18px;
+    box-shadow: 0 10px 25px rgba(0,0,0,0.08);
+}
+
+.card h2 {
+    margin-bottom: 20px;
+    font-weight: 700;
+    color: #1f2937;
+}
+
+input {
+    width: 100%;
+    padding: 14px 16px;
+    border-radius: 12px;
+    border: 1px solid #d1d5db;
+    font-size: 15px;
+    outline: none;
+}
+
+input:focus {
+    border-color: #2563eb;
+}
+
+button {
+    width: 100%;
+    margin-top: 18px;
+    padding: 14px;
+    background: #2563eb;
+    color: white;
+    border: none;
+    border-radius: 12px;
+    font-size: 16px;
+    font-weight: 600;
+    cursor: pointer;
+}
+
+button:hover {
+    background: #1e40af;
+}
+
+.resultado {
+    margin-top: 30px;
+}
+
+.bubble {
+    background: #f1f5f9;
+    padding: 18px;
+    border-radius: 14px;
+    white-space: pre-wrap;
+    font-size: 14.5px;
+    line-height: 1.6;
+    border-left: 5px solid #2563eb;
+}
+
+.copy {
+    margin-top: 12px;
+    background: #10b981;
+}
+
+.copy:hover {
+    background: #059669;
+}
+</style>
+
+<div class="page">
+    <div class="card">
+        <h2>🎓 Homologaciones SENA</h2>
+
+        <form method="POST">
+            <input
+                list="titulos"
+                name="titulo"
+                placeholder="Escribe tu título SENA"
+                required
+            >
+            <datalist id="titulos">
+                {% for t in titulos %}
+                <option value="{{ t }}">
+                {% endfor %}
+            </datalist>
+
+            <button type="submit">Generar mensaje</button>
+        </form>
+
+        {% if mensaje %}
+        <div class="resultado">
+            <h3>📄 Mensaje generado</h3>
+            <div class="bubble" id="msg">{{ mensaje }}</div>
+            <button class="copy" onclick="copiar()">📋 Copiar</button>
+        </div>
+
+        <script>
+        function copiar(){
+            navigator.clipboard.writeText(
+                document.getElementById("msg").innerText
+            );
+            alert("Copiado 👍");
+        }
+        </script>
+        {% endif %}
+    </div>
+</div>
+
+{% endblock %}

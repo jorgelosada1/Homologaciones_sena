@@ -1,0 +1,142 @@
+{% extends "layout.html" %}
+{% block content %}
+
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
+
+.page {
+    display: flex;
+    justify-content: center;
+    margin-top: 40px;
+    font-family: 'Inter', sans-serif;
+}
+
+.card {
+    width: 720px;
+    background: white;
+    padding: 30px;
+    border-radius: 18px;
+    box-shadow: 0 10px 25px rgba(0,0,0,0.08);
+}
+
+.card h2 {
+    font-weight: 700;
+    margin-bottom: 25px;
+    color: #1f2937;
+}
+
+.top-bar {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 30px;
+}
+
+select {
+    padding: 10px 14px;
+    border-radius: 10px;
+    border: 1px solid #d1d5db;
+    font-size: 14px;
+    cursor: pointer;
+}
+
+/* 🔥 DIFERENCIACIÓN DE MENSAJES */
+.msg-card {
+    background: #f8fafc;
+    padding: 22px;
+    border-radius: 18px;
+    margin-bottom: 28px;
+    border-left: 5px solid #2563eb;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.04);
+    position: relative;
+}
+
+/* Línea separadora sutil */
+.msg-card::after {
+    content: "";
+    position: absolute;
+    bottom: -14px;
+    left: 10%;
+    width: 80%;
+    height: 1px;
+    background: linear-gradient(
+        to right,
+        transparent,
+        #e5e7eb,
+        transparent
+    );
+}
+
+.msg-card:last-child::after {
+    display: none;
+}
+
+.msg-card h3 {
+    margin-bottom: 10px;
+    font-weight: 600;
+    color: #111827;
+}
+
+.msg-text {
+    white-space: pre-wrap;
+    font-size: 14.5px;
+    line-height: 1.65;
+    margin-bottom: 14px;
+    color: #374151;
+}
+
+.copy-btn {
+    background: #10b981;
+    color: white;
+    border: none;
+    padding: 10px 16px;
+    border-radius: 10px;
+    font-size: 14px;
+    cursor: pointer;
+}
+
+.copy-btn:hover {
+    background: #059669;
+}
+</style>
+
+
+<div class="page">
+    <div class="card">
+        <div class="top-bar">
+            <h2>💬 Mensajes Comerciales</h2>
+
+            <form method="get">
+                <select name="nivel" onchange="this.form.submit()">
+                    <option value="pre" {% if filtro == "pre" %}selected{% endif %}>
+                        🎓 Pregrados
+                    </option>
+                    <option value="pos" {% if filtro == "pos" %}selected{% endif %}>
+                        🎓 Posgrados
+                    </option>
+                </select>
+            </form>
+        </div>
+
+        {% for m in mensajes %}
+        <div class="msg-card">
+            <h3>{{ m.titulo }}</h3>
+            <div class="msg-text" id="m{{ loop.index }}">{{ m.texto }}</div>
+            <button class="copy-btn" onclick="copiar('m{{ loop.index }}')">
+                📋 Copiar
+            </button>
+        </div>
+        {% endfor %}
+    </div>
+</div>
+
+<script>
+function copiar(id){
+    navigator.clipboard.writeText(
+        document.getElementById(id).innerText
+    );
+    alert("Copiado 👍");
+}
+</script>
+
+{% endblock %}

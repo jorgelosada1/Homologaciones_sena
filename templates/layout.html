@@ -1,0 +1,53 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Homologaciones SENA</title>
+    <style>
+        body {
+            margin: 0;
+            font-family: Arial;
+            display: flex;
+            background: #f4f6f9;
+        }
+        .sidebar {
+            width: 220px;
+            background: #1e3a8a;
+            color: white;
+            min-height: 100vh;
+            padding: 20px;
+        }
+        .sidebar h2 {
+            font-size: 18px;
+            margin-bottom: 20px;
+        }
+        .sidebar a {
+            display: block;
+            color: white;
+            text-decoration: none;
+            padding: 10px;
+            border-radius: 6px;
+            margin-bottom: 8px;
+        }
+        .sidebar a:hover {
+            background: #2563eb;
+        }
+        .content {
+            flex: 1;
+            padding: 30px;
+        }
+    </style>
+</head>
+<body>
+
+<div class="sidebar">
+    <h2>📚 Areandina</h2>
+    <a href="/">🏫 Homologaciones</a>
+    <a href="/mensajes">📩 Mensajes</a>
+</div>
+
+<div class="content">
+    {% block content %}{% endblock %}
+</div>
+
+</body>
+</html>
