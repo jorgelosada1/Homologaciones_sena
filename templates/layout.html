@@ -1,5 +1,6 @@
 <!DOCTYPE html>
 <html lang="es">
+
 <head>
     <meta charset="UTF-8">
     <title>Homologaciones SENA</title>
@@ -8,7 +9,8 @@
     <link rel="icon" type="image/jpeg" href="{{ url_for('logo') }}">
 
     <!-- Google Font -->
-    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap"
+        rel="stylesheet">
 
     <style>
         * {
@@ -30,7 +32,7 @@
             background: linear-gradient(180deg, #31d60f, #31d60f);
             padding: 30px 22px;
             color: #fff;
-            box-shadow: 4px 0 15px rgba(0,0,0,0.12);
+            box-shadow: 4px 0 15px rgba(0, 0, 0, 0.12);
         }
 
         .brand {
@@ -61,7 +63,7 @@
         }
 
         .menu a:hover {
-            background: rgba(255,255,255,0.18);
+            background: rgba(255, 255, 255, 0.18);
             transform: translateX(6px);
         }
 
@@ -103,7 +105,8 @@
             transform: translateY(-1px);
         }
 
-        input, select {
+        input,
+        select {
             padding: 12px 14px;
             border-radius: 10px;
             border: 1px solid #cbd5f5;
@@ -134,30 +137,35 @@
 
 <body>
 
-<div class="sidebar">
-    <div class="brand">
-        <span>🎓</span> Areandina
+    <div class="sidebar">
+        <div class="brand">
+            <span>🎓</span> Areandina
+        </div>
+
+        <div class="menu">
+            <a href="/">
+                <span>🏫</span> Homologaciones
+            </a>
+
+            <a href="/mensajes">
+                <span>💬</span> Mensajes Comerciales
+            </a>
+
+            <!-- NUEVO -->
+            <a href="/sena">
+                <span>🎓</span> Mensajes SENA
+            </a>
+            <a href="/piezas">
+                <span>🧩</span> Piezas
+            </a>
+
+        </div>
     </div>
 
-    <div class="menu">
-        <a href="/">
-            <span>🏫</span> Homologaciones
-        </a>
-
-        <a href="/mensajes">
-            <span>💬</span> Mensajes Comerciales
-        </a>
-
-        <!-- NUEVO -->
-        <a href="/sena">
-            <span>🎓</span> Mensajes SENA
-        </a>
+    <div class="content">
+        {% block content %}{% endblock %}
     </div>
-</div>
-
-<div class="content">
-    {% block content %}{% endblock %}
-</div>
 
 </body>
+
 </html>

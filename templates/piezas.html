@@ -1,0 +1,56 @@
+{% extends "layout.html" %}
+{% block content %}
+
+<h2>🧩 Piezas Gráficas</h2>
+
+<div class="grid">
+
+    {% for img in imagenes %}
+    <div class="card">
+
+        <img src="{{ url_for('static', filename='piezas/' + img) }}" alt="pieza">
+
+        <div class="actions">
+            <a href="{{ url_for('static', filename='piezas/' + img) }}" download>
+                ⬇ Descargar
+            </a>
+        </div>
+
+    </div>
+    {% endfor %}
+
+</div>
+
+<style>
+.grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+    gap: 25px;
+}
+
+.card {
+    background: white;
+    padding: 15px;
+    border-radius: 16px;
+    box-shadow: 0 10px 25px rgba(0,0,0,0.08);
+    text-align: center;
+}
+
+.card img {
+    width: 100%;
+    border-radius: 12px;
+    margin-bottom: 12px;
+}
+
+.actions a {
+    display: inline-block;
+    background: #31d60f;
+    color: white;
+    padding: 8px 16px;
+    border-radius: 10px;
+    text-decoration: none;
+    font-size: 14px;
+}
+</style>
+
+{% endblock %}

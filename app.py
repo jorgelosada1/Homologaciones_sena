@@ -1,5 +1,6 @@
 import pandas as pd
 from mensajes_data import mensajes_programas, mensajes_sena
+import os
 
 from flask import Flask, render_template, request, send_from_directory, session
 
@@ -255,6 +256,16 @@ def sena():
         "sena.html",
         mensajes=filtrados,
         q=q
+    )
+
+@app.route("/piezas")
+def piezas():
+    carpeta = "static/piezas"
+    imagenes = os.listdir(carpeta)
+
+    return render_template(
+        "piezas.html",
+        imagenes=imagenes
     )
 
 
