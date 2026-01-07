@@ -1,48 +1,153 @@
 <!DOCTYPE html>
-<html>
+<html lang="es">
 <head>
+    <meta charset="UTF-8">
     <title>Homologaciones SENA</title>
+
+    <!-- Favicon -->
+    <link rel="icon" type="image/jpeg" href="{{ url_for('logo') }}">
+
+    <!-- Google Font -->
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+
     <style>
+        * {
+            box-sizing: border-box;
+        }
+
         body {
             margin: 0;
-            font-family: Arial;
+            font-family: 'Poppins', sans-serif;
+            background: #f1f5f9;
             display: flex;
-            background: #f4f6f9;
+            color: #1f2937;
         }
+
+        /* ===== SIDEBAR ===== */
         .sidebar {
-            width: 220px;
-            background: #1e3a8a;
-            color: white;
+            width: 250px;
             min-height: 100vh;
-            padding: 20px;
+            background: linear-gradient(180deg, #1e3a8a, #1d4ed8);
+            padding: 30px 22px;
+            color: #fff;
+            box-shadow: 4px 0 15px rgba(0,0,0,0.12);
         }
-        .sidebar h2 {
-            font-size: 18px;
-            margin-bottom: 20px;
+
+        .brand {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            font-size: 22px;
+            font-weight: 600;
+            margin-bottom: 40px;
         }
-        .sidebar a {
-            display: block;
-            color: white;
+
+        .brand span {
+            font-size: 26px;
+        }
+
+        .menu a {
+            display: flex;
+            align-items: center;
+            gap: 12px;
             text-decoration: none;
-            padding: 10px;
-            border-radius: 6px;
-            margin-bottom: 8px;
+            color: #fff;
+            padding: 14px 16px;
+            border-radius: 14px;
+            margin-bottom: 12px;
+            font-size: 14.5px;
+            font-weight: 500;
+            transition: all 0.25s ease;
         }
-        .sidebar a:hover {
-            background: #2563eb;
+
+        .menu a:hover {
+            background: rgba(255,255,255,0.18);
+            transform: translateX(6px);
         }
+
+        .menu a span {
+            font-size: 18px;
+        }
+
+        /* ===== CONTENT ===== */
         .content {
             flex: 1;
-            padding: 30px;
+            padding: 40px;
+        }
+
+        h2 {
+            font-weight: 600;
+            margin-bottom: 25px;
+            font-size: 26px;
+        }
+
+        h3 {
+            font-weight: 500;
+            margin-bottom: 10px;
+        }
+
+        button {
+            background: linear-gradient(90deg, #2563eb, #1d4ed8);
+            border: none;
+            color: white;
+            padding: 10px 18px;
+            border-radius: 10px;
+            font-family: 'Poppins';
+            font-size: 14px;
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+
+        button:hover {
+            opacity: 0.9;
+            transform: translateY(-1px);
+        }
+
+        input, select {
+            padding: 12px 14px;
+            border-radius: 10px;
+            border: 1px solid #cbd5f5;
+            font-family: 'Poppins';
+            font-size: 14px;
+            width: 100%;
+            max-width: 400px;
+        }
+
+        pre {
+            background: #f8fafc;
+            padding: 16px;
+            border-radius: 12px;
+            white-space: pre-wrap;
+            font-family: 'Poppins';
+            font-size: 14px;
+            line-height: 1.5;
+            border-left: 5px solid #2563eb;
+        }
+
+        hr {
+            border: none;
+            height: 1px;
+            background: #e5e7eb;
+            margin: 30px 0;
         }
     </style>
 </head>
+
 <body>
 
 <div class="sidebar">
-    <h2>📚 Areandina</h2>
-    <a href="/">🏫 Homologaciones</a>
-    <a href="/mensajes">📩 Mensajes</a>
+    <div class="brand">
+        <span>🎓</span> Areandina
+    </div>
+
+    <div class="menu">
+        <a href="/">
+            <span>🏫</span> Homologaciones
+        </a>
+        <a href="/mensajes">
+            <span>💬</span> Mensajes Comerciales
+        </a>
+    </div>
 </div>
 
 <div class="content">
