@@ -5,10 +5,6 @@ from datetime import datetime, timedelta
 from flask import  redirect
 from flask import Flask, render_template, request, send_from_directory, session
 
-META_LLAMADAS = 400
-META_INSCRITOS = 0  
-META_PAGOS = 0
-
 
 # =====================================================
 # CONFIG
@@ -295,6 +291,9 @@ def aguachica_dashboard():
 
     ruta = "aguachica.xlsx"
 
+    # =========================
+    # GUARDAR DATOS
+    # =========================
     if request.method == "POST":
         data = {
             "fecha": datetime.now().date(),
@@ -315,14 +314,20 @@ def aguachica_dashboard():
         df.to_excel(ruta, index=False)
         return redirect("/aguachica/dashboard")
 
+    # =========================
+    # LEER DATOS
+    # =========================
     if os.path.exists(ruta):
         df = pd.read_excel(ruta)
     else:
-        df = pd.DataFrame(columns=["fecha","ejecutivo","llamadas","inscritos","pagos"])
+        df = pd.DataFrame(columns=["fecha", "ejecutivo", "llamadas", "inscritos", "pagos"])
 
     df["fecha"] = pd.to_datetime(df["fecha"])
     semana = df[df["fecha"] >= datetime.now() - timedelta(days=7)]
 
+    # =========================
+    # TOTALES POR EJECUTIVO
+    # =========================
     totales = (
         semana
         .groupby("ejecutivo")[["llamadas", "inscritos", "pagos"]]
@@ -330,6 +335,31 @@ def aguachica_dashboard():
         .reset_index()
     )
 
+    # =========================
+    # METAS INDIVIDUALES
+    # =========================
+    METAS_EJECUTIVOS = {
+        "Jorge": {"llamadas": 400, "inscritos": 0, "pagos": 11},
+        "Maria": {"llamadas": 350, "inscritos": 0, "pagos": 11},
+        "Ana":   {"llamadas": 300, "inscritos": 0, "pagos": 11},
+    }
+
+    # Ejecutivo seleccionado para la gráfica
+    ejecutivo_sel = request.args.get("ejecutivo", "Jorge")
+
+    resumen_individual = (
+        semana[semana["ejecutivo"] == ejecutivo_sel][
+            ["llamadas", "inscritos", "pagos"]
+        ]
+        .sum()
+        .fillna(0)
+    )
+
+    meta_individual = METAS_EJECUTIVOS.get(ejecutivo_sel)
+
+    # =========================
+    # RESUMEN GENERAL (opcional)
+    # =========================
     resumen = semana[["llamadas", "inscritos", "pagos"]].sum().fillna(0)
 
     def semaforo(valor, meta):
@@ -341,23 +371,25 @@ def aguachica_dashboard():
             return "rojo"
 
     estado = {
-        "llamadas": semaforo(resumen["llamadas"], META_LLAMADAS),
-        "inscritos": semaforo(resumen["inscritos"], META_INSCRITOS),
-        "pagos": semaforo(resumen["pagos"], META_PAGOS),
+        "llamadas": semaforo(resumen_individual["llamadas"], meta_individual["llamadas"]),
+        "inscritos": semaforo(resumen_individual["inscritos"], meta_individual["inscritos"]),
+        "pagos": semaforo(resumen_individual["pagos"], meta_individual["pagos"]),
     }
 
+    # =========================
+    # RENDER
+    # =========================
     return render_template(
         "aguachica.html",
         datos=semana,
         totales=totales,
-        resumen=resumen,
-        estado=estado,
-        metas={
-            "llamadas": META_LLAMADAS,
-            "inscritos": META_INSCRITOS,
-            "pagos": META_PAGOS
-        }
+        ejecutivo_sel=ejecutivo_sel,
+        resumen_individual=resumen_individual,
+        meta_individual=meta_individual,
+        metas_ejecutivos=METAS_EJECUTIVOS,
+        estado=estado
     )
+
 
 @app.route("/aguachica/borrar", methods=["POST"])
 def aguachica_borrar():
