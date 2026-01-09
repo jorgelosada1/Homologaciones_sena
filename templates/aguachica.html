@@ -103,35 +103,45 @@
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 
 <script>
+const actual = {
+    llamadas: {{ resumen_individual.llamadas }},
+    inscritos: {{ resumen_individual.inscritos }},
+    pagos: {{ resumen_individual.pagos }}
+};
+
+const metas = {
+    llamadas: {{ meta_individual.llamadas }},
+    inscritos: {{ meta_individual.inscritos }},
+    pagos: {{ meta_individual.pagos }}
+};
+
+// convertir a porcentaje de cumplimiento
+const porcentajes = [
+    metas.llamadas ? (actual.llamadas / metas.llamadas) * 100 : 0,
+    metas.inscritos ? (actual.inscritos / metas.inscritos) * 100 : 0,
+    metas.pagos ? (actual.pagos / metas.pagos) * 100 : 0
+];
+
 new Chart(document.getElementById("graficaIndividual"), {
     type: "bar",
     data: {
         labels: ["Llamadas", "Inscritos", "Pagos"],
-        datasets: [
-            {
-                label: "Actual",
-                data: [
-                    {{ resumen_individual.llamadas }},
-                    {{ resumen_individual.inscritos }},
-                    {{ resumen_individual.pagos }}
-                ],
-                backgroundColor: "#2563eb"
-            },
-            {
-                label: "Meta",
-                data: [
-                    {{ meta_individual.llamadas }},
-                    {{ meta_individual.inscritos }},
-                    {{ meta_individual.pagos }}
-                ],
-                backgroundColor: "#9ca3af"
-            }
-        ]
+        datasets: [{
+            label: "% Cumplimiento",
+            data: porcentajes,
+            backgroundColor: "#2563eb"
+        }]
     },
     options: {
         responsive: true,
         scales: {
-            y: { beginAtZero: true }
+            y: {
+                beginAtZero: true,
+                max: 100,
+                ticks: {
+                    callback: value => value + "%"
+                }
+            }
         }
     }
 });
