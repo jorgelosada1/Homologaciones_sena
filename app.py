@@ -1,14 +1,21 @@
 import pandas as pd
 from mensajes_data import mensajes_programas, mensajes_sena
 import os
-
+from datetime import datetime, timedelta
+from flask import  redirect
 from flask import Flask, render_template, request, send_from_directory, session
+
+META_LLAMADAS = 400
+META_INSCRITOS = 0  
+META_PAGOS = 0
+
 
 # =====================================================
 # CONFIG
 # =====================================================
 app = Flask(__name__)
-app.secret_key = "homologaciones_secret"
+app.secret_key = "homologaciones-aguachica-2026"
+
 
 # =====================================================
 # CARGAR ACTAS
@@ -267,6 +274,106 @@ def piezas():
         "piezas.html",
         imagenes=imagenes
     )
+
+@app.route("/aguachica", methods=["GET", "POST"])
+def aguachica_login():
+    if request.method == "POST":
+        user = request.form.get("user")
+        password = request.form.get("password")
+
+        if user == "csu-aguachica" and password == "1234":
+            session["aguachica"] = True
+            return redirect("/aguachica/dashboard")
+
+    return render_template("aguachica_login.html")
+
+
+@app.route("/aguachica/dashboard", methods=["GET", "POST"])
+def aguachica_dashboard():
+    if not session.get("aguachica"):
+        return redirect("/aguachica")
+
+    ruta = "aguachica.xlsx"
+
+    if request.method == "POST":
+        data = {
+            "fecha": datetime.now().date(),
+            "ejecutivo": request.form["ejecutivo"],
+            "llamadas": int(request.form["llamadas"]),
+            "inscritos": int(request.form["inscritos"]),
+            "pagos": int(request.form["pagos"]),
+        }
+
+        df_new = pd.DataFrame([data])
+
+        if os.path.exists(ruta):
+            df = pd.read_excel(ruta)
+            df = pd.concat([df, df_new], ignore_index=True)
+        else:
+            df = df_new
+
+        df.to_excel(ruta, index=False)
+        return redirect("/aguachica/dashboard")
+
+    if os.path.exists(ruta):
+        df = pd.read_excel(ruta)
+    else:
+        df = pd.DataFrame(columns=["fecha","ejecutivo","llamadas","inscritos","pagos"])
+
+    df["fecha"] = pd.to_datetime(df["fecha"])
+    semana = df[df["fecha"] >= datetime.now() - timedelta(days=7)]
+
+    totales = (
+        semana
+        .groupby("ejecutivo")[["llamadas", "inscritos", "pagos"]]
+        .sum()
+        .reset_index()
+    )
+
+    resumen = semana[["llamadas", "inscritos", "pagos"]].sum().fillna(0)
+
+    def semaforo(valor, meta):
+        if valor >= meta:
+            return "verde"
+        elif valor >= meta * 0.7:
+            return "amarillo"
+        else:
+            return "rojo"
+
+    estado = {
+        "llamadas": semaforo(resumen["llamadas"], META_LLAMADAS),
+        "inscritos": semaforo(resumen["inscritos"], META_INSCRITOS),
+        "pagos": semaforo(resumen["pagos"], META_PAGOS),
+    }
+
+    return render_template(
+        "aguachica.html",
+        datos=semana,
+        totales=totales,
+        resumen=resumen,
+        estado=estado,
+        metas={
+            "llamadas": META_LLAMADAS,
+            "inscritos": META_INSCRITOS,
+            "pagos": META_PAGOS
+        }
+    )
+
+@app.route("/aguachica/borrar", methods=["POST"])
+def aguachica_borrar():
+    if not session.get("aguachica"):
+        return redirect("/aguachica")
+
+    clave = request.form.get("clave")
+
+    if clave == "2907":
+        ruta = "aguachica.xlsx"
+        if os.path.exists(ruta):
+            os.remove(ruta)
+
+    return redirect("/aguachica/dashboard")
+
+
 
 
 
