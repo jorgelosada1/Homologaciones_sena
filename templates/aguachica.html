@@ -1,100 +1,143 @@
 {% extends "layout.html" %}
 {% block content %}
 
-<h2>📊 Aguachica – Control Semanal</h2>
+<h2 style="margin-bottom:20px;">📊 Aguachica – Control Semanal</h2>
 
 <style>
 .contenedor {
-    display: flex;
+    display: grid;
+    grid-template-columns: 1.2fr 0.8fr;
     gap: 30px;
     align-items: flex-start;
 }
 
-.col-izq {
-    width: 60%;
+.card {
+    background: #ffffff;
+    border: 1px solid #e5e7eb;
+    border-radius: 10px;
+    padding: 20px;
+    margin-bottom: 25px;
+}
+
+.card h3 {
+    margin-top: 0;
+    margin-bottom: 15px;
 }
 
 .col-der {
-    width: 40%;
     position: sticky;
     top: 20px;
-    padding: 15px;
-    border: 1px solid #e5e7eb;
-    border-radius: 8px;
-    background: #fafafa;
+}
+
+input, select, button {
+    width: 100%;
+    padding: 8px;
+}
+
+button {
+    background: #2563eb;
+    color: white;
+    border: none;
+    border-radius: 6px;
+    cursor: pointer;
+}
+
+button:hover {
+    opacity: 0.9;
+}
+
+table {
+    border-collapse: collapse;
+}
+
+th {
+    background: #f3f4f6;
+}
+
+hr {
+    border: none;
+    border-top: 1px solid #e5e7eb;
+    margin: 25px 0;
 }
 </style>
 
 <div class="contenedor">
 
     <!-- ================= IZQUIERDA ================= -->
-    <div class="col-izq">
+    <div>
 
         <!-- FORMULARIO -->
-        <form method="post" style="max-width:500px">
-            <select name="ejecutivo" required>
-                <option>Jorge</option>
-                <option>Maria</option>
-                <option>Ana</option>
-            </select><br><br>
+        <div class="card">
+            <h3>➕ Registrar actividad</h3>
+            <form method="post">
+                <select name="ejecutivo" required>
+                    <option>Jorge</option>
+                    <option>Maria</option>
+                    <option>Ana</option>
+                </select><br><br>
 
-            <input type="number" name="llamadas" placeholder="Llamadas" required><br><br>
-            <input type="number" name="inscritos" placeholder="Inscritos" required><br><br>
-            <input type="number" name="pagos" placeholder="Pagos" required><br><br>
+                <input type="number" name="llamadas" placeholder="Llamadas" required><br><br>
+                <input type="number" name="inscritos" placeholder="Inscritos" required><br><br>
+                <input type="number" name="pagos" placeholder="Pagos" required><br><br>
 
-            <button>Guardar</button>
-        </form>
-
-        <hr>
+                <button>Guardar</button>
+            </form>
+        </div>
 
         <!-- TABLA -->
-        <h3>📋 Totales semana</h3>
-        <table border="1" cellpadding="8" cellspacing="0" width="100%">
-            <tr>
-                <th>Ejecutivo</th>
-                <th>Llamadas</th>
-                <th>Inscritos</th>
-                <th>Pagos</th>
-            </tr>
-            {% for t in totales.itertuples() %}
-            <tr>
-                <td>{{ t.ejecutivo }}</td>
-                <td>{{ t.llamadas }}</td>
-                <td>{{ t.inscritos }}</td>
-                <td>{{ t.pagos }}</td>
-            </tr>
-            {% endfor %}
-        </table>
-
-        <hr>
+        <div class="card">
+            <h3>📋 Totales semana</h3>
+            <table border="1" cellpadding="8" width="100%">
+                <tr>
+                    <th>Ejecutivo</th>
+                    <th>Llamadas</th>
+                    <th>Inscritos</th>
+                    <th>Pagos</th>
+                </tr>
+                {% for t in totales.itertuples() %}
+                <tr>
+                    <td>{{ t.ejecutivo }}</td>
+                    <td>{{ t.llamadas }}</td>
+                    <td>{{ t.inscritos }}</td>
+                    <td>{{ t.pagos }}</td>
+                </tr>
+                {% endfor %}
+            </table>
+        </div>
 
         <!-- BORRAR -->
-        <h3 style="color:#dc2626">🗑️ Borrar datos</h3>
-        <form method="post" action="/aguachica/borrar">
-            <input type="password" name="clave" placeholder="Contraseña" required><br><br>
-            <button onclick="return confirm('Esto borrará todo')">Borrar todo</button>
-        </form>
+        <div class="card">
+            <h3 style="color:#dc2626">🗑️ Borrar datos</h3>
+            <form method="post" action="/aguachica/borrar">
+                <input type="password" name="clave" placeholder="Contraseña" required><br><br>
+                <button onclick="return confirm('Esto borrará todo')">Borrar todo</button>
+            </form>
+        </div>
 
     </div>
 
-    <!-- ================= DERECHA ================= -->
+    <!-- ================= DERECHA (GRAFICAS) ================= -->
     <div class="col-der">
 
-        <h3>📈 Progreso individual</h3>
+        <div class="card">
+            <h3>📈 Progreso individual</h3>
+            <form method="get">
+                <select name="ejecutivo" onchange="this.form.submit()">
+                    {% for e in metas_ejecutivos.keys() %}
+                    <option value="{{ e }}" {% if e == ejecutivo_sel %}selected{% endif %}>
+                        {{ e }}
+                    </option>
+                    {% endfor %}
+                </select>
+            </form>
+            <br>
+            <canvas id="graficaIndividual" height="220"></canvas>
+        </div>
 
-        <form method="get">
-            <select name="ejecutivo" onchange="this.form.submit()">
-                {% for e in metas_ejecutivos.keys() %}
-                <option value="{{ e }}" {% if e == ejecutivo_sel %}selected{% endif %}>
-                    {{ e }}
-                </option>
-                {% endfor %}
-            </select>
-        </form>
-
-        <br>
-
-        <canvas id="graficaIndividual" height="220"></canvas>
+        <div class="card">
+            <h3>🚦 Llamadas diarias por ejecutivo</h3>
+            <canvas id="graficaSemaforo" height="260"></canvas>
+        </div>
 
     </div>
 
@@ -102,7 +145,9 @@
 
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 
+<!-- SCRIPTS SIN CAMBIOS -->
 <script>
+/* ================= GRAFICA INDIVIDUAL ================= */
 const actual = {
     llamadas: {{ resumen_individual.llamadas }},
     inscritos: {{ resumen_individual.inscritos }},
@@ -115,7 +160,6 @@ const metas = {
     pagos: {{ meta_individual.pagos }}
 };
 
-// convertir a porcentaje de cumplimiento
 const porcentajes = [
     metas.llamadas ? (actual.llamadas / metas.llamadas) * 100 : 0,
     metas.inscritos ? (actual.inscritos / metas.inscritos) * 100 : 0,
@@ -133,16 +177,31 @@ new Chart(document.getElementById("graficaIndividual"), {
         }]
     },
     options: {
-        responsive: true,
         scales: {
-            y: {
-                beginAtZero: true,
-                max: 100,
-                ticks: {
-                    callback: value => value + "%"
-                }
-            }
+            y: { beginAtZero: true, max: 100 }
         }
+    }
+});
+
+/* ================= GRAFICA SEMAFORO ================= */
+const ejecutivos = [{% for t in totales.itertuples() %}"{{ t.ejecutivo }}",{% endfor %}];
+const llamadas = [{% for t in totales.itertuples() %}{{ t.llamadas }},{% endfor %}];
+const inscritos = [{% for t in totales.itertuples() %}{{ t.inscritos }},{% endfor %}];
+
+const insConvertidas = inscritos.map(i => i * 15);
+const total = llamadas.map((l, i) => l + insConvertidas[i]);
+
+const coloresTotal = total.map(v => v > 80 ? "#16a34a" : v >= 50 ? "#facc15" : "#dc2626");
+
+new Chart(document.getElementById("graficaSemaforo"), {
+    type: "bar",
+    data: {
+        labels: ejecutivos,
+        datasets: [
+            { label: "Llamadas", data: llamadas, backgroundColor: "#3b82f6" },
+            { label: "INS (x15)", data: insConvertidas, backgroundColor: "#9333ea" },
+            { label: "TOTAL", data: total, backgroundColor: coloresTotal }
+        ]
     }
 });
 </script>
