@@ -12,6 +12,9 @@
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap"
         rel="stylesheet">
 
+    <!-- Font Awesome -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+
     <style>
         * {
             box-sizing: border-box;
@@ -27,48 +30,80 @@
 
         /* ===== SIDEBAR ===== */
         .sidebar {
-            width: 250px;
+            width: 260px;
             min-height: 100vh;
-            background: linear-gradient(180deg, #31d60f, #31d60f);
-            padding: 30px 22px;
+            background: linear-gradient(180deg, #2ecb0f, #27b80d);
+            padding: 28px 22px;
             color: #fff;
-            box-shadow: 4px 0 15px rgba(0, 0, 0, 0.12);
+            box-shadow: 6px 0 18px rgba(0, 0, 0, 0.12);
+            display: flex;
+            flex-direction: column;
         }
 
         .brand {
             display: flex;
             align-items: center;
-            gap: 10px;
+            gap: 12px;
             font-size: 22px;
             font-weight: 600;
-            margin-bottom: 40px;
+            margin-bottom: 35px;
         }
 
-        .brand span {
-            font-size: 26px;
+        .brand i {
+            font-size: 28px;
+        }
+
+        /* ===== MENU ===== */
+        .menu-section {
+            margin-bottom: 28px;
+        }
+
+        .menu-title {
+            font-size: 12px;
+            letter-spacing: 1px;
+            text-transform: uppercase;
+            opacity: 0.7;
+            margin: 12px 10px;
         }
 
         .menu a {
             display: flex;
             align-items: center;
-            gap: 12px;
+            gap: 14px;
             text-decoration: none;
             color: #fff;
-            padding: 14px 16px;
+            padding: 13px 16px;
             border-radius: 14px;
-            margin-bottom: 12px;
+            margin-bottom: 8px;
             font-size: 14.5px;
             font-weight: 500;
             transition: all 0.25s ease;
+            position: relative;
+        }
+
+        .menu a i {
+            font-size: 16px;
+            width: 22px;
+            text-align: center;
         }
 
         .menu a:hover {
             background: rgba(255, 255, 255, 0.18);
-            transform: translateX(6px);
+            transform: translateX(4px);
         }
 
-        .menu a span {
-            font-size: 18px;
+        /* ACTIVO DINÁMICO */
+        .menu a.active {
+            background: rgba(255, 255, 255, 0.28);
+            box-shadow: inset 4px 0 0 #ffffff;
+        }
+
+        /* SEPARADOR */
+        .menu-divider {
+            height: 1px;
+            background: rgba(255, 255, 255, 0.25);
+            margin: 18px 10px;
+            border-radius: 10px;
         }
 
         /* ===== CONTENT ===== */
@@ -89,20 +124,21 @@
         }
 
         button {
-            background: linear-gradient(90deg, #31d60f, #31d60f);
+            background: linear-gradient(90deg, #2ecb0f, #27b80d);
             border: none;
             color: white;
-            padding: 10px 18px;
-            border-radius: 10px;
+            padding: 11px 20px;
+            border-radius: 12px;
             font-family: 'Poppins';
             font-size: 14px;
             cursor: pointer;
             transition: all 0.2s ease;
+            box-shadow: 0 6px 14px rgba(46, 203, 15, 0.35);
         }
 
         button:hover {
-            opacity: 0.9;
-            transform: translateY(-1px);
+            transform: translateY(-2px);
+            box-shadow: 0 10px 20px rgba(46, 203, 15, 0.45);
         }
 
         input,
@@ -123,14 +159,7 @@
             font-family: 'Poppins';
             font-size: 14px;
             line-height: 1.5;
-            border-left: 5px solid #31d60f;
-        }
-
-        hr {
-            border: none;
-            height: 1px;
-            background: #e5e7eb;
-            margin: 30px 0;
+            border-left: 5px solid #2ecb0f;
         }
     </style>
 </head>
@@ -139,30 +168,46 @@
 
     <div class="sidebar">
         <div class="brand">
-            <span>🎓</span> Areandina
+            <i class="fa-solid fa-graduation-cap"></i>
+            Areandina
         </div>
 
         <div class="menu">
-            <a href="/">
-                <span>🏫</span> Homologaciones
-            </a>
 
-            <a href="/mensajes">
-                <span>💬</span> Mensajes Comerciales
-            </a>
+            <div class="menu-section">
+                <div class="menu-title">Principal</div>
 
-            <!-- NUEVO -->
-            <a href="/sena">
-                <span>🎓</span> Mensajes SENA
-            </a>
-            <a href="/piezas">
-                <span>🧩</span> Piezas
-            </a>
+                <a href="/" class="{% if request.path == '/' %}active{% endif %}">
+                    <i class="fa-solid fa-building-columns"></i>
+                    Homologaciones
+                </a>
 
-            <a href="/aguachica">
-                <span>📊</span> Aguachica
-            </a>
+                <a href="/mensajes" class="{% if request.path == '/mensajes' %}active{% endif %}">
+                    <i class="fa-solid fa-comments"></i>
+                    Mensajes Comerciales
+                </a>
 
+                <a href="/sena" class="{% if request.path == '/sena' %}active{% endif %}">
+                    <i class="fa-solid fa-graduation-cap"></i>
+                    Mensajes SENA
+                </a>
+            </div>
+
+            <div class="menu-divider"></div>
+
+            <div class="menu-section">
+                <div class="menu-title">Gestión</div>
+
+                <a href="/piezas" class="{% if request.path == '/piezas' %}active{% endif %}">
+                    <i class="fa-solid fa-puzzle-piece"></i>
+                    Piezas
+                </a>
+
+                <a href="/aguachica" class="{% if request.path == '/aguachica' %}active{% endif %}">
+                    <i class="fa-solid fa-chart-line"></i>
+                    Aguachica
+                </a>
+            </div>
 
         </div>
     </div>
