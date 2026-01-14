@@ -11,7 +11,6 @@
         placeholder="🔍 Buscar programa..."
         oninput="filtrarProgramas()"
     >
-
     <button onclick="cambiarVista()">Cambiar vista</button>
 </div>
 
@@ -22,7 +21,7 @@
          data-nombre="{{ p.programa | lower }}"
          data-valor="{{ p.valor }}">
 
-        <h3>{{ p.programa }}</h3>
+        <h3 title="{{ p.programa }}">{{ p.programa }}</h3>
 
         <div class="fila">
             <span>Base</span>
@@ -43,6 +42,10 @@
         </div>
 
         <div class="final">$0</div>
+
+        <button class="btn-info" onclick="abrirModal(this)">
+            Ver oferta
+        </button>
     </div>
     {% endfor %}
 </div>
@@ -53,7 +56,7 @@
         <tr>
             <th>Programa</th>
             <th>Valor</th>
-            <th>% Desc</th>
+            <th>%</th>
             <th>Ahorro</th>
             <th>Final</th>
         </tr>
@@ -76,6 +79,19 @@
         {% endfor %}
     </tbody>
 </table>
+
+<!-- ===== MODAL ===== -->
+<div id="modal" class="modal" onclick="cerrarModal(event)">
+    <div class="modal-box">
+        <h3>🎓 Oferta Universidad Areandina</h3>
+
+        <!-- TEXTO VISIBLE -->
+        <pre id="modal-texto" style="white-space:pre-wrap;font-family:inherit"></pre>
+
+        <button class="btn-copiar" onclick="copiarOferta()">📋 Copiar para WhatsApp</button>
+        <button onclick="cerrarModal()">Cerrar</button>
+    </div>
+</div>
 
 <script>
 let modo = 0; // 0=cards, 1=compacta, 2=tabla
@@ -133,6 +149,40 @@ function filtrarProgramas() {
         });
 }
 
+function abrirModal(btn) {
+    const card = btn.closest(".card");
+    const nombre = card.querySelector("h3").innerText;
+    const valor = parseInt(card.dataset.valor);
+    const d = parseInt(card.querySelector("input").value || 0);
+
+    const ahorro = Math.round(valor * d / 100);
+    const final = valor - ahorro;
+
+    const texto = 
+`🎓 Oferta Universidad Areandina
+*${nombre}* en la *Universidad Areandina* tiene un valor regular de *$${valor.toLocaleString()}*.
+
+Actualmente cuentas con un *${d}% de descuento*, lo que representa un ahorro de *$${ahorro.toLocaleString()}*.
+
+✅ El valor final de tu matrícula queda en *$${final.toLocaleString()}*.
+
+📌 Cupos limitados. Aprovecha este beneficio exclusivo.`;
+
+    document.getElementById("modal-texto").innerText = texto;
+    document.getElementById("modal").style.display = "flex";
+}
+
+function copiarOferta() {
+    const texto = document.getElementById("modal-texto").innerText;
+    navigator.clipboard.writeText(texto);
+}
+
+function cerrarModal(e) {
+    if (!e || e.target.id === "modal") {
+        document.getElementById("modal").style.display = "none";
+    }
+}
+
 // inicializar
 document.querySelectorAll(".card input").forEach(i => recalcularCard(i));
 document.querySelectorAll(".tabla input").forEach(i => recalcularFila(i));
@@ -184,7 +234,7 @@ document.querySelectorAll(".tabla input").forEach(i => recalcularFila(i));
     display: flex;
     flex-direction: column;
     gap: 6px;
-    min-height: 180px; /* altura uniforme */
+    min-height: 210px;
 }
 
 .card h3 {
@@ -209,7 +259,6 @@ document.querySelectorAll(".tabla input").forEach(i => recalcularFila(i));
 
 .ahorro {
     color: #16a34a;
-    font-size: 12px;
 }
 
 .final {
@@ -220,6 +269,21 @@ document.querySelectorAll(".tabla input").forEach(i => recalcularFila(i));
     border-radius: 8px;
     font-weight: 600;
     font-size: 13px;
+}
+
+.btn-info {
+    margin-top: auto;
+    padding: 8px;
+    border-radius: 8px;
+    border: none;
+    background: #2563eb;
+    color: #fff;
+    font-size: 12px;
+    cursor: pointer;
+}
+
+.btn-info:hover {
+    background: #1e40af;
 }
 
 /* ===== TABLA ===== */
@@ -233,14 +297,46 @@ document.querySelectorAll(".tabla input").forEach(i => recalcularFila(i));
 .tabla th, .tabla td {
     padding: 6px 8px;
     border-bottom: 1px solid #e5e7eb;
-    text-align: left;
 }
 
 .tabla input {
     width: 40px;
     text-align: center;
-    padding: 2px 4px;
     font-size: 12px;
+}
+
+/* ===== MODAL ===== */
+.modal {
+    position: fixed;
+    inset: 0;
+    background: rgba(0,0,0,.45);
+    display: none;
+    align-items: center;
+    justify-content: center;
+    z-index: 100;
+}
+
+.modal-box {
+    background: #fff;
+    max-width: 420px;
+    width: 90%;
+    padding: 20px;
+    border-radius: 14px;
+}
+
+.modal-box button {
+    margin-top: 10px;
+    width: 100%;
+    padding: 10px;
+    border-radius: 10px;
+    border: none;
+    background: #16a34a;
+    color: #fff;
+    font-weight: 600;
+}
+
+.btn-copiar {
+    background: #2563eb;
 }
 </style>
 
