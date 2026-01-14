@@ -1,0 +1,247 @@
+{% extends "layout.html" %}
+{% block content %}
+
+<h2>💰 Precios Pregrado 2026</h2>
+
+<!-- ===== CONTROLES ===== -->
+<div class="top-bar">
+    <input
+        type="text"
+        id="buscador"
+        placeholder="🔍 Buscar programa..."
+        oninput="filtrarProgramas()"
+    >
+
+    <button onclick="cambiarVista()">Cambiar vista</button>
+</div>
+
+<!-- ===== GRID / CARDS ===== -->
+<div id="grid" class="grid">
+    {% for p in programas %}
+    <div class="card"
+         data-nombre="{{ p.programa | lower }}"
+         data-valor="{{ p.valor }}">
+
+        <h3>{{ p.programa }}</h3>
+
+        <div class="fila">
+            <span>Base</span>
+            <strong>$ {{ "{:,}".format(p.valor) }}</strong>
+        </div>
+
+        <div class="fila">
+            <span>Desc %</span>
+            <input type="number"
+                   value="{{ p.descuento }}"
+                   min="0" max="100"
+                   oninput="recalcularCard(this)">
+        </div>
+
+        <div class="fila ahorro">
+            <span>Ahorro</span>
+            <strong>$0</strong>
+        </div>
+
+        <div class="final">$0</div>
+    </div>
+    {% endfor %}
+</div>
+
+<!-- ===== TABLA ===== -->
+<table id="tabla" class="tabla" style="display:none">
+    <thead>
+        <tr>
+            <th>Programa</th>
+            <th>Valor</th>
+            <th>% Desc</th>
+            <th>Ahorro</th>
+            <th>Final</th>
+        </tr>
+    </thead>
+    <tbody>
+        {% for p in programas %}
+        <tr data-nombre="{{ p.programa | lower }}"
+            data-valor="{{ p.valor }}">
+            <td>{{ p.programa }}</td>
+            <td>$ {{ "{:,}".format(p.valor) }}</td>
+            <td>
+                <input type="number"
+                       value="{{ p.descuento }}"
+                       min="0" max="100"
+                       oninput="recalcularFila(this)">
+            </td>
+            <td class="ahorro">$0</td>
+            <td class="final">$0</td>
+        </tr>
+        {% endfor %}
+    </tbody>
+</table>
+
+<script>
+let modo = 0; // 0=cards, 1=compacta, 2=tabla
+
+function cambiarVista() {
+    modo = (modo + 1) % 3;
+
+    document.getElementById("grid").style.display =
+        modo === 2 ? "none" : "grid";
+
+    document.getElementById("tabla").style.display =
+        modo === 2 ? "table" : "none";
+
+    document.getElementById("grid")
+        .classList.toggle("compacta", modo === 1);
+}
+
+function recalcularCard(input) {
+    const card = input.closest(".card");
+    const valor = parseInt(card.dataset.valor);
+    const d = parseInt(input.value || 0);
+
+    const ahorro = Math.round(valor * d / 100);
+    const final = valor - ahorro;
+
+    card.querySelector(".ahorro strong").innerText =
+        "$ " + ahorro.toLocaleString();
+
+    card.querySelector(".final").innerText =
+        "$ " + final.toLocaleString();
+}
+
+function recalcularFila(input) {
+    const row = input.closest("tr");
+    const valor = parseInt(row.dataset.valor);
+    const d = parseInt(input.value || 0);
+
+    const ahorro = Math.round(valor * d / 100);
+    const final = valor - ahorro;
+
+    row.querySelector(".ahorro").innerText =
+        "$ " + ahorro.toLocaleString();
+
+    row.querySelector(".final").innerText =
+        "$ " + final.toLocaleString();
+}
+
+function filtrarProgramas() {
+    const q = document.getElementById("buscador").value.toLowerCase();
+
+    document.querySelectorAll(".card, .tabla tbody tr")
+        .forEach(el => {
+            el.style.display =
+                el.dataset.nombre.includes(q) ? "" : "none";
+        });
+}
+
+// inicializar
+document.querySelectorAll(".card input").forEach(i => recalcularCard(i));
+document.querySelectorAll(".tabla input").forEach(i => recalcularFila(i));
+</script>
+
+<style>
+/* ===== TOP BAR ===== */
+.top-bar {
+    position: sticky;
+    top: 0;
+    background: #f1f5f9;
+    z-index: 10;
+    padding: 8px 0 12px;
+    display: flex;
+    gap: 12px;
+}
+
+.top-bar input {
+    flex: 1;
+    max-width: 420px;
+    padding: 10px 12px;
+    border-radius: 10px;
+    border: 1px solid #cbd5f5;
+    font-size: 13px;
+}
+
+.top-bar button {
+    padding: 10px 14px;
+    font-size: 13px;
+}
+
+/* ===== GRID ===== */
+.grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(220px,1fr));
+    gap: 12px;
+}
+
+.grid.compacta {
+    grid-template-columns: repeat(auto-fill, minmax(180px,1fr));
+}
+
+/* ===== CARD ===== */
+.card {
+    background: #fff;
+    border-radius: 12px;
+    padding: 12px;
+    box-shadow: 0 5px 12px rgba(0,0,0,.06);
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    min-height: 180px; /* altura uniforme */
+}
+
+.card h3 {
+    font-size: 13px;
+    margin: 0;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.fila {
+    display: flex;
+    justify-content: space-between;
+    font-size: 12px;
+}
+
+.fila input {
+    width: 50px;
+    padding: 4px;
+    text-align: center;
+}
+
+.ahorro {
+    color: #16a34a;
+    font-size: 12px;
+}
+
+.final {
+    padding: 6px;
+    background: linear-gradient(90deg,#2ecb0f,#27b80d);
+    color: #fff;
+    text-align: center;
+    border-radius: 8px;
+    font-weight: 600;
+    font-size: 13px;
+}
+
+/* ===== TABLA ===== */
+.tabla {
+    width: 100%;
+    border-collapse: collapse;
+    margin-top: 6px;
+    font-size: 12px;
+}
+
+.tabla th, .tabla td {
+    padding: 6px 8px;
+    border-bottom: 1px solid #e5e7eb;
+    text-align: left;
+}
+
+.tabla input {
+    width: 40px;
+    text-align: center;
+    padding: 2px 4px;
+    font-size: 12px;
+}
+</style>
+
+{% endblock %}

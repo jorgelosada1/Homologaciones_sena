@@ -19,6 +19,35 @@ app.secret_key = "homologaciones-aguachica-2026"
 actas = pd.read_excel("Actas SENA.xlsx")
 actas.columns = actas.columns.str.strip()
 
+
+
+# =====================================================
+# PRECIOS PREGRADO (JSON)
+# =====================================================
+PRECIOS_PREGRADO = [
+    {"id": 1, "programa": "Psicología Virtual", "valor": 3030000, "descuento": 0},
+    {"id": 2, "programa": "Comunicación Social", "valor": 2600000, "descuento": 15},
+    {"id": 3, "programa": "Economía", "valor": 2730000, "descuento": 20},
+    {"id": 4, "programa": "Tecnología Gestión Talento Humano", "valor": 2240000, "descuento": 20},
+    {"id": 5, "programa": "Tecnología Logística", "valor": 1990000, "descuento": 15},
+    {"id": 6, "programa": "Tecnología Producción Ganadería Sostenible", "valor": 1440000, "descuento": 20},
+    {"id": 7, "programa": "Marketing de Negocios", "valor": 2730000, "descuento": 20},
+    {"id": 8, "programa": "Administración de Empresas", "valor": 2610000, "descuento": 30},
+    {"id": 9, "programa": "Finanzas y Negocios Internacionales", "valor": 2610000, "descuento": 20},
+    {"id": 10, "programa": "Ingeniería de Sistemas Virtual", "valor": 3010000, "descuento": 15},
+    {"id": 11, "programa": "Ingeniería Industrial", "valor": 2850000, "descuento": 20},
+    {"id": 12, "programa": "Lic. en Ciencias Sociales", "valor": 2710000, "descuento": 30},
+    {"id": 13, "programa": "Lic. en Educación Infantil", "valor": 2750000, "descuento": 30},
+    {"id": 14, "programa": "Administración en Salud", "valor": 2330000, "descuento": 0},
+    {"id": 15, "programa": "Derecho", "valor": 2210000, "descuento": 20},
+    {"id": 16, "programa": "Administración Pública", "valor": 2330000, "descuento": 30},
+    {"id": 17, "programa": "Ingeniería de Software", "valor": 2740000, "descuento": 15},
+    {"id": 18, "programa": "Seguridad y Salud en el Trabajo", "valor": 2470000, "descuento": 10},
+    {"id": 19, "programa": "Sociología", "valor": 2000000, "descuento": 20},
+]
+
+
+
 # =====================================================
 # LISTA DE TÍTULOS PARA AUTOCOMPLETADO
 # =====================================================
@@ -405,6 +434,13 @@ def aguachica_borrar():
 
     return redirect("/aguachica/dashboard")
 
+
+@app.route("/precios")
+def precios():
+    return render_template(
+        "precios.html",
+        programas=PRECIOS_PREGRADO
+    )
 
 
 
