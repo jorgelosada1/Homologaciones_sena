@@ -75,7 +75,7 @@
         }
 
         pre {
-            margin-top: 30px;
+            margin-top: 25px;
             background: #f8fafc;
             padding: 20px;
             border-radius: 14px;
@@ -83,6 +83,24 @@
             font-size: 14px;
             line-height: 1.6;
             border-left: 5px solid #2ecb0f;
+        }
+
+        .acciones {
+            margin-top: 15px;
+            text-align: right;
+        }
+
+        .btn-copiar {
+            width: auto;
+            padding: 10px 16px;
+            font-size: 14px;
+            border-radius: 10px;
+            background: #1f2937;
+            box-shadow: none;
+        }
+
+        .btn-copiar i {
+            margin-right: 6px;
         }
 
         .logo {
@@ -131,10 +149,25 @@
         </form>
 
         {% if mensaje %}
-        <pre>{{ mensaje }}</pre>
+        <pre id="mensaje">{{ mensaje }}</pre>
+
+        <div class="acciones">
+            <button type="button" class="btn-copiar" onclick="copiarMensaje()">
+                <i class="fa-solid fa-copy"></i> Copiar mensaje
+            </button>
+        </div>
         {% endif %}
 
     </div>
+
+    <script>
+        function copiarMensaje() {
+            const texto = document.getElementById("mensaje").innerText;
+            navigator.clipboard.writeText(texto).then(() => {
+                alert("Mensaje copiado ✅");
+            });
+        }
+    </script>
 
 </body>
 </html>
