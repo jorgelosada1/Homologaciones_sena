@@ -12,6 +12,11 @@ from flask import Flask, render_template, request, send_from_directory, session
 app = Flask(__name__)
 app.secret_key = "homologaciones-aguachica-2026"
 
+# =====================================================
+# CARGAR HOMOLOGACIONES PRESENCIAL
+# =====================================================
+presencial = pd.read_excel("Presencial 2026.xlsx")
+presencial.columns = presencial.columns.str.strip()
 
 # =====================================================
 # CARGAR ACTAS
@@ -417,6 +422,81 @@ def aguachica_dashboard():
         meta_individual=meta_individual,
         metas_ejecutivos=METAS_EJECUTIVOS,
         estado=estado
+    )
+
+# =====================================================
+# FUNCIÓN MENSAJE PRESENCIAL
+# =====================================================
+def generar_mensaje_presencial(titulo_input, sede):
+    titulo_norm = titulo_input.strip().upper()
+    sede = sede.lower()
+
+    if sede == "bogota":
+        col_titulo = "Sede Bogota"
+        col_homo = "Semestres de Homologacion"
+        col_pend = "Semestres Pendientes"
+    elif sede == "pereira":
+        col_titulo = "Sede Pereira"
+        col_homo = "Semestres de Homologacion.1"
+        col_pend = "Semestres Pendientes.1"
+    elif sede == "valledupar":
+        col_titulo = "Sede Valledupar"
+        col_homo = "Semestres de Homologacion.2"
+        col_pend = "Semestres Pendientes.2"
+    else:
+        return "Sede no válida."
+
+    coincidencias = presencial[
+        presencial[col_titulo]
+        .astype(str)
+        .str.upper()
+        .str.contains(titulo_norm, na=False)
+    ]
+
+    if coincidencias.empty:
+        return f"No encontré homologaciones presenciales para el título *{titulo_input}* en esta sede."
+
+    texto = (
+        f"*{titulo_input}*\n"
+        f"📍 *Sede {sede.capitalize()}*\n\n"
+        "Con este título puedes homologar en:\n\n"
+    )
+
+    for _, fila in coincidencias.iterrows():
+        programa = str(fila["Unnamed: 0"]).upper()
+        homologados = int(fila[col_homo])
+        pendientes = int(fila[col_pend])
+
+        texto += (
+            f"🔹 *{programa}*\n"
+            f"➡ Semestres homologados: {homologados}\n"
+            f"➡ Semestres por cursar: {pendientes}\n\n"
+        )
+
+    texto += (
+        "¿En cuál de estas opciones te gustaría recibir más información?\n\n"
+        "💡 *Beneficios especiales para egresados SENA en modalidad presencial.*"
+    )
+
+    return texto
+
+
+# =====================================================
+# RUTA PRESENCIAL
+# =====================================================
+@app.route("/presencial", methods=["GET", "POST"])
+def presencial_route():
+    mensaje = None
+
+    if request.method == "POST":
+        titulo = request.form.get("titulo")
+        sede = request.form.get("sede")
+        mensaje = generar_mensaje_presencial(titulo, sede)
+
+    return render_template(
+        "presencial.html",
+        titulos=titulos_sena,
+        mensaje=mensaje
     )
 
 

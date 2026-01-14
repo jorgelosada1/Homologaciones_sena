@@ -1,0 +1,142 @@
+{% extends "layout.html" %}
+
+{% block content %}
+
+<!DOCTYPE html>
+<html lang="es">
+
+<head>
+    <meta charset="UTF-8">
+    <title>Homologaciones Presenciales</title>
+
+    <link rel="icon" type="image/jpeg" href="{{ url_for('logo') }}">
+
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap"
+        rel="stylesheet">
+
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+
+    <style>
+        body {
+            margin: 0;
+            font-family: 'Poppins', sans-serif;
+            background: #f1f5f9;
+            color: #1f2937;
+        }
+
+        .container {
+            max-width: 900px;
+            margin: 50px auto;
+            background: #ffffff;
+            padding: 40px;
+            border-radius: 20px;
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.1);
+        }
+
+        h2 {
+            font-weight: 600;
+            margin-bottom: 25px;
+            font-size: 26px;
+            text-align: center;
+        }
+
+        label {
+            font-weight: 500;
+            display: block;
+            margin-bottom: 6px;
+        }
+
+        input,
+        select {
+            width: 100%;
+            padding: 12px 14px;
+            border-radius: 10px;
+            border: 1px solid #cbd5f5;
+            font-family: 'Poppins';
+            font-size: 14px;
+            margin-bottom: 18px;
+        }
+
+        button {
+            width: 100%;
+            background: linear-gradient(90deg, #2ecb0f, #27b80d);
+            border: none;
+            color: white;
+            padding: 14px;
+            border-radius: 14px;
+            font-size: 15px;
+            font-weight: 500;
+            cursor: pointer;
+            box-shadow: 0 10px 20px rgba(46, 203, 15, 0.35);
+        }
+
+        button:hover {
+            transform: translateY(-2px);
+        }
+
+        pre {
+            margin-top: 30px;
+            background: #f8fafc;
+            padding: 20px;
+            border-radius: 14px;
+            white-space: pre-wrap;
+            font-size: 14px;
+            line-height: 1.6;
+            border-left: 5px solid #2ecb0f;
+        }
+
+        .logo {
+            text-align: center;
+            margin-bottom: 20px;
+        }
+
+        .logo i {
+            font-size: 40px;
+            color: #2ecb0f;
+        }
+    </style>
+</head>
+
+<body>
+
+    <div class="container">
+
+        <div class="logo">
+            <i class="fa-solid fa-school"></i>
+        </div>
+
+        <h2>Homologaciones Presenciales</h2>
+
+        <form method="POST">
+            <label>Título SENA</label>
+            <input list="titulos" name="titulo" required placeholder="Escribe tu título SENA">
+
+            <datalist id="titulos">
+                {% for t in titulos %}
+                <option value="{{ t }}">
+                {% endfor %}
+            </datalist>
+
+            <label>Sede</label>
+            <select name="sede" required>
+                <option value="">Selecciona una sede</option>
+                <option value="bogota">Bogotá</option>
+                <option value="pereira">Pereira</option>
+                <option value="valledupar">Valledupar</option>
+            </select>
+
+            <button type="submit">
+                <i class="fa-solid fa-magnifying-glass"></i> Consultar homologación
+            </button>
+        </form>
+
+        {% if mensaje %}
+        <pre>{{ mensaje }}</pre>
+        {% endif %}
+
+    </div>
+
+</body>
+</html>
+
+{% endblock %}
