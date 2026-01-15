@@ -1,175 +1,214 @@
 {% extends "layout.html" %}
-
 {% block content %}
 
-<!DOCTYPE html>
-<html lang="es">
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap');
 
-<head>
-    <meta charset="UTF-8">
-    <title>Homologaciones Presenciales</title>
+/* ===== VARIABLES LIGHT ===== */
+:root {
+    --green-main: #2ecb0f;
+    --green-dark: #27b80d;
+    --green-soft: rgba(46,203,15,0.15);
 
-    <link rel="icon" type="image/jpeg" href="{{ url_for('logo') }}">
+    --bg-page: #f1f5f9;
+    --bg-card: #ffffff;
+    --bg-pre: #f8fafc;
 
-    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap"
-        rel="stylesheet">
+    --text-main: #1f2937;
+    --text-soft: #475569;
 
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+    --border: #cbd5f5;
+}
 
-    <style>
-        body {
-            margin: 0;
-            font-family: 'Poppins', sans-serif;
-            background: #f1f5f9;
-            color: #1f2937;
-        }
+/* ===== VARIABLES DARK ===== */
+body.dark {
+    --bg-page: #0f172a;
+    --bg-card: #020617;
+    --bg-pre: #020617;
 
-        .container {
-            max-width: 900px;
-            margin: 50px auto;
-            background: #ffffff;
-            padding: 40px;
-            border-radius: 20px;
-            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.1);
-        }
+    --text-main: #e5e7eb;
+    --text-soft: #cbd5f5;
 
-        h2 {
-            font-weight: 600;
-            margin-bottom: 25px;
-            font-size: 26px;
-            text-align: center;
-        }
+    --border: #1e293b;
+}
 
-        label {
-            font-weight: 500;
-            display: block;
-            margin-bottom: 6px;
-        }
+body {
+    margin: 0;
+    font-family: 'Poppins', sans-serif;
+    background: var(--bg-page);
+    color: var(--text-main);
+    transition: background .3s, color .3s;
+}
 
-        input,
-        select {
-            width: 100%;
-            padding: 12px 14px;
-            border-radius: 10px;
-            border: 1px solid #cbd5f5;
-            font-family: 'Poppins';
-            font-size: 14px;
-            margin-bottom: 18px;
-        }
+.container {
+    max-width: 900px;
+    margin: 50px auto;
+    background: var(--bg-card);
+    padding: 40px;
+    border-radius: 20px;
+    box-shadow: 0 20px 40px rgba(0,0,0,0.15);
+    transition: background .3s;
+}
 
-        button {
-            width: 100%;
-            background: linear-gradient(90deg, #2ecb0f, #27b80d);
-            border: none;
-            color: white;
-            padding: 14px;
-            border-radius: 14px;
-            font-size: 15px;
-            font-weight: 500;
-            cursor: pointer;
-            box-shadow: 0 10px 20px rgba(46, 203, 15, 0.35);
-        }
+h2 {
+    font-weight: 600;
+    margin-bottom: 25px;
+    font-size: 26px;
+    text-align: center;
+}
 
-        button:hover {
-            transform: translateY(-2px);
-        }
+label {
+    font-weight: 500;
+    display: block;
+    margin-bottom: 6px;
+    color: var(--text-soft);
+}
 
-        pre {
-            margin-top: 25px;
-            background: #f8fafc;
-            padding: 20px;
-            border-radius: 14px;
-            white-space: pre-wrap;
-            font-size: 14px;
-            line-height: 1.6;
-            border-left: 5px solid #2ecb0f;
-        }
+input,
+select {
+    width: 100%;
+    padding: 12px 14px;
+    border-radius: 10px;
+    border: 1px solid var(--border);
+    font-family: 'Poppins';
+    font-size: 14px;
+    margin-bottom: 18px;
+    background: transparent;
+    color: var(--text-main);
+}
 
-        .acciones {
-            margin-top: 15px;
-            text-align: right;
-        }
+input::placeholder {
+    color: var(--text-soft);
+}
 
-        .btn-copiar {
-            width: auto;
-            padding: 10px 16px;
-            font-size: 14px;
-            border-radius: 10px;
-            background: #1f2937;
-            box-shadow: none;
-        }
+input:focus,
+select:focus {
+    outline: none;
+    border-color: var(--green-main);
+}
 
-        .btn-copiar i {
-            margin-right: 6px;
-        }
+button {
+    width: 100%;
+    background: linear-gradient(90deg, var(--green-main), var(--green-dark));
+    border: none;
+    color: white;
+    padding: 14px;
+    border-radius: 14px;
+    font-size: 15px;
+    font-weight: 500;
+    cursor: pointer;
+    box-shadow: 0 10px 20px rgba(46,203,15,0.35);
+    transition: transform .15s ease;
+}
 
-        .logo {
-            text-align: center;
-            margin-bottom: 20px;
-        }
+button:hover {
+    transform: translateY(-2px);
+}
 
-        .logo i {
-            font-size: 40px;
-            color: #2ecb0f;
-        }
-    </style>
-</head>
+pre {
+    margin-top: 25px;
+    background: var(--bg-pre);
+    padding: 20px;
+    border-radius: 14px;
+    white-space: pre-wrap;
+    font-size: 14px;
+    line-height: 1.6;
+    border-left: 5px solid var(--green-main);
+    color: var(--text-main);
+}
 
-<body>
+.acciones {
+    margin-top: 15px;
+    text-align: right;
+}
 
-    <div class="container">
+.btn-copiar {
+    width: auto;
+    padding: 10px 16px;
+    font-size: 14px;
+    border-radius: 10px;
+    background: transparent;
+    color: var(--green-main);
+    border: 2px solid var(--green-main);
+    box-shadow: none;
+    transition: all .2s ease;
+}
 
-        <div class="logo">
-            <i class="fa-solid fa-school"></i>
-        </div>
+.btn-copiar:hover {
+    background: var(--green-main);
+    color: white;
+}
 
-        <h2>Homologaciones Presenciales</h2>
+.btn-copiar i {
+    margin-right: 6px;
+}
 
-        <form method="POST">
-            <label>Título SENA</label>
-            <input list="titulos" name="titulo" required placeholder="Escribe tu título SENA">
+.logo {
+    text-align: center;
+    margin-bottom: 20px;
+}
 
-            <datalist id="titulos">
-                {% for t in titulos %}
-                <option value="{{ t }}">
-                {% endfor %}
-            </datalist>
+.logo i {
+    font-size: 40px;
+    color: var(--green-main);
+}
+</style>
 
-            <label>Sede</label>
-            <select name="sede" required>
-                <option value="">Selecciona una sede</option>
-                <option value="bogota">Bogotá</option>
-                <option value="pereira">Pereira</option>
-                <option value="valledupar">Valledupar</option>
-            </select>
+<div class="container">
 
-            <button type="submit">
-                <i class="fa-solid fa-magnifying-glass"></i> Consultar homologación
-            </button>
-        </form>
-
-        {% if mensaje %}
-        <pre id="mensaje">{{ mensaje }}</pre>
-
-        <div class="acciones">
-            <button type="button" class="btn-copiar" onclick="copiarMensaje()">
-                <i class="fa-solid fa-copy"></i> Copiar mensaje
-            </button>
-        </div>
-        {% endif %}
-
+    <div class="logo">
+        <i class="fa-solid fa-school"></i>
     </div>
 
-    <script>
-        function copiarMensaje() {
-            const texto = document.getElementById("mensaje").innerText;
-            navigator.clipboard.writeText(texto).then(() => {
-                alert("Mensaje copiado ✅");
-            });
-        }
-    </script>
+    <h2>Homologaciones Presenciales</h2>
 
-</body>
-</html>
+    <form method="POST">
+        <label>Título SENA</label>
+        <input list="titulos" name="titulo" required placeholder="Escribe tu título SENA">
+
+        <datalist id="titulos">
+            {% for t in titulos %}
+            <option value="{{ t }}">
+            {% endfor %}
+        </datalist>
+
+        <label>Sede</label>
+        <select name="sede" required>
+            <option value="">Selecciona una sede</option>
+            <option value="bogota">Bogotá</option>
+            <option value="pereira">Pereira</option>
+            <option value="valledupar">Valledupar</option>
+        </select>
+
+        <button type="submit">
+            <i class="fa-solid fa-magnifying-glass"></i> Consultar homologación
+        </button>
+    </form>
+
+    {% if mensaje %}
+    <pre id="mensaje">{{ mensaje }}</pre>
+
+    <div class="acciones">
+        <button type="button" class="btn-copiar" onclick="copiarMensaje(this)">
+            <i class="fa-solid fa-copy"></i> Copiar mensaje
+        </button>
+    </div>
+    {% endif %}
+
+</div>
+
+<script>
+function copiarMensaje(btn) {
+    const texto = document.getElementById("mensaje").textContent
+        .replace(/\n/g, '\n\n')
+        .trim();
+
+    navigator.clipboard.writeText(texto);
+
+    const original = btn.innerHTML;
+    btn.innerHTML = "✓ Copiado";
+    setTimeout(() => btn.innerHTML = original, 1200);
+}
+</script>
 
 {% endblock %}

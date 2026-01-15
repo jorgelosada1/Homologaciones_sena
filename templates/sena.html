@@ -2,40 +2,213 @@
 {% block content %}
 
 <style>
-.page { display: flex; justify-content: center; margin-top: 30px; }
-.card { width: 100%; max-width: 900px; background: #fff; padding: 30px; border-radius: 18px; box-shadow: 0 10px 25px rgba(0,0,0,.08); }
-.top-bar { display: flex; justify-content: space-between; align-items: center; gap: 20px; }
-.search { margin: 20px 0; }
-.msg-card { background: #f8fafc; padding: 22px; border-radius: 18px; margin-bottom: 25px; border-left: 5px solid #16a34a; }
-.msg-text { white-space: pre-wrap; line-height: 1.6; }
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
+
+/* ===== VARIABLES LIGHT ===== */
+:root {
+    --green: #2ecb0f;
+    --green-soft: rgba(46,203,15,0.12);
+
+    --bg-page: #f9fafb;
+    --bg-card: #ffffff;
+    --bg-card-soft: #fbfbfb;
+
+    --text-main: #111827;
+    --text-soft: #374151;
+
+    --border: #e5e7eb;
+    --input-bg: #ffffff;
+}
+
+/* ===== VARIABLES DARK ===== */
+body.dark {
+    --bg-page: #0f172a;
+    --bg-card: #020617;
+    --bg-card-soft: #020617;
+
+    --text-main: #f9fafb;
+    --text-soft: #cbd5f5;
+
+    --border: #1e293b;
+    --input-bg: #020617;
+}
+
+* {
+    box-sizing: border-box;
+}
+
+.page {
+    display: flex;
+    justify-content: center;
+    padding: 50px 20px;
+    font-family: 'Inter', sans-serif;
+    background: var(--bg-page);
+    transition: background .3s;
+}
+
+.card {
+    width: 100%;
+    max-width: 1100px;
+    background: var(--bg-card);
+    padding: 45px;
+    border-radius: 22px;
+    border: 1px solid var(--border);
+    transition: background .3s, border .3s;
+}
+
+/* ===== HEADER ===== */
+.top-bar {
+    margin-bottom: 35px;
+}
+
+.top-bar h2 {
+    font-size: 24px;
+    font-weight: 700;
+    color: var(--text-main);
+}
+
+/* ===== SEARCH ===== */
+.search {
+    margin-bottom: 45px;
+}
+
+.search input {
+    width: 100%;
+    padding: 15px 18px;
+    border-radius: 14px;
+    border: 1px solid var(--border);
+    font-size: 15px;
+    outline: none;
+    background: var(--input-bg);
+    color: var(--text-main);
+}
+
+.search input::placeholder {
+    color: var(--text-soft);
+}
+
+.search input:focus {
+    border-color: var(--green);
+}
+
+/* ===== GRID ===== */
+.msg-grid {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 30px;
+}
+
+/* ===== MENSAJES ===== */
+.msg-card {
+    padding: 28px 30px;
+    border-radius: 20px;
+    background: linear-gradient(180deg, var(--bg-card), var(--bg-card-soft));
+    border: 1px solid var(--border);
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    position: relative;
+    transition: background .3s, border .3s;
+}
+
+.msg-card::before {
+    content: "";
+    position: absolute;
+    inset: 0;
+    border-radius: 20px;
+    background: linear-gradient(135deg, transparent, var(--green-soft));
+    opacity: 0.6;
+    pointer-events: none;
+}
+
+.msg-card h3 {
+    margin-bottom: 14px;
+    font-size: 16.5px;
+    font-weight: 600;
+    color: var(--text-main);
+    z-index: 1;
+}
+
+.msg-text {
+    white-space: pre-wrap;
+    line-height: 1.7;
+    font-size: 14.6px;
+    color: var(--text-soft);
+    margin-bottom: 26px;
+    z-index: 1;
+}
+
+/* ===== BUTTON ===== */
+.msg-card button {
+    align-self: flex-end;
+    padding: 10px 20px;
+    background: var(--green);
+    color: white;
+    border: none;
+    border-radius: 12px;
+    font-size: 14px;
+    font-weight: 600;
+    cursor: pointer;
+    z-index: 1;
+    transition: transform .15s, opacity .15s;
+}
+
+.msg-card button:active {
+    transform: scale(.95);
+}
+
+/* ===== RESPONSIVE ===== */
+@media (max-width: 900px) {
+    .msg-grid {
+        grid-template-columns: 1fr;
+    }
+}
 </style>
 
 <div class="page">
 <div class="card">
 
-<div class="top-bar">
-    <h2>🎓 Mensajes SENA</h2>
-</div>
+    <div class="top-bar">
+        <h2>Mensajes SENA</h2>
+    </div>
 
-<form method="get" class="search">
-    <input type="text" name="q" placeholder="🔍 Buscar programa..." value="{{ q }}">
-</form>
+    <form method="get" class="search">
+        <input
+            type="text"
+            name="q"
+            placeholder="Buscar programa"
+            value="{{ q }}"
+        >
+    </form>
 
-{% for m in mensajes %}
-<div class="msg-card">
-    <h3>{{ m.titulo }}</h3>
-    <div class="msg-text" id="s{{ loop.index }}">{{ m.texto }}</div>
-    <button onclick="copiar('s{{ loop.index }}')">📋 Copiar</button>
-</div>
-{% endfor %}
+    <div class="msg-grid">
+        {% for m in mensajes %}
+        <div class="msg-card">
+            <h3>{{ m.titulo }}</h3>
+            <div class="msg-text" id="s{{ loop.index }}">
+{{ m.texto }}
+            </div>
+            <button onclick="copiar(this, 's{{ loop.index }}')">
+                Copiar
+            </button>
+        </div>
+        {% endfor %}
+    </div>
 
 </div>
 </div>
 
 <script>
-function copiar(id){
-    navigator.clipboard.writeText(document.getElementById(id).innerText);
-    alert("Copiado 👍");
+function copiar(btn, id){
+    let texto = document.getElementById(id).textContent
+        .replace(/\n/g, '\n\n')
+        .trim();
+
+    navigator.clipboard.writeText(texto);
+
+    const original = btn.innerText;
+    btn.innerText = "✓ Copiado";
+    setTimeout(() => btn.innerText = original, 1200);
 }
 </script>
 

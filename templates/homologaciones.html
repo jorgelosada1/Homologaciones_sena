@@ -4,117 +4,218 @@
 <style>
 @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
 
+/* =========================
+   VARIABLES BASE
+========================= */
+:root {
+    --green-main: #22c55e;
+    --green-dark: #16a34a;
+    --green-soft: #dcfce7;
+
+    --bg-main: #f0fdf4;
+    --card-bg: #ffffff;
+    --text-main: #1f2937;
+    --text-soft: #4b5563;
+    --border-soft: #e5e7eb;
+}
+
+/* =========================
+   MODO OSCURO
+   (hereda de layout.html)
+========================= */
+body.dark {
+    --bg-main: #0f172a;
+    --card-bg: #020617;
+    --text-main: #e5e7eb;
+    --text-soft: #9ca3af;
+    --border-soft: #1e293b;
+    --green-soft: rgba(34,197,94,0.15);
+}
+
+/* =========================
+   BASE
+========================= */
 .page {
     display: flex;
     justify-content: center;
-    margin-top: 40px;
+    padding: 60px 20px;
     font-family: 'Inter', sans-serif;
 }
 
 .card {
-    background: white;
-    width: 520px;
-    padding: 30px;
-    border-radius: 18px;
-    box-shadow: 0 10px 25px rgba(0,0,0,0.08);
+    width: 100%;
+    max-width: 560px;
+    background: var(--card-bg);
+    border-radius: 22px;
+    box-shadow: 0 20px 40px rgba(0,0,0,0.15);
+    overflow: hidden;
+    color: var(--text-main);
 }
 
-.card h2 {
-    margin-bottom: 20px;
+/* =========================
+   HEADER
+========================= */
+.card-header {
+    background: linear-gradient(135deg, var(--green-main), var(--green-dark));
+    padding: 26px 30px;
+    color: white;
+}
+
+.card-header h2 {
+    margin: 0;
+    font-size: 22px;
     font-weight: 700;
-    color: #1f2937;
+}
+
+.card-header p {
+    margin: 4px 0 0;
+    font-size: 14px;
+    opacity: 0.95;
+}
+
+/* =========================
+   BODY
+========================= */
+.card-body {
+    padding: 32px;
+}
+
+label {
+    font-size: 14px;
+    font-weight: 600;
+    color: var(--text-soft);
+    margin-bottom: 6px;
+    display: block;
 }
 
 input {
     width: 100%;
     padding: 14px 16px;
-    border-radius: 12px;
-    border: 1px solid #d1d5db;
+    border-radius: 14px;
+    border: 1px solid var(--border-soft);
     font-size: 15px;
-    outline: none;
+    background: transparent;
+    color: var(--text-main);
 }
 
 input:focus {
-    border-color: #31d60f;
+    outline: none;
+    border-color: var(--green-main);
+    box-shadow: 0 0 0 4px rgba(34,197,94,0.25);
 }
 
 button {
     width: 100%;
-    margin-top: 18px;
-    padding: 14px;
-    background: #31d60f;
-    color: white;
+    margin-top: 20px;
+    padding: 15px;
+    border-radius: 14px;
     border: none;
-    border-radius: 12px;
     font-size: 16px;
     font-weight: 600;
     cursor: pointer;
+    background: linear-gradient(135deg, var(--green-main), var(--green-dark));
+    color: white;
+    transition: transform 0.15s ease, box-shadow 0.15s ease;
 }
 
 button:hover {
-    background: #31d60f;
+    transform: translateY(-1px);
+    box-shadow: 0 10px 20px rgba(34,197,94,0.35);
 }
 
+/* =========================
+   RESULTADO
+========================= */
 .resultado {
-    margin-top: 30px;
+    margin-top: 36px;
+    border-top: 1px solid var(--border-soft);
+    padding-top: 26px;
 }
 
 .bubble {
-    background: #f1f5f9;
-    padding: 18px;
-    border-radius: 14px;
-    white-space: pre-wrap;
-    font-size: 14.5px;
+    background: var(--green-soft);
+    padding: 22px;
+    border-radius: 18px;
+    font-size: 14.8px;
     line-height: 1.6;
-    border-left: 5px solid #31d60f;
+    color: var(--text-main);
+    border-left: 5px solid var(--green-main);
+    white-space: pre-wrap;
 }
 
+/* =========================
+   BOTÓN COPIAR
+========================= */
 .copy {
-    margin-top: 12px;
-    background: #10b981;
+    background: transparent;
+    color: var(--green-main);
+    border: 2px solid var(--green-main);
+    margin-top: 14px;
+    transition: all 0.25s ease;
 }
 
-.copy:hover {
-    background: #059669;
+.copy.success {
+    background: var(--green-main);
+    color: white;
+    border-color: var(--green-main);
 }
 </style>
 
 <div class="page">
     <div class="card">
-        <h2>🎓 Homologaciones SENA</h2>
 
-        <form method="POST">
-            <input
-                list="titulos"
-                name="titulo"
-                placeholder="Escribe tu título SENA"
-                required
-            >
-            <datalist id="titulos">
-                {% for t in titulos %}
-                <option value="{{ t }}">
-                {% endfor %}
-            </datalist>
-
-            <button type="submit">Generar mensaje</button>
-        </form>
-
-        {% if mensaje %}
-        <div class="resultado">
-            <h3>📄 Mensaje generado</h3>
-            <div class="bubble" id="msg">{{ mensaje }}</div>
-            <button class="copy" onclick="copiar()">📋 Copiar</button>
+        <div class="card-header">
+            <h2>Homologaciones SENA</h2>
+            <p>Generador automático de mensajes académicos</p>
         </div>
 
-        <script>
-        function copiar(){
-            navigator.clipboard.writeText(
-                document.getElementById("msg").innerText
-            );
-            alert("Copiado 👍");
-        }
-        </script>
-        {% endif %}
+        <div class="card-body">
+            <form method="POST">
+                <label>Título obtenido en el SENA</label>
+                <input list="titulos" name="titulo" required>
+
+                <datalist id="titulos">
+                    {% for t in titulos %}
+                    <option value="{{ t }}">
+                    {% endfor %}
+                </datalist>
+
+                <button type="submit">Generar mensaje</button>
+            </form>
+
+            {% if mensaje %}
+            <div class="resultado">
+                <div class="bubble" id="msg">{{ mensaje }}</div>
+
+                <button class="copy" id="btnCopy" onclick="copiar()">
+                    <span id="copyText">Copiar mensaje</span>
+                </button>
+            </div>
+
+            <script>
+            function copiar() {
+                const msg = document.getElementById("msg");
+                const btn = document.getElementById("btnCopy");
+                const text = document.getElementById("copyText");
+
+                let contenido = msg.textContent
+                    .replace(/\r\n/g, '\n')
+                    .replace(/\n{1,}/g, '\n\n')
+                    .trim();
+
+                navigator.clipboard.writeText(contenido);
+
+                btn.classList.add("success");
+                text.textContent = "✓ Copiado";
+
+                setTimeout(() => {
+                    btn.classList.remove("success");
+                    text.textContent = "Copiar mensaje";
+                }, 1500);
+            }
+            </script>
+            {% endif %}
+        </div>
     </div>
 </div>
 
