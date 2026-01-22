@@ -4,6 +4,8 @@ import os
 from datetime import datetime, timedelta
 from flask import  redirect
 from flask import Flask, render_template, request, send_from_directory, session
+from whatsapp import whatsapp_bp
+
 
 
 # =====================================================
@@ -11,6 +13,8 @@ from flask import Flask, render_template, request, send_from_directory, session
 # =====================================================
 app = Flask(__name__)
 app.secret_key = "homologaciones-aguachica-2026"
+
+app.register_blueprint(whatsapp_bp)
 
 # =====================================================
 # CARGAR HOMOLOGACIONES PRESENCIAL
