@@ -1,0 +1,490 @@
+{% extends "layout.html" %}
+{% block content %}
+
+<style>
+    .param-page {
+        animation: fadeIn 0.5s ease;
+        padding-bottom: 60px;
+    }
+
+    .param-header {
+        margin-bottom: 32px;
+    }
+
+    .param-header p {
+        color: var(--text-muted);
+        font-size: 14px;
+        margin-top: -20px;
+    }
+
+    /* Tabs */
+    .param-tabs {
+        display: flex;
+        gap: 12px;
+        margin-bottom: 24px;
+        border-bottom: 1px solid var(--border-glass);
+        padding-bottom: 12px;
+    }
+
+    .param-tab {
+        padding: 10px 20px;
+        border-radius: 12px;
+        background: transparent;
+        color: var(--text-muted);
+        font-size: 14px;
+        font-weight: 600;
+        cursor: pointer;
+        border: 1px solid transparent;
+        transition: var(--transition);
+    }
+
+    .param-tab.active {
+        background: rgba(59, 130, 246, 0.1);
+        color: var(--accent-blue);
+        border-color: rgba(59, 130, 246, 0.3);
+    }
+
+    /* Timeline Cards */
+    .param-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+        gap: 20px;
+    }
+
+    .param-section {
+        display: none;
+    }
+
+    .param-section.active {
+        display: grid;
+        animation: slideUp 0.4s ease;
+    }
+
+    .tilt-card {
+        background: rgba(15, 23, 42, 0.6);
+        backdrop-filter: blur(12px);
+        border: 1px solid var(--border-glass);
+        border-radius: 20px;
+        padding: 24px;
+        transition: box-shadow 0.3s ease;
+        transform-style: preserve-3d;
+        box-shadow: 0 4px 20px rgba(0, 0, 0, 0.2);
+    }
+
+    .tilt-card:hover {
+        box-shadow: 0 16px 40px rgba(59, 130, 246, 0.2);
+        border-color: rgba(255, 255, 255, 0.15);
+    }
+
+    .card-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 20px;
+        border-bottom: 1px dashed rgba(255, 255, 255, 0.1);
+        padding-bottom: 12px;
+        transform: translateZ(30px);
+    }
+
+    .card-badge {
+        background: linear-gradient(135deg, var(--accent-blue), var(--accent-purple));
+        padding: 6px 12px;
+        border-radius: 8px;
+        font-size: 12px;
+        font-weight: 700;
+        color: white;
+        letter-spacing: 0.5px;
+    }
+
+    .card-title {
+        font-size: 18px;
+        font-weight: 700;
+        color: var(--text-primary);
+    }
+
+    .timeline-item {
+        display: flex;
+        gap: 16px;
+        margin-bottom: 16px;
+        transform: translateZ(20px);
+    }
+
+    .timeline-item:last-child {
+        margin-bottom: 0;
+    }
+
+    .timeline-icon {
+        width: 32px;
+        height: 32px;
+        border-radius: 10px;
+        background: rgba(255, 255, 255, 0.05);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        color: var(--accent);
+        flex-shrink: 0;
+    }
+
+    .tl-info {
+        flex: 1;
+    }
+
+    .tl-label {
+        font-size: 11px;
+        color: var(--text-muted);
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+        margin-bottom: 4px;
+        font-weight: 600;
+    }
+
+    .tl-date {
+        font-size: 14px;
+        color: var(--text-primary);
+        font-weight: 500;
+    }
+
+    /* Stagger init */
+    .tilt-card:nth-child(1) {
+        animation-delay: 0.1s;
+    }
+
+    .tilt-card:nth-child(2) {
+        animation-delay: 0.2s;
+    }
+
+    .tilt-card:nth-child(3) {
+        animation-delay: 0.3s;
+    }
+
+    .careers-list {
+        margin-top: 16px;
+        padding-top: 16px;
+        border-top: 1px dashed rgba(255, 255, 255, 0.1);
+        transform: translateZ(10px);
+    }
+
+    .cl-title {
+        font-size: 13px;
+        font-weight: 600;
+        color: var(--accent-blue);
+        margin-bottom: 8px;
+        display: flex;
+        align-items: center;
+        gap: 6px;
+    }
+
+    .careers-list ul {
+        list-style: none;
+        padding: 0;
+        margin: 0;
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(130px, 1fr));
+        gap: 6px;
+    }
+
+    .careers-list li {
+        font-size: 11px;
+        color: var(--text-secondary);
+        display: flex;
+        align-items: flex-start;
+        gap: 6px;
+        line-height: 1.3;
+    }
+
+    .careers-list li::before {
+        content: "•";
+        color: var(--accent);
+    }
+</style>
+
+<div class="param-page">
+    <div class="param-header">
+        <h2><i class="fa-solid fa-calendar-days" style="color:var(--accent-blue)"></i> Parametrización 2026</h2>
+        <p>Fechas clave de inscripción y clases. Pase el mouse sobre las tarjetas para ver el efecto 3D.</p>
+    </div>
+
+    <div class="param-tabs">
+        <button class="param-tab active" onclick="switchTab('pregrado', this)">PREGRADO</button>
+        <button class="param-tab" onclick="switchTab('posgrado', this)">POSGRADOS</button>
+    </div>
+
+    <!-- PREGRADO -->
+    <div id="pregrado" class="param-section param-grid active">
+        <!-- 1A -->
+        <div class="tilt-card" data-tilt data-tilt-max="15" data-tilt-speed="400" data-tilt-glare
+            data-tilt-max-glare="0.2">
+            <div class="card-header">
+                <div class="card-title">Cohorte 1A</div>
+                <div class="card-badge">2026-10</div>
+            </div>
+            <div class="timeline-item">
+                <div class="timeline-icon"><i class="fa-solid fa-user-plus"></i></div>
+                <div class="tl-info">
+                    <div class="tl-label">Inscripción Nuevos</div>
+                    <div class="tl-date">28-oct a 31-ene</div>
+                </div>
+            </div>
+            <div class="timeline-item">
+                <div class="timeline-icon"><i class="fa-solid fa-right-left"></i></div>
+                <div class="tl-info">
+                    <div class="tl-label">Transferencias</div>
+                    <div class="tl-date">Hasta el 22-ene</div>
+                </div>
+            </div>
+            <div class="timeline-item">
+                <div class="timeline-icon"><i class="fa-solid fa-chalkboard-user"></i></div>
+                <div class="tl-info">
+                    <div class="tl-label">Clases (Inicio - Fin)</div>
+                    <div class="tl-date">3 feb al 2 jun</div>
+                </div>
+            </div>
+
+            <div class="careers-list">
+                <div class="cl-title"><i class="fa-solid fa-bookmark"></i> Carreras Disponibles</div>
+                <ul>
+                    <li>Marketing de Negocios</li>
+                    <li>Administración de Empresas</li>
+                    <li>Finanzas y Negocios Intern.</li>
+                    <li>Ing. de Sistemas Virtual</li>
+                    <li>Ingeniería Industrial</li>
+                    <li>Lic. en Ciencias Sociales</li>
+                    <li>Lic. en Educación Infantil</li>
+                    <li>Psicología Virtual</li>
+                    <li>Derecho</li>
+                    <li>Comunicación Social</li>
+                </ul>
+            </div>
+        </div>
+
+        <!-- 1B -->
+        <div class="tilt-card" data-tilt data-tilt-max="15" data-tilt-speed="400" data-tilt-glare
+            data-tilt-max-glare="0.2">
+            <div class="card-header">
+                <div class="card-title">Cohorte 1B</div>
+                <div class="card-badge">2026-10</div>
+            </div>
+            <div class="timeline-item">
+                <div class="timeline-icon"><i class="fa-solid fa-user-plus"></i></div>
+                <div class="tl-info">
+                    <div class="tl-label">Inscripción Nuevos</div>
+                    <div class="tl-date">28-oct a 21-feb</div>
+                </div>
+            </div>
+            <div class="timeline-item">
+                <div class="timeline-icon"><i class="fa-solid fa-right-left"></i></div>
+                <div class="tl-info">
+                    <div class="tl-label">Transferencias</div>
+                    <div class="tl-date">Hasta el 14-feb</div>
+                </div>
+            </div>
+            <div class="timeline-item">
+                <div class="timeline-icon"><i class="fa-solid fa-chalkboard-user"></i></div>
+                <div class="tl-info">
+                    <div class="tl-label">Clases (Inicio - Fin)</div>
+                    <div class="tl-date">24 feb al 23 jun</div>
+                </div>
+            </div>
+
+            <div class="careers-list">
+                <div class="cl-title"><i class="fa-solid fa-bookmark"></i> Carreras Disponibles</div>
+                <ul>
+                    <li>Administración Pública</li>
+                    <li>Economía</li>
+                </ul>
+            </div>
+        </div>
+
+        <!-- 1C -->
+        <div class="tilt-card" data-tilt data-tilt-max="15" data-tilt-speed="400" data-tilt-glare
+            data-tilt-max-glare="0.2">
+            <div class="card-header">
+                <div class="card-title">Cohorte 1C</div>
+                <div class="card-badge" style="background: linear-gradient(135deg, var(--accent), #059669)">2026-10
+                </div>
+            </div>
+            <div class="timeline-item">
+                <div class="timeline-icon"><i class="fa-solid fa-user-plus"></i></div>
+                <div class="tl-info">
+                    <div class="tl-label">Inscripción Nuevos</div>
+                    <div class="tl-date">17-mar a 14-jul</div>
+                </div>
+            </div>
+            <div class="timeline-item">
+                <div class="timeline-icon"><i class="fa-solid fa-right-left"></i></div>
+                <div class="tl-info">
+                    <div class="tl-label">Transferencias</div>
+                    <div class="tl-date">3-feb hasta 7-mar</div>
+                </div>
+            </div>
+            <div class="timeline-item">
+                <div class="timeline-icon"><i class="fa-solid fa-chalkboard-user"></i></div>
+                <div class="tl-info">
+                    <div class="tl-label">Clases (Inicio - Fin)</div>
+                    <div class="tl-date">17 mar al 14 jul</div>
+                </div>
+            </div>
+
+            <div class="careers-list">
+                <div class="cl-title" style="color:var(--accent)"><i class="fa-solid fa-bookmark"></i> Carreras
+                    Disponibles</div>
+                <ul>
+                    <li>Marketing de Negocios</li>
+                    <li>Administración de Empresas</li>
+                    <li>Finanzas y Negocios Intern.</li>
+                    <li>Ing. de Sistemas Virtual</li>
+                    <li>Ingeniería Industrial</li>
+                    <li>Lic. en Ciencias Sociales</li>
+                    <li>Lic. en Educación Infantil</li>
+                    <li>Derecho</li>
+                </ul>
+            </div>
+        </div>
+    </div>
+
+    <!-- POSGRADOS -->
+    <div id="posgrado" class="param-section param-grid">
+        <!-- 3B -->
+        <div class="tilt-card" data-tilt data-tilt-max="15" data-tilt-speed="400" data-tilt-glare
+            data-tilt-max-glare="0.2">
+            <div class="card-header">
+                <div class="card-title">Cohorte 3B</div>
+                <div class="card-badge" style="background: linear-gradient(135deg, var(--accent-orange), #ea580c)">
+                    2026-30</div>
+            </div>
+            <div class="timeline-item">
+                <div class="timeline-icon"><i class="fa-solid fa-user-plus"></i></div>
+                <div class="tl-info">
+                    <div class="tl-label">Inscripción Nuevos</div>
+                    <div class="tl-date">28-oct hasta 14-feb</div>
+                </div>
+            </div>
+            <div class="timeline-item">
+                <div class="timeline-icon"><i class="fa-solid fa-right-left"></i></div>
+                <div class="tl-info">
+                    <div class="tl-label">Transferencias</div>
+                    <div class="tl-date">28-oct hasta 14-feb</div>
+                </div>
+            </div>
+            <div class="timeline-item">
+                <div class="timeline-icon"><i class="fa-solid fa-chalkboard-user"></i></div>
+                <div class="tl-info">
+                    <div class="tl-label">Clases (Inicio - Fin)</div>
+                    <div class="tl-date">17 feb hasta 16 jun</div>
+                </div>
+            </div>
+
+            <div class="careers-list">
+                <div class="cl-title" style="color:var(--accent-orange)"><i class="fa-solid fa-bookmark"></i> Posgrados
+                    Disponibles</div>
+                <ul>
+                    <li>Esp. Auditoría Salud</li>
+                    <li>Esp. Informática Educativa</li>
+                    <li>Esp. Ger. Seg. y Salud Trab.</li>
+                    <li>Esp. Pedagogía y Docencia</li>
+                    <li>Esp. Gestión Ambiental</li>
+                    <li>Esp. Gerencia Financiera</li>
+                    <li>Esp. Alta Gerencia</li>
+                    <li>Esp. Revisoría Fiscal</li>
+                </ul>
+            </div>
+        </div>
+
+        <!-- 3D -->
+        <div class="tilt-card" data-tilt data-tilt-max="15" data-tilt-speed="400" data-tilt-glare
+            data-tilt-max-glare="0.2">
+            <div class="card-header">
+                <div class="card-title">Cohorte 3D</div>
+                <div class="card-badge" style="background: linear-gradient(135deg, var(--accent-orange), #ea580c)">
+                    2026-30</div>
+            </div>
+            <div class="timeline-item">
+                <div class="timeline-icon"><i class="fa-solid fa-user-plus"></i></div>
+                <div class="tl-info">
+                    <div class="tl-label">Inscripción Nuevos</div>
+                    <div class="tl-date">17-feb hasta 21-mar</div>
+                </div>
+            </div>
+            <div class="timeline-item">
+                <div class="timeline-icon"><i class="fa-solid fa-right-left"></i></div>
+                <div class="tl-info">
+                    <div class="tl-label">Transferencias</div>
+                    <div class="tl-date">17-feb hasta 14-mar</div>
+                </div>
+            </div>
+            <div class="timeline-item">
+                <div class="timeline-icon"><i class="fa-solid fa-chalkboard-user"></i></div>
+                <div class="tl-info">
+                    <div class="tl-label">Clases (Inicio - Fin)</div>
+                    <div class="tl-date">24 mar hasta 21 jul</div>
+                </div>
+            </div>
+
+            <div class="careers-list">
+                <div class="cl-title" style="color:var(--accent-orange)"><i class="fa-solid fa-bookmark"></i> Posgrados
+                    Disponibles</div>
+                <ul>
+                    <li>Esp. Derechos de Autor</li>
+                    <li>Esp. Dir. y Prod. Audiovisual</li>
+                    <li>Esp. Infancia y Adolescencia</li>
+                </ul>
+            </div>
+        </div>
+
+        <!-- 3F -->
+        <div class="tilt-card" data-tilt data-tilt-max="15" data-tilt-speed="400" data-tilt-glare
+            data-tilt-max-glare="0.2">
+            <div class="card-header">
+                <div class="card-title">Cohorte 3F</div>
+                <div class="card-badge" style="background: linear-gradient(135deg, var(--accent-orange), #ea580c)">
+                    2026-30</div>
+            </div>
+            <div class="timeline-item">
+                <div class="timeline-icon"><i class="fa-solid fa-user-plus"></i></div>
+                <div class="tl-info">
+                    <div class="tl-label">Inscripción Nuevos</div>
+                    <div class="tl-date">10-mar hasta 25-abr</div>
+                </div>
+            </div>
+            <div class="timeline-item">
+                <div class="timeline-icon"><i class="fa-solid fa-right-left"></i></div>
+                <div class="tl-info">
+                    <div class="tl-label">Transferencias</div>
+                    <div class="tl-date">10-mar hasta 21-abr</div>
+                </div>
+            </div>
+            <div class="timeline-item">
+                <div class="timeline-icon"><i class="fa-solid fa-chalkboard-user"></i></div>
+                <div class="tl-info">
+                    <div class="tl-label">Clases (Inicio - Fin)</div>
+                    <div class="tl-date">28 abr hasta 18 ago</div>
+                </div>
+            </div>
+
+            <div class="careers-list">
+                <div class="cl-title" style="color:var(--accent-orange)"><i class="fa-solid fa-bookmark"></i> Posgrados
+                    Disponibles</div>
+                <ul>
+                    <li>Esp. Auditoría Salud</li>
+                    <li>Esp. Informática Educativa</li>
+                    <li>Esp. Ger. Seg. y Salud Trab.</li>
+                    <li>Esp. Pedagogía y Docencia</li>
+                    <li>Esp. Gestión Ambiental</li>
+                </ul>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Vanilla Tilt JS -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/vanilla-tilt/1.8.0/vanilla-tilt.min.js"></script>
+<script>
+    function switchTab(id, btn) {
+        document.querySelectorAll('.param-tab').forEach(t => t.classList.remove('active'));
+        document.querySelectorAll('.param-section').forEach(s => s.classList.remove('active'));
+        btn.classList.add('active');
+        document.getElementById(id).classList.add('active');
+    }
+</script>
+
+{% endblock %}

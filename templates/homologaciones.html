@@ -1,0 +1,315 @@
+{% extends "layout.html" %}
+{% block content %}
+
+<style>
+    .homo-page {
+        max-width: 640px;
+        margin: 0 auto;
+        animation: slideUp 0.5s ease;
+    }
+
+    .homo-header {
+        text-align: center;
+        margin-bottom: 32px;
+    }
+
+    .homo-header h2 {
+        justify-content: center;
+        font-size: 30px;
+        margin-bottom: 8px;
+    }
+
+    .homo-header p {
+        color: var(--text-muted);
+        font-size: 14px;
+    }
+
+    .homo-card {
+        background: var(--bg-card);
+        backdrop-filter: blur(12px);
+        border: 1px solid var(--border-glass);
+        border-radius: var(--radius);
+        padding: 32px;
+        animation: scaleIn 0.4s ease;
+    }
+
+    .input-group {
+        position: relative;
+        margin-bottom: 20px;
+    }
+
+    .input-group i {
+        position: absolute;
+        left: 16px;
+        top: 50%;
+        transform: translateY(-50%);
+        color: var(--text-muted);
+        font-size: 16px;
+        pointer-events: none;
+    }
+
+    .input-group input {
+        padding-left: 44px;
+        padding-right: 16px;
+        height: 52px;
+        font-size: 15px;
+        border-radius: 14px;
+    }
+
+    .btn-generar {
+        width: 100%;
+        height: 52px;
+        border: none;
+        border-radius: 14px;
+        background: linear-gradient(135deg, var(--accent), var(--accent-dark));
+        color: white;
+        font-size: 15px;
+        font-weight: 600;
+        cursor: pointer;
+        transition: var(--transition);
+        box-shadow: 0 4px 20px var(--accent-glow);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 8px;
+    }
+
+    .btn-generar:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 8px 30px rgba(34, 197, 94, 0.4);
+    }
+
+    /* Resultado */
+    .resultado {
+        margin-top: 28px;
+        animation: slideUp 0.5s ease;
+    }
+
+    .resultado-header {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        margin-bottom: 16px;
+    }
+
+    .resultado-header h3 {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        font-size: 18px;
+        margin: 0;
+    }
+
+    .resultado-header h3 i {
+        color: var(--accent);
+    }
+
+    .bubble {
+        background: rgba(15, 23, 42, 0.6);
+        padding: 20px;
+        border-radius: 14px;
+        white-space: pre-wrap;
+        font-size: 14px;
+        line-height: 1.7;
+        border-left: 4px solid var(--accent);
+        color: var(--text-secondary);
+        margin-bottom: 16px;
+    }
+
+    .btn-copiar {
+        width: 100%;
+        height: 46px;
+        border: none;
+        border-radius: 12px;
+        background: linear-gradient(135deg, var(--accent-blue), #2563eb);
+        color: white;
+        font-size: 14px;
+        font-weight: 600;
+        cursor: pointer;
+        transition: var(--transition);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 8px;
+        box-shadow: 0 4px 15px rgba(59, 130, 246, 0.25);
+    }
+
+    .btn-copiar:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 8px 25px rgba(59, 130, 246, 0.35);
+    }
+</style>
+
+<div class="homo-page">
+    <div class="homo-header">
+        <h2><i class="fa-solid fa-building-columns" style="color:var(--accent)"></i> Homologaciones SENA</h2>
+        <p>Consulta las materias que puedes homologar con tu título SENA</p>
+    </div>
+
+    <div class="homo-card">
+        <form method="POST">
+            <div class="input-group">
+                <i class="fa-solid fa-search"></i>
+                <input list="titulos" name="titulo" placeholder="Escribe tu título SENA..." required autocomplete="off">
+                <datalist id="titulos">
+                    {% for t in titulos %}
+                    <option value="{{ t }}">
+                        {% endfor %}
+                </datalist>
+            </div>
+
+            <button type="submit" class="btn-generar">
+                <i class="fa-solid fa-wand-magic-sparkles"></i>
+                Generar mensaje
+            </button>
+        </form>
+
+        {% if mensaje %}
+        <div class="resultado">
+            <div class="resultado-header">
+                <h3><i class="fa-solid fa-file-lines"></i> Mensaje generado</h3>
+            </div>
+            <div class="bubble" id="msg">{{ mensaje }}</div>
+            <button class="btn-copiar" onclick="copiarTexto('msg', '¡Mensaje copiado!')">
+                <i class="fa-solid fa-copy"></i> Copiar mensaje
+            </button>
+        </div>
+        {% endif %}
+
+        <!-- HISTORIAL DE BÚSQUEDAS -->
+        <div class="historial" id="historial" style="display:none">
+            <div class="historial-header">
+                <span><i class="fa-solid fa-clock-rotate-left"></i> Búsquedas recientes</span>
+                <button class="historial-clear" onclick="limpiarHistorial()">Limpiar</button>
+            </div>
+            <div class="historial-chips" id="historialChips"></div>
+        </div>
+    </div>
+</div>
+
+<style>
+    .historial {
+        margin-top: 24px;
+        padding-top: 20px;
+        border-top: 1px solid var(--border-glass);
+    }
+
+    .historial-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 12px;
+        font-size: 13px;
+        color: var(--text-muted);
+    }
+
+    .historial-header span {
+        display: flex;
+        align-items: center;
+        gap: 6px;
+    }
+
+    .historial-clear {
+        background: none;
+        border: none;
+        color: var(--text-muted);
+        font-size: 12px;
+        cursor: pointer;
+        padding: 4px 8px;
+        border-radius: 6px;
+        transition: var(--transition);
+    }
+
+    .historial-clear:hover {
+        color: var(--danger);
+        background: rgba(239, 68, 68, 0.1);
+    }
+
+    .historial-chips {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 8px;
+    }
+
+    .historial-chip {
+        padding: 8px 14px;
+        border-radius: 20px;
+        background: rgba(255, 255, 255, 0.05);
+        border: 1px solid var(--border-glass);
+        color: var(--text-secondary);
+        font-size: 12px;
+        cursor: pointer;
+        transition: var(--transition);
+        text-decoration: none;
+        white-space: nowrap;
+    }
+
+    .historial-chip:hover {
+        border-color: var(--accent);
+        color: var(--accent);
+        background: rgba(34, 197, 94, 0.08);
+    }
+</style>
+
+<script>
+    // Search history with localStorage
+    const HISTORY_KEY = 'homo_search_history';
+    const MAX_HISTORY = 5;
+
+    function getHistory() {
+        try { return JSON.parse(localStorage.getItem(HISTORY_KEY) || '[]'); }
+        catch { return []; }
+    }
+
+    function saveToHistory(term) {
+        if (!term.trim()) return;
+        let h = getHistory().filter(t => t !== term);
+        h.unshift(term);
+        if (h.length > MAX_HISTORY) h = h.slice(0, MAX_HISTORY);
+        localStorage.setItem(HISTORY_KEY, JSON.stringify(h));
+    }
+
+    function renderHistory() {
+        const h = getHistory();
+        const container = document.getElementById('historial');
+        const chips = document.getElementById('historialChips');
+
+        if (h.length === 0) { container.style.display = 'none'; return; }
+
+        container.style.display = 'block';
+        chips.innerHTML = h.map(t =>
+            `<a class="historial-chip" href="/?autoSearch=${encodeURIComponent(t)}">${t}</a>`
+        ).join('');
+    }
+
+    function limpiarHistorial() {
+        localStorage.removeItem(HISTORY_KEY);
+        renderHistory();
+        showToast('Historial limpiado', 'info');
+    }
+
+    // Save on form submit
+    document.querySelector('form').addEventListener('submit', () => {
+        const input = document.querySelector('input[name="titulo"]');
+        if (input.value) saveToHistory(input.value);
+    });
+
+    // Auto-fill from history click
+    const params = new URLSearchParams(window.location.search);
+    const autoSearch = params.get('autoSearch');
+    if (autoSearch) {
+        // Evitar bucle infinito borrando el parámetro de la URL antes de enviar
+        window.history.replaceState({}, document.title, window.location.pathname);
+
+        const input = document.querySelector('input[name="titulo"]');
+        if (input) {
+            input.value = autoSearch;
+            saveToHistory(autoSearch);
+            document.querySelector('form').submit();
+        }
+    }
+
+    renderHistory();
+</script>
+
+{% endblock %}

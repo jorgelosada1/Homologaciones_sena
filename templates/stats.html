@@ -1,0 +1,325 @@
+{% extends "layout.html" %}
+{% block content %}
+
+<style>
+    .stats-page {
+        animation: fadeIn 0.5s ease;
+    }
+
+    .stats-header {
+        margin-bottom: 32px;
+    }
+
+    .stats-header p {
+        color: var(--text-muted);
+        font-size: 14px;
+        margin-top: -20px;
+    }
+
+    /* KPI Grid */
+    .stats-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+        gap: 16px;
+        margin-bottom: 32px;
+    }
+
+    .stat-card {
+        background: var(--bg-card);
+        backdrop-filter: blur(12px);
+        border: 1px solid var(--border-glass);
+        border-radius: var(--radius);
+        padding: 24px;
+        display: flex;
+        align-items: center;
+        gap: 18px;
+        transition: var(--transition);
+        animation: slideUp 0.5s ease both;
+    }
+
+    .stat-card:hover {
+        border-color: rgba(255, 255, 255, 0.12);
+        transform: translateY(-4px);
+        box-shadow: 0 12px 40px rgba(0, 0, 0, 0.3);
+    }
+
+    .stat-card:nth-child(1) {
+        animation-delay: 0.05s;
+    }
+
+    .stat-card:nth-child(2) {
+        animation-delay: 0.1s;
+    }
+
+    .stat-card:nth-child(3) {
+        animation-delay: 0.15s;
+    }
+
+    .stat-card:nth-child(4) {
+        animation-delay: 0.2s;
+    }
+
+    .stat-card:nth-child(5) {
+        animation-delay: 0.25s;
+    }
+
+    .stat-card:nth-child(6) {
+        animation-delay: 0.3s;
+    }
+
+    .stat-icon {
+        width: 56px;
+        height: 56px;
+        border-radius: 16px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 22px;
+        flex-shrink: 0;
+    }
+
+    .stat-icon.green {
+        background: linear-gradient(135deg, rgba(34, 197, 94, 0.2), rgba(34, 197, 94, 0.05));
+        color: var(--accent);
+    }
+
+    .stat-icon.blue {
+        background: linear-gradient(135deg, rgba(59, 130, 246, 0.2), rgba(59, 130, 246, 0.05));
+        color: var(--accent-blue);
+    }
+
+    .stat-icon.purple {
+        background: linear-gradient(135deg, rgba(139, 92, 246, 0.2), rgba(139, 92, 246, 0.05));
+        color: var(--accent-purple);
+    }
+
+    .stat-icon.orange {
+        background: linear-gradient(135deg, rgba(245, 158, 11, 0.2), rgba(245, 158, 11, 0.05));
+        color: var(--accent-orange);
+    }
+
+    .stat-info h4 {
+        font-size: 11px;
+        color: var(--text-muted);
+        text-transform: uppercase;
+        letter-spacing: 0.8px;
+        margin-bottom: 4px;
+        font-weight: 600;
+    }
+
+    .stat-value {
+        font-size: 30px;
+        font-weight: 800;
+        color: var(--text-primary);
+        line-height: 1;
+    }
+
+    .stat-sub {
+        font-size: 12px;
+        color: var(--text-muted);
+        margin-top: 4px;
+    }
+
+    /* Price section */
+    .price-section {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+        gap: 16px;
+        margin-bottom: 32px;
+    }
+
+    .price-highlight {
+        background: var(--bg-card);
+        backdrop-filter: blur(12px);
+        border: 1px solid var(--border-glass);
+        border-radius: var(--radius);
+        padding: 24px;
+        text-align: center;
+        animation: slideUp 0.6s ease both;
+    }
+
+    .price-highlight h3 {
+        font-size: 14px;
+        color: var(--text-muted);
+        margin-bottom: 8px;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+    }
+
+    .price-highlight .price-big {
+        font-size: 32px;
+        font-weight: 800;
+        margin-bottom: 4px;
+    }
+
+    .price-big.low {
+        color: var(--accent);
+    }
+
+    .price-big.high {
+        color: var(--accent-orange);
+    }
+
+    .price-big.avg {
+        color: var(--accent-blue);
+    }
+
+    .price-highlight .price-label {
+        font-size: 12px;
+        color: var(--text-muted);
+    }
+
+    /* Quick links */
+    .quick-links {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+        gap: 12px;
+    }
+
+    .quick-link {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        padding: 16px 20px;
+        background: var(--bg-card);
+        border: 1px solid var(--border-glass);
+        border-radius: var(--radius-sm);
+        text-decoration: none;
+        color: var(--text-secondary);
+        font-weight: 500;
+        font-size: 14px;
+        transition: var(--transition);
+    }
+
+    .quick-link:hover {
+        color: var(--text-primary);
+        border-color: var(--accent);
+        background: rgba(34, 197, 94, 0.05);
+        transform: translateX(4px);
+    }
+
+    .quick-link i {
+        font-size: 18px;
+        color: var(--accent);
+        width: 24px;
+        text-align: center;
+    }
+
+    @media (max-width: 480px) {
+        .stats-grid {
+            grid-template-columns: 1fr;
+        }
+
+        .price-section {
+            grid-template-columns: 1fr;
+        }
+    }
+</style>
+
+<div class="stats-page">
+    <div class="stats-header">
+        <h2><i class="fa-solid fa-chart-pie" style="color:var(--accent-orange)"></i> Estadísticas Generales</h2>
+        <p>Vista rápida del estado de la oferta académica</p>
+    </div>
+
+    <!-- KPI Cards -->
+    <div class="stats-grid">
+        <div class="stat-card">
+            <div class="stat-icon green"><i class="fa-solid fa-graduation-cap"></i></div>
+            <div class="stat-info">
+                <h4>Pregrados</h4>
+                <div class="stat-value">{{ stats.total_pregrado }}</div>
+                <div class="stat-sub">programas disponibles</div>
+            </div>
+        </div>
+
+        <div class="stat-card">
+            <div class="stat-icon purple"><i class="fa-solid fa-award"></i></div>
+            <div class="stat-info">
+                <h4>Posgrados</h4>
+                <div class="stat-value">{{ stats.total_posgrado }}</div>
+                <div class="stat-sub">especializaciones y maestrías</div>
+            </div>
+        </div>
+
+        <div class="stat-card">
+            <div class="stat-icon blue"><i class="fa-solid fa-certificate"></i></div>
+            <div class="stat-info">
+                <h4>Títulos SENA</h4>
+                <div class="stat-value">{{ stats.total_titulos_sena }}</div>
+                <div class="stat-sub">títulos registrados</div>
+            </div>
+        </div>
+
+        <div class="stat-card">
+            <div class="stat-icon orange"><i class="fa-solid fa-tags"></i></div>
+            <div class="stat-info">
+                <h4>Programas con Precio</h4>
+                <div class="stat-value">{{ stats.total_precios }}</div>
+                <div class="stat-sub">con descuento disponible</div>
+            </div>
+        </div>
+
+        <div class="stat-card">
+            <div class="stat-icon green"><i class="fa-brands fa-whatsapp"></i></div>
+            <div class="stat-info">
+                <h4>Mensajes SENA</h4>
+                <div class="stat-value">{{ stats.total_mensajes_sena }}</div>
+                <div class="stat-sub">plantillas de homologación</div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Price Summary -->
+    <h3
+        style="margin-bottom:16px;color:var(--text-secondary);font-size:14px;text-transform:uppercase;letter-spacing:1px">
+        <i class="fa-solid fa-dollar-sign" style="color:var(--accent)"></i> Rango de Precios Pregrado
+    </h3>
+
+    <div class="price-section">
+        <div class="price-highlight">
+            <h3>Precio Más Bajo</h3>
+            <div class="price-big low">$ {{ "{:,}".format(stats.precio_min) }}</div>
+            <div class="price-label">por semestre</div>
+        </div>
+        <div class="price-highlight">
+            <h3>Precio Promedio</h3>
+            <div class="price-big avg">$ {{ "{:,}".format(stats.precio_promedio) }}</div>
+            <div class="price-label">por semestre</div>
+        </div>
+        <div class="price-highlight">
+            <h3>Precio Más Alto</h3>
+            <div class="price-big high">$ {{ "{:,}".format(stats.precio_max) }}</div>
+            <div class="price-label">por semestre</div>
+        </div>
+    </div>
+
+    <!-- Quick Links -->
+    <h3
+        style="margin-bottom:16px;color:var(--text-secondary);font-size:14px;text-transform:uppercase;letter-spacing:1px">
+        <i class="fa-solid fa-bolt" style="color:var(--accent-orange)"></i> Acceso Rápido
+    </h3>
+
+    <div class="quick-links">
+        <a href="/" class="quick-link">
+            <i class="fa-solid fa-building-columns"></i> Consultar homologación
+        </a>
+        <a href="/presencial" class="quick-link">
+            <i class="fa-solid fa-school"></i> Homologaciones presenciales
+        </a>
+        <a href="/precios" class="quick-link">
+            <i class="fa-solid fa-calculator"></i> Calculadora de precios
+        </a>
+        <a href="/mensajes" class="quick-link">
+            <i class="fa-solid fa-comments"></i> Mensajes comerciales
+        </a>
+        <a href="/sena" class="quick-link">
+            <i class="fa-solid fa-graduation-cap"></i> Mensajes SENA
+        </a>
+        <a href="/piezas" class="quick-link">
+            <i class="fa-solid fa-images"></i> Piezas gráficas
+        </a>
+    </div>
+</div>
+
+{% endblock %}

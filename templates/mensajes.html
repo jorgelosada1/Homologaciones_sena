@@ -1,0 +1,224 @@
+{% extends "layout.html" %}
+{% block content %}
+
+<style>
+    .mensajes-page {
+        max-width: 800px;
+        margin: 0 auto;
+        animation: fadeIn 0.5s ease;
+    }
+
+    .mensajes-header {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        flex-wrap: wrap;
+        gap: 16px;
+        margin-bottom: 24px;
+    }
+
+    .mensajes-header h2 {
+        margin-bottom: 0;
+    }
+
+    .filtro-select {
+        padding: 10px 16px;
+        border-radius: 10px;
+        border: 1px solid var(--border-glass);
+        background: rgba(15, 23, 42, 0.5);
+        color: var(--text-primary);
+        font-size: 14px;
+        font-weight: 500;
+        cursor: pointer;
+        width: auto;
+    }
+
+    /* Buscador */
+    .search-box {
+        position: relative;
+        margin-bottom: 28px;
+    }
+
+    .search-box i {
+        position: absolute;
+        left: 16px;
+        top: 50%;
+        transform: translateY(-50%);
+        color: var(--text-muted);
+        pointer-events: none;
+    }
+
+    .search-box input {
+        padding-left: 44px;
+        height: 52px;
+        border-radius: 14px;
+        font-size: 15px;
+        background: var(--bg-card);
+        border: 1px solid var(--border-glass);
+    }
+
+    /* Mensaje cards */
+    .msg-item {
+        background: var(--bg-card);
+        backdrop-filter: blur(12px);
+        border: 1px solid var(--border-glass);
+        border-radius: var(--radius);
+        padding: 24px;
+        margin-bottom: 16px;
+        transition: var(--transition);
+        animation: slideUp 0.5s ease both;
+        position: relative;
+        overflow: hidden;
+    }
+
+    .msg-item::before {
+        content: '';
+        position: absolute;
+        left: 0;
+        top: 0;
+        bottom: 0;
+        width: 4px;
+        background: linear-gradient(180deg, var(--accent), var(--accent-blue));
+        border-radius: 4px 0 0 4px;
+    }
+
+    .msg-item:hover {
+        border-color: rgba(255, 255, 255, 0.12);
+        transform: translateX(4px);
+        box-shadow: 0 8px 30px rgba(0, 0, 0, 0.2);
+    }
+
+    .msg-item h3 {
+        font-size: 16px;
+        margin-bottom: 12px;
+        color: var(--text-primary);
+        display: flex;
+        align-items: center;
+        gap: 8px;
+    }
+
+    .msg-item h3::before {
+        content: '🎓';
+        font-size: 18px;
+    }
+
+    .msg-body {
+        white-space: pre-wrap;
+        font-size: 14px;
+        line-height: 1.7;
+        color: var(--text-secondary);
+        margin-bottom: 16px;
+        padding-left: 8px;
+    }
+
+    .btn-copy-msg {
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+        padding: 10px 20px;
+        border: none;
+        border-radius: 10px;
+        background: linear-gradient(135deg, var(--accent), var(--accent-dark));
+        color: white;
+        font-size: 13px;
+        font-weight: 600;
+        cursor: pointer;
+        transition: var(--transition);
+        box-shadow: 0 3px 12px var(--accent-glow);
+    }
+
+    .btn-copy-msg:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 6px 20px rgba(34, 197, 94, 0.35);
+    }
+
+    /* Stagger */
+    .msg-item:nth-child(1) {
+        animation-delay: 0.05s;
+    }
+
+    .msg-item:nth-child(2) {
+        animation-delay: 0.1s;
+    }
+
+    .msg-item:nth-child(3) {
+        animation-delay: 0.15s;
+    }
+
+    .msg-item:nth-child(4) {
+        animation-delay: 0.2s;
+    }
+
+    .msg-item:nth-child(5) {
+        animation-delay: 0.25s;
+    }
+
+    .no-results {
+        text-align: center;
+        padding: 40px;
+        color: var(--text-muted);
+        font-size: 15px;
+        display: none;
+    }
+
+    @media (max-width: 480px) {
+        .mensajes-header {
+            flex-direction: column;
+            align-items: flex-start;
+        }
+    }
+</style>
+
+<div class="mensajes-page">
+    <div class="mensajes-header">
+        <h2><i class="fa-solid fa-comments" style="color:var(--accent-purple)"></i> Mensajes Comerciales</h2>
+
+        <form method="get">
+            <select name="nivel" class="filtro-select" onchange="this.form.submit()">
+                <option value="pre" {% if filtro=="pre" %}selected{% endif %}>
+                    🎓 Pregrados
+                </option>
+                <option value="pos" {% if filtro=="pos" %}selected{% endif %}>
+                    🎓 Posgrados
+                </option>
+            </select>
+        </form>
+    </div>
+
+    <div class="search-box">
+        <i class="fa-solid fa-magnifying-glass"></i>
+        <input type="text" id="buscador" placeholder="Buscar por programa o palabra clave..." onkeyup="filtrar()">
+    </div>
+
+    <div id="listaMsg">
+        {% for m in mensajes %}
+        <div class="msg-item mensaje">
+            <h3>{{ m.titulo }}</h3>
+            <div class="msg-body" id="m{{ loop.index }}">{{ m.texto }}</div>
+            <button class="btn-copy-msg" onclick="copiarTexto('m{{ loop.index }}', '¡Mensaje copiado!')">
+                <i class="fa-solid fa-copy"></i> Copiar
+            </button>
+        </div>
+        {% endfor %}
+    </div>
+
+    <div class="no-results" id="noResults">
+        <i class="fa-solid fa-inbox" style="font-size:32px;display:block;margin-bottom:12px"></i>
+        No se encontraron mensajes
+    </div>
+</div>
+
+<script>
+    function filtrar() {
+        const texto = document.getElementById("buscador").value.toLowerCase();
+        let visible = 0;
+        document.querySelectorAll(".mensaje").forEach(card => {
+            const show = card.innerText.toLowerCase().includes(texto);
+            card.style.display = show ? "block" : "none";
+            if (show) visible++;
+        });
+        document.getElementById("noResults").style.display = visible === 0 ? "block" : "none";
+    }
+</script>
+
+{% endblock %}
