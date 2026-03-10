@@ -131,6 +131,86 @@
             text-transform: uppercase;
         }
 
+        /* ===== SIDEBAR STATUS ===== */
+        .sidebar-status {
+            margin-top: auto;
+            padding: 16px;
+            border-radius: var(--radius-sm);
+            background: rgba(34, 197, 94, 0.08);
+            border: 1px solid rgba(34, 197, 94, 0.15);
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            font-size: 12px;
+            color: var(--text-secondary);
+        }
+
+        .sidebar-status .pulse-dot {
+            width: 8px;
+            height: 8px;
+            min-width: 8px;
+            border-radius: 50%;
+            background: var(--accent);
+            animation: sidebarPulse 2s infinite;
+            box-shadow: 0 0 8px var(--accent-glow);
+        }
+
+        @keyframes sidebarPulse {
+
+            0%,
+            100% {
+                opacity: 1;
+                transform: scale(1);
+            }
+
+            50% {
+                opacity: 0.4;
+                transform: scale(1.4);
+            }
+        }
+
+        .sidebar-status .status-text {
+            line-height: 1.4;
+        }
+
+        .sidebar-status .status-text strong {
+            color: var(--accent);
+            font-weight: 600;
+        }
+
+        /* ===== FOOTER ===== */
+        .app-footer {
+            margin-top: 60px;
+            padding: 24px 0;
+            border-top: 1px solid var(--border-glass);
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            flex-wrap: wrap;
+            gap: 12px;
+            font-size: 12px;
+            color: var(--text-muted);
+        }
+
+        .app-footer a {
+            color: var(--accent);
+            text-decoration: none;
+            transition: var(--transition);
+        }
+
+        .app-footer a:hover {
+            color: var(--text-primary);
+        }
+
+        .footer-version {
+            padding: 3px 10px;
+            border-radius: 6px;
+            background: rgba(255, 255, 255, 0.05);
+            border: 1px solid var(--border-glass);
+            font-weight: 600;
+            font-size: 11px;
+        }
+
         /* ===== MENU ===== */
         .menu-section {
             margin-bottom: 8px;
@@ -642,6 +722,7 @@
             </div>
 
         </div>
+
     </div>
 
     <!-- CONTENT -->

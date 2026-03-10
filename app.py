@@ -274,7 +274,8 @@ def homologaciones():
     return render_template(
         "homologaciones.html",
         titulos=titulos_sena,
-        mensaje=mensaje
+        mensaje=mensaje,
+        precios=PRECIOS_PREGRADO
     )
 
 

@@ -8,7 +8,7 @@ Forma parte de Areandina y contribuye a la gestión eficiente del sector salud �
 *Información general del programa:*
 🕒 *Duración:* 8 semestres
 💰 *Valor del semestre:* $2.330.000 (ajustado según IPC anual)
-📅 *Inicio de clases:* 2 de febrero del 2026
+📅 *Inicio de clases:* 16 de marzo del 2026
 
 *Beneficios de estudiar con nosotros:*
 ✅ Inscripción sin costo
@@ -25,7 +25,7 @@ Forma parte de Areandina y contribuye al desarrollo integral de la primera infan
 *Información general del programa:*
 🕒 *Duración:* 9 semestres
 💰 *Valor del semestre:* $2.750.000
-📅 *Inicio de clases:* 2 de febrero del 2026
+📅 *Inicio de clases:* 16 de marzo del 2026
 
 *Beneficios de estudiar con nosotros:*
 ✅ Inscripción sin costo
@@ -42,7 +42,7 @@ Estudia en Areandina y potencia tus habilidades para el mundo empresarial digita
 *Información general del programa:*
 🕒 *Duración:* 8 semestres
 💰 *Valor del semestre:* $2.730.000 (ajustado según IPC anual)
-📅 *Inicio de clases:* 2 de febrero del 2026
+📅 *Inicio de clases:* 16 de marzo del 2026
 
 *Beneficios de estudiar con nosotros:*
 ✅ Inscripción sin costo
@@ -59,7 +59,7 @@ Estudia en Areandina y prepárate para el mundo globalizado de los negocios 💚
 *Información general del programa:*
 🕒 *Duración:* 8 semestres
 💰 *Valor del semestre:* $2.610.000 (ajustado según IPC anual)
-📅 *Inicio de clases:* 2 de febrero del 2026
+📅 *Inicio de clases:* 16 de marzo del 2026
 
 *Beneficios de estudiar con nosotros:*
 ✅ Inscripción sin costo
@@ -76,7 +76,7 @@ Forma parte de Areandina y lidera el futuro empresarial con una formación integ
 *Información general del programa:*
 🕒 *Duración:* 8 semestres
 💰 *Valor del semestre:* $2.610.000 (ajustado según IPC anual)
-📅 *Inicio de clases:* 2 de febrero del 2026
+📅 *Inicio de clases:* 16 de marzo del 2026
 
 *Beneficios de estudiar con nosotros:*
 ✅ Inscripción sin costo
@@ -93,7 +93,7 @@ Forma parte de Areandina y aporta al conocimiento social y cultural 💚
 *Información general del programa:*
 🕒 *Duración:* 9 semestres
 💰 *Valor del semestre:* $2.710.000 (ajustado según IPC anual)
-📅 *Inicio de clases:* 2 de febrero del 2026
+📅 *Inicio de clases:* 16 de marzo del 2026
 
 *Beneficios de estudiar con nosotros:*
 ✅ Inscripción sin costo
@@ -110,7 +110,7 @@ Estudia en Areandina y transforma vidas con una formación integral en Psicolog�
 *Información general del programa:*
 🕒 *Duración:* 10 semestres
 💰 *Valor del semestre:* $3.030.000 (ajustado según IPC anual)
-📅 *Inicio de clases:* 2 de febrero del 2026
+📅 *Inicio de clases:* 16 de marzo del 2026
 
 *Beneficios de estudiar con nosotros:*
 ✅ Inscripción sin costo
@@ -127,7 +127,7 @@ Forma parte de Areandina y lidera la optimización de procesos industriales 💚
 *Información general del programa:*
 🕒 *Duración:* 9 semestres
 💰 *Valor del semestre:* $2.850.000 (ajustado según IPC anual)
-📅 *Inicio de clases:* 2 de febrero del 2026
+📅 *Inicio de clases:* 16 de marzo del 2026
 
 *Beneficios de estudiar con nosotros:*
 ✅ Inscripción sin costo
@@ -144,7 +144,7 @@ Estudia en Areandina y prepárate para la innovación tecnológica 💚
 *Información general del programa:*
 🕒 *Duración:* 10 semestres
 💰 *Valor del semestre:* $3.010.000 (ajustado según IPC anual)
-📅 *Inicio de clases:* 2 de febrero del 2026
+📅 *Inicio de clases:* 16 de marzo del 2026
 
 *Beneficios de estudiar con nosotros:*
 ✅ Inscripción sin costo
@@ -161,7 +161,7 @@ Forma parte de Areandina y contribuye al buen gobierno y la gestión pública �
 *Información general del programa:*
 🕒 *Duración:* 8 semestres
 💰 *Valor del semestre:* $2.330.000 (ajustado según IPC anual)
-📅 *Inicio de clases:* 23 de febrero del 2026
+📅 *Inicio de clases:* 16 de marzo del 2026
 
 *Beneficios de estudiar con nosotros:*
 ✅ Inscripción sin costo
@@ -178,7 +178,7 @@ Estudia en Areandina y prepárate para analizar y gestionar mercados económicos
 *Información general del programa:*
 🕒 *Duración:* 8 semestres
 💰 *Valor del semestre:* $2.730.000 (ajustado según IPC anual)
-📅 *Inicio de clases:* 23 de febrero del 2026
+📅 *Inicio de clases:* 16 de marzo del 2026
 
 *Beneficios de estudiar con nosotros:*
 ✅ Inscripción sin costo
@@ -195,7 +195,7 @@ Forma parte de Areandina y comunica con impacto en el mundo digital y social �
 *Información general del programa:*
 🕒 *Duración:* 8 semestres
 💰 *Valor del semestre:* $2.600.000 (ajustado según IPC anual)
-📅 *Inicio de clases:* 2 de febrero del 2026
+📅 *Inicio de clases:* 16 de marzo del 2026
 
 *Beneficios de estudiar con nosotros:*
 ✅ Inscripción sin costo
@@ -212,7 +212,7 @@ Desarrolla habilidades para gestionar el capital humano con Areandina 💚
 *Información general del programa:*
 🕒 *Duración:* 6 semestres
 💰 *Valor del semestre:* $2.240.000 (ajustado según IPC anual)
-📅 *Inicio de clases:* 23 de febrero del 2026
+📅 *Inicio de clases:* 16 de marzo del 2026
 
 *Beneficios de estudiar con nosotros:*
 ✅ Inscripción sin costo
@@ -229,7 +229,7 @@ Estudia en Areandina y gestiona la cadena de suministro con excelencia 💚
 *Información general del programa:*
 🕒 *Duración:* 6 semestres
 💰 *Valor del semestre:* $1.990.000 (ajustado según IPC anual)
-📅 *Inicio de clases:* 23 de febrero del 2026
+📅 *Inicio de clases:* 16 de marzo del 2026
 
 *Beneficios de estudiar con nosotros:*
 ✅ Inscripción sin costo
@@ -246,7 +246,7 @@ Forma parte de Areandina y contribuye a la producción agropecuaria sostenible �
 *Información general del programa:*
 🕒 *Duración:* 6 semestres
 💰 *Valor del semestre:* $1.440.000 (ajustado según IPC anual)
-📅 *Inicio de clases:* 23 de febrero del 2026
+📅 *Inicio de clases:* 16 de marzo del 2026
 
 *Beneficios de estudiar con nosotros:*
 ✅ Inscripción sin costo
@@ -263,7 +263,7 @@ Estudia en Areandina y forma profesionales éticos en el campo jurídico 💚
 *Información general del programa:*
 🕒 *Duración:* 10 semestres
 💰 *Valor del semestre:* $2.210.000 (ajustado según IPC anual)
-📅 *Inicio de clases:* 2 de febrero del 2026
+📅 *Inicio de clases:* 16 de marzo del 2026
 
 *Beneficios de estudiar con nosotros:*
 ✅ Inscripción sin costo
@@ -280,7 +280,7 @@ Forma parte de Areandina y desarrolla soluciones tecnológicas innovadoras 💚
 *Información general del programa:*
 🕒 *Duración:* 9 semestres
 💰 *Valor del semestre:* $2.740.000 (ajustado según IPC anual)
-📅 *Inicio de clases:* 23 de febrero del 2026
+📅 *Inicio de clases:* 16 de marzo del 2026
 
 *Beneficios de estudiar con nosotros:*
 ✅ Inscripción sin costo
@@ -297,7 +297,7 @@ Estudia en Areandina y prepárate para gestionar entornos laborales seguros 💚
 *Información general del programa:*
 🕒 *Duración:* 8 semestres
 💰 *Valor del semestre:* $2.470.000 (ajustado según IPC anual)
-📅 *Inicio de clases:* 23 de febrero del 2026
+📅 *Inicio de clases:* 16 de marzo del 2026
 
 *Beneficios de estudiar con nosotros:*
 ✅ Inscripción sin costo
@@ -314,7 +314,7 @@ Estudia en Areandina y analiza los fenómenos sociales con una visión crítica 
 *Información general del programa:*
 🕒 *Duración:* 8 semestres
 💰 *Valor del semestre:* $2.000.000 (ajustado según IPC anual)
-📅 *Inicio de clases:* 23 de febrero del 2026
+📅 *Inicio de clases:* 16 de marzo del 2026
 
 *Beneficios de estudiar con nosotros:*
 ✅ Inscripción sin costo
@@ -590,7 +590,7 @@ Beneficios Homologación SENA:
 📍 Valor del semestre con *20% de descuento*
 📍 Valor original: $2.710.000
 📍 Valor con descuento: *$2.168.000*
-✔ Inicia el 02 de febrero del 2026
+✔ Inicia el 16 de marzo del 2026
 
 Contamos con diferentes formas de pago."""
     },
@@ -604,7 +604,7 @@ Beneficios Homologación SENA:
 📍 Se te homologan *4 semestres* y te faltarían *5* 🥳
 📍 Valor original: $2.850.000
 📍 Valor con descuento: *$2.280.000*
-✔ Inicia el 02 de febrero del 2026
+✔ Inicia el 16 de marzo del 2026
 
 Contamos con diferentes formas de pago."""
     },
@@ -619,7 +619,7 @@ Beneficios Homologación SENA:
 📍 Valor original: $3.010.000
 📍 Valor con descuento: *$2.408.000*
 📍 Clases sincrónicas después de las 6:00 p.m.
-✔ Inicia el 02 de febrero del 2026"""
+✔ Inicia el 16 de marzo del 2026"""
     },
     {
         "titulo": "Licenciatura en Educación Infantil – Virtual",
@@ -631,7 +631,7 @@ Beneficios Homologación SENA:
 📍 Se te homologan *3 semestres* y te faltarían *6* 🥳
 📍 Valor original: $2.750.000
 📍 Valor con descuento: *$2.200.000*
-✔ Inicia el 02 de febrero del 2026"""
+✔ Inicia el 16 de marzo del 2026"""
     },
     {
         "titulo": "Marketing de Negocios – Virtual",
@@ -643,6 +643,6 @@ Beneficios Homologación SENA:
 📍 Se te homologan *4 semestres* y te faltarían *4* 🥳
 📍 Valor original: $2.730.000
 📍 Valor con descuento: *$2.184.000*
-✔ Inicia el 02 de febrero del 2026"""
+✔ Inicia el 16 de marzo del 2026"""
     }
 ]

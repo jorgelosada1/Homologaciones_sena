@@ -6,6 +6,7 @@
         max-width: 640px;
         margin: 0 auto;
         animation: slideUp 0.5s ease;
+        position: relative;
     }
 
     .homo-header {
@@ -24,6 +25,39 @@
         font-size: 14px;
     }
 
+    .status-live {
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+        font-size: 12px;
+        color: var(--accent);
+        margin-top: 10px;
+        font-weight: 500;
+    }
+
+    .pulse-dot {
+        width: 8px;
+        height: 8px;
+        border-radius: 50%;
+        background: var(--accent);
+        animation: pulse 2s infinite;
+        box-shadow: 0 0 6px var(--accent-glow);
+    }
+
+    @keyframes pulse {
+
+        0%,
+        100% {
+            opacity: 1;
+            transform: scale(1);
+        }
+
+        50% {
+            opacity: 0.5;
+            transform: scale(1.3);
+        }
+    }
+
     .homo-card {
         background: var(--bg-card);
         backdrop-filter: blur(12px);
@@ -31,14 +65,17 @@
         border-radius: var(--radius);
         padding: 32px;
         animation: scaleIn 0.4s ease;
+        position: relative;
+        overflow: visible;
     }
 
-    .input-group {
+    /* ===== CUSTOM AUTOCOMPLETE ===== */
+    .search-wrapper {
         position: relative;
         margin-bottom: 20px;
     }
 
-    .input-group i {
+    .search-wrapper>i {
         position: absolute;
         left: 16px;
         top: 50%;
@@ -46,14 +83,163 @@
         color: var(--text-muted);
         font-size: 16px;
         pointer-events: none;
+        z-index: 2;
     }
 
-    .input-group input {
+    .search-wrapper input {
         padding-left: 44px;
         padding-right: 16px;
         height: 52px;
         font-size: 15px;
         border-radius: 14px;
+        width: 100%;
+        position: relative;
+        z-index: 1;
+    }
+
+    .search-wrapper input:focus {
+        border-color: var(--accent);
+        box-shadow: 0 0 0 3px rgba(34, 197, 94, 0.15);
+    }
+
+    .autocomplete-dropdown {
+        position: absolute;
+        top: calc(100% + 4px);
+        left: 0;
+        right: 0;
+        background: var(--bg-secondary);
+        border: 1px solid var(--border-glass);
+        border-radius: 14px;
+        max-height: 320px;
+        overflow-y: auto;
+        display: none;
+        z-index: 100;
+        box-shadow: 0 16px 48px rgba(0, 0, 0, 0.4);
+        padding: 6px;
+    }
+
+    .autocomplete-dropdown.open {
+        display: block;
+        animation: dropIn 0.25s ease;
+    }
+
+    @keyframes dropIn {
+        from {
+            opacity: 0;
+            transform: translateY(-8px);
+        }
+
+        to {
+            opacity: 1;
+            transform: translateY(0);
+        }
+    }
+
+    .autocomplete-item {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        padding: 12px 14px;
+        border-radius: 10px;
+        cursor: pointer;
+        transition: all 0.2s ease;
+        border: 1px solid transparent;
+    }
+
+    .autocomplete-item:hover,
+    .autocomplete-item.selected {
+        background: rgba(34, 197, 94, 0.08);
+        border-color: rgba(34, 197, 94, 0.2);
+    }
+
+    .autocomplete-item .ac-icon {
+        width: 32px;
+        height: 32px;
+        border-radius: 8px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 14px;
+        flex-shrink: 0;
+        background: rgba(255, 255, 255, 0.05);
+        color: var(--text-muted);
+    }
+
+    .autocomplete-item:hover .ac-icon,
+    .autocomplete-item.selected .ac-icon {
+        color: var(--accent);
+        background: rgba(34, 197, 94, 0.1);
+    }
+
+    .autocomplete-item .ac-text {
+        flex: 1;
+        min-width: 0;
+    }
+
+    .autocomplete-item .ac-title {
+        font-size: 13px;
+        font-weight: 500;
+        color: var(--text-secondary);
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+    }
+
+    .autocomplete-item:hover .ac-title,
+    .autocomplete-item.selected .ac-title {
+        color: var(--text-primary);
+    }
+
+    .autocomplete-item .ac-title .highlight {
+        color: var(--accent);
+        font-weight: 700;
+    }
+
+    .autocomplete-count {
+        padding: 8px 14px;
+        font-size: 11px;
+        color: var(--text-muted);
+        border-bottom: 1px solid var(--border-glass);
+        margin-bottom: 4px;
+    }
+
+    .autocomplete-empty {
+        padding: 24px;
+        text-align: center;
+        color: var(--text-muted);
+        font-size: 13px;
+    }
+
+    .autocomplete-empty i {
+        font-size: 24px;
+        display: block;
+        margin-bottom: 8px;
+        opacity: 0.5;
+    }
+
+    /* Scrollbar for dropdown */
+    .autocomplete-dropdown::-webkit-scrollbar {
+        width: 6px;
+    }
+
+    .autocomplete-dropdown::-webkit-scrollbar-track {
+        background: transparent;
+    }
+
+    .autocomplete-dropdown::-webkit-scrollbar-thumb {
+        background: rgba(255, 255, 255, 0.1);
+        border-radius: 3px;
+    }
+
+    /* ===== SPARKLE CANVAS ===== */
+    .sparkle-canvas {
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        pointer-events: none;
+        z-index: 9998;
     }
 
     .btn-generar {
@@ -104,6 +290,39 @@
         color: var(--accent);
     }
 
+    .counter-badge {
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+        padding: 4px 12px;
+        border-radius: 20px;
+        background: linear-gradient(135deg, rgba(34, 197, 94, 0.2), rgba(34, 197, 94, 0.08));
+        border: 1px solid rgba(34, 197, 94, 0.3);
+        font-size: 12px;
+        font-weight: 600;
+        color: var(--accent);
+        animation: scaleIn 0.4s ease 0.3s both;
+    }
+
+    .counter-badge .count-num {
+        font-size: 16px;
+        font-weight: 800;
+    }
+
+    .discount-badge {
+        display: inline-flex;
+        align-items: center;
+        gap: 4px;
+        padding: 3px 10px;
+        border-radius: 8px;
+        background: linear-gradient(135deg, rgba(245, 158, 11, 0.2), rgba(245, 158, 11, 0.08));
+        border: 1px solid rgba(245, 158, 11, 0.3);
+        font-size: 11px;
+        font-weight: 700;
+        color: var(--accent-orange);
+        margin-top: 8px;
+    }
+
     .bubble {
         background: rgba(15, 23, 42, 0.6);
         padding: 20px;
@@ -114,10 +333,39 @@
         border-left: 4px solid var(--accent);
         color: var(--text-secondary);
         margin-bottom: 16px;
+        position: relative;
+    }
+
+    .bubble.typing .cursor-blink {
+        display: inline-block;
+        width: 2px;
+        height: 16px;
+        background: var(--accent);
+        margin-left: 2px;
+        animation: blink 0.6s infinite;
+        vertical-align: text-bottom;
+    }
+
+    @keyframes blink {
+
+        0%,
+        100% {
+            opacity: 1;
+        }
+
+        50% {
+            opacity: 0;
+        }
+    }
+
+    .btn-group {
+        display: flex;
+        gap: 10px;
+        margin-bottom: 12px;
     }
 
     .btn-copiar {
-        width: 100%;
+        flex: 1;
         height: 46px;
         border: none;
         border-radius: 12px;
@@ -138,56 +386,225 @@
         transform: translateY(-2px);
         box-shadow: 0 8px 25px rgba(59, 130, 246, 0.35);
     }
-</style>
 
-<div class="homo-page">
-    <div class="homo-header">
-        <h2><i class="fa-solid fa-building-columns" style="color:var(--accent)"></i> Homologaciones SENA</h2>
-        <p>Consulta las materias que puedes homologar con tu título SENA</p>
-    </div>
+    .btn-precios {
+        flex: 1;
+        height: 46px;
+        border: none;
+        border-radius: 12px;
+        background: linear-gradient(135deg, var(--accent-orange), #d97706);
+        color: white;
+        font-size: 14px;
+        font-weight: 600;
+        cursor: pointer;
+        transition: var(--transition);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 8px;
+        box-shadow: 0 4px 15px rgba(245, 158, 11, 0.25);
+    }
 
-    <div class="homo-card">
-        <form method="POST">
-            <div class="input-group">
-                <i class="fa-solid fa-search"></i>
-                <input list="titulos" name="titulo" placeholder="Escribe tu título SENA..." required autocomplete="off">
-                <datalist id="titulos">
-                    {% for t in titulos %}
-                    <option value="{{ t }}">
-                        {% endfor %}
-                </datalist>
-            </div>
+    .btn-precios:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 8px 25px rgba(245, 158, 11, 0.35);
+    }
 
-            <button type="submit" class="btn-generar">
-                <i class="fa-solid fa-wand-magic-sparkles"></i>
-                Generar mensaje
-            </button>
-        </form>
+    /* ===== JL DEVELOPER BADGE (Minimal Version) ===== */
+    .jl-badge {
+        position: fixed;
+        bottom: 20px;
+        right: 20px;
+        width: 44px;
+        height: 44px;
+        border-radius: 50%;
+        background: var(--bg-secondary);
+        border: 1px solid var(--border-glass);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 14px;
+        font-weight: 900;
+        color: var(--accent);
+        cursor: pointer;
+        z-index: 8000;
+        transition: all 0.3s ease;
+        box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
+    }
 
-        {% if mensaje %}
-        <div class="resultado">
-            <div class="resultado-header">
-                <h3><i class="fa-solid fa-file-lines"></i> Mensaje generado</h3>
-            </div>
-            <div class="bubble" id="msg">{{ mensaje }}</div>
-            <button class="btn-copiar" onclick="copiarTexto('msg', '¡Mensaje copiado!')">
-                <i class="fa-solid fa-copy"></i> Copiar mensaje
-            </button>
-        </div>
-        {% endif %}
+    .jl-badge:hover {
+        background: var(--bg-primary);
+        border-color: var(--accent);
+        transform: translateY(-2px);
+        box-shadow: 0 6px 20px rgba(34, 197, 94, 0.2);
+    }
 
-        <!-- HISTORIAL DE BÚSQUEDAS -->
-        <div class="historial" id="historial" style="display:none">
-            <div class="historial-header">
-                <span><i class="fa-solid fa-clock-rotate-left"></i> Búsquedas recientes</span>
-                <button class="historial-clear" onclick="limpiarHistorial()">Limpiar</button>
-            </div>
-            <div class="historial-chips" id="historialChips"></div>
-        </div>
-    </div>
-</div>
+    /* ===== MODAL PRECIOS ===== */
+    .modal-overlay-precios {
+        position: fixed;
+        inset: 0;
+        background: rgba(0, 0, 0, 0.6);
+        backdrop-filter: blur(4px);
+        display: none;
+        align-items: center;
+        justify-content: center;
+        z-index: 9000;
+    }
 
-<style>
+    .modal-box-precios {
+        background: var(--bg-secondary);
+        border: 1px solid var(--border-glass);
+        max-width: 520px;
+        width: 92%;
+        padding: 28px;
+        border-radius: 20px;
+        animation: scaleIn 0.3s ease;
+        box-shadow: 0 25px 60px rgba(0, 0, 0, 0.5);
+        max-height: 80vh;
+        overflow-y: auto;
+    }
+
+    .modal-box-precios h3 {
+        font-size: 18px;
+        margin-bottom: 16px;
+        display: flex;
+        align-items: center;
+        gap: 10px;
+    }
+
+    .modal-box-precios h3 i {
+        color: var(--accent-orange);
+    }
+
+    .precio-item {
+        background: rgba(15, 23, 42, 0.5);
+        padding: 14px 18px;
+        border-radius: 12px;
+        margin-bottom: 10px;
+        border-left: 3px solid var(--accent-orange);
+    }
+
+    .precio-item .prog-name {
+        font-weight: 700;
+        font-size: 14px;
+        color: var(--text-primary);
+        margin-bottom: 6px;
+    }
+
+    .precio-item .prog-details {
+        font-size: 13px;
+        color: var(--text-secondary);
+        line-height: 1.6;
+    }
+
+    .precio-item .prog-details strong {
+        color: var(--accent);
+    }
+
+    .modal-texto-precios {
+        background: rgba(15, 23, 42, 0.5);
+        padding: 18px;
+        border-radius: 14px;
+        white-space: pre-wrap;
+        font-size: 14px;
+        line-height: 1.7;
+        color: var(--text-secondary);
+        border-left: 4px solid var(--accent-orange);
+        margin-bottom: 16px;
+        display: none;
+    }
+
+    .modal-btns-precios {
+        display: flex;
+        gap: 10px;
+        margin-top: 16px;
+    }
+
+    .modal-btns-precios button {
+        flex: 1;
+        height: 46px;
+        border: none;
+        border-radius: 12px;
+        font-size: 14px;
+        font-weight: 600;
+        cursor: pointer;
+        transition: var(--transition);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 6px;
+    }
+
+    .modal-btn-copy-p {
+        background: linear-gradient(135deg, var(--accent-orange), #d97706);
+        color: white;
+    }
+
+    .modal-btn-close-p {
+        background: rgba(255, 255, 255, 0.05);
+        color: var(--text-secondary);
+        border: 1px solid var(--border-glass) !important;
+    }
+
+    /* Quick actions */
+    .quick-actions {
+        display: flex;
+        gap: 10px;
+        margin-top: 20px;
+        padding-top: 16px;
+        border-top: 1px solid var(--border-glass);
+    }
+
+    .quick-action {
+        flex: 1;
+        padding: 12px;
+        border-radius: 12px;
+        background: rgba(255, 255, 255, 0.03);
+        border: 1px solid var(--border-glass);
+        text-align: center;
+        cursor: pointer;
+        transition: var(--transition);
+        text-decoration: none;
+        color: var(--text-secondary);
+    }
+
+    .quick-action:hover {
+        background: rgba(255, 255, 255, 0.06);
+        border-color: var(--accent);
+        transform: translateY(-2px);
+    }
+
+    .quick-action i {
+        display: block;
+        font-size: 20px;
+        margin-bottom: 6px;
+        color: var(--accent);
+    }
+
+    .quick-action span {
+        font-size: 11px;
+        font-weight: 600;
+    }
+
+    .shortcut-hint {
+        text-align: center;
+        margin-top: 14px;
+        font-size: 11px;
+        color: var(--text-muted);
+    }
+
+    .shortcut-hint kbd {
+        display: inline-block;
+        padding: 2px 6px;
+        border-radius: 4px;
+        background: rgba(255, 255, 255, 0.08);
+        border: 1px solid var(--border-glass);
+        font-family: 'Inter', sans-serif;
+        font-size: 10px;
+        color: var(--text-secondary);
+    }
+
+    /* Historial */
     .historial {
         margin-top: 24px;
         padding-top: 20px;
@@ -249,17 +666,475 @@
         color: var(--accent);
         background: rgba(34, 197, 94, 0.08);
     }
+
+    @media (max-width: 480px) {
+        .btn-group {
+            flex-direction: column;
+        }
+
+        .quick-actions {
+            flex-direction: column;
+        }
+
+        .jl-badge {
+            bottom: 12px;
+            right: 12px;
+            width: 36px;
+            height: 36px;
+            font-size: 11px;
+        }
+
+        .jl-badge:hover {
+            width: 160px;
+        }
+    }
 </style>
 
+<!-- SPARKLE CANVAS -->
+<canvas class="sparkle-canvas" id="sparkleCanvas"></canvas>
+
+<div class="homo-page">
+    <div class="homo-header">
+        <h2><i class="fa-solid fa-building-columns" style="color:var(--accent)"></i> Homologaciones SENA</h2>
+        <p>Consulta las materias que puedes homologar con tu título SENA</p>
+        <div class="status-live">
+            <div class="pulse-dot"></div>
+            Sistema actualizado · Marzo 2026
+        </div>
+    </div>
+
+    <div class="homo-card">
+        <form method="POST" id="homoForm">
+            <!-- CUSTOM AUTOCOMPLETE -->
+            <div class="search-wrapper">
+                <i class="fa-solid fa-search"></i>
+                <input type="text" name="titulo" id="tituloInput" placeholder="Escribe tu título SENA..." required
+                    autocomplete="off">
+                <div class="autocomplete-dropdown" id="acDropdown"></div>
+            </div>
+
+            <button type="submit" class="btn-generar">
+                <i class="fa-solid fa-wand-magic-sparkles"></i>
+                Generar mensaje
+            </button>
+
+            <div class="shortcut-hint">
+                <kbd>Ctrl</kbd> + <kbd>K</kbd> para buscar · <kbd>↑</kbd><kbd>↓</kbd> para navegar · <kbd>Enter</kbd>
+                para seleccionar
+            </div>
+        </form>
+
+        {% if mensaje %}
+        <div class="resultado" id="resultadoSection">
+            <div class="resultado-header">
+                <h3><i class="fa-solid fa-file-lines"></i> Mensaje generado</h3>
+                <div class="counter-badge">
+                    <i class="fa-solid fa-star"></i>
+                    <span class="count-num" id="matchCount">0</span> programas
+                </div>
+            </div>
+
+            <div class="discount-badge">
+                <i class="fa-solid fa-percent"></i>
+                20% descuento SENA incluido
+            </div>
+
+            <div class="bubble typing" id="msg" style="margin-top: 12px;" data-fulltext="{{ mensaje }}">
+                <span id="typedText"></span><span class="cursor-blink"></span>
+            </div>
+
+            <div class="btn-group" id="btnGroup" style="opacity:0;transition:opacity 0.5s;">
+                <button class="btn-copiar" onclick="copiarMensajeCompleto()">
+                    <i class="fa-solid fa-copy"></i> Copiar mensaje
+                </button>
+                <button class="btn-precios" onclick="abrirModalPrecios()">
+                    <i class="fa-solid fa-tags"></i> Copiar precios
+                </button>
+            </div>
+        </div>
+        {% endif %}
+
+        <!-- ACCIONES RÁPIDAS -->
+        <div class="quick-actions">
+            <a class="quick-action" href="/precios">
+                <i class="fa-solid fa-tags"></i>
+                <span>Ver Precios</span>
+            </a>
+            <a class="quick-action" href="/mensajes">
+                <i class="fa-solid fa-comments"></i>
+                <span>Mensajes</span>
+            </a>
+            <a class="quick-action" href="/presencial">
+                <i class="fa-solid fa-school"></i>
+                <span>Presencial</span>
+            </a>
+            <a class="quick-action" href="/sena">
+                <i class="fa-solid fa-graduation-cap"></i>
+                <span>Info SENA</span>
+            </a>
+        </div>
+
+        <!-- HISTORIAL -->
+        <div class="historial" id="historial" style="display:none">
+            <div class="historial-header">
+                <span><i class="fa-solid fa-clock-rotate-left"></i> Búsquedas recientes</span>
+                <button class="historial-clear" onclick="limpiarHistorial()">Limpiar</button>
+            </div>
+            <div class="historial-chips" id="historialChips"></div>
+        </div>
+    </div>
+</div>
+
+<!-- JL -->
+<div class="jl-badge" title="Jorge Losada">JL</div>
+
+<!-- MODAL PRECIOS -->
+<div id="modalPrecios" class="modal-overlay-precios" onclick="cerrarModalPrecios(event)">
+    <div class="modal-box-precios">
+        <h3><i class="fa-solid fa-tags"></i> Precios de Programas</h3>
+        <div id="preciosCards"></div>
+        <div class="modal-texto-precios" id="preciosMensaje"></div>
+        <div class="modal-btns-precios">
+            <button class="modal-btn-copy-p" onclick="copiarPrecios()">
+                <i class="fa-solid fa-copy"></i> Copiar mensaje
+            </button>
+            <button class="modal-btn-close-p" onclick="cerrarModalPrecios()">
+                <i class="fa-solid fa-xmark"></i> Cerrar
+            </button>
+        </div>
+    </div>
+</div>
+
 <script>
-    // Search history with localStorage
+    // ===== DATA =====
+    const preciosData = {{ precios | tojson }};
+    const titulosSena = {{ titulos | tojson }};
+
+    // ===== CUSTOM AUTOCOMPLETE =====
+    const acInput = document.getElementById('tituloInput');
+    const acDropdown = document.getElementById('acDropdown');
+    let selectedIndex = -1;
+
+    function getIconForTitle(title) {
+        return 'fa-graduation-cap';
+    }
+
+    function highlightMatch(text, query) {
+        if (!query) return text;
+        const regex = new RegExp(`(${query.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')})`, 'gi');
+        return text.replace(regex, '<span class="highlight">$1</span>');
+    }
+
+    function renderDropdown(query) {
+        const q = query.trim().toLowerCase();
+        if (!q) { acDropdown.classList.remove('open'); return; }
+
+        const matches = titulosSena.filter(t => t.toLowerCase().includes(q));
+
+        if (matches.length === 0) {
+            acDropdown.innerHTML = `
+                <div class="autocomplete-empty">
+                    <i class="fa-solid fa-search"></i>
+                    No se encontró "${query}"
+                </div>`;
+            acDropdown.classList.add('open');
+            selectedIndex = -1;
+            return;
+        }
+
+        let html = `<div class="autocomplete-count"><i class="fa-solid fa-list" style="margin-right:6px;"></i>${matches.length} título${matches.length > 1 ? 's' : ''} encontrado${matches.length > 1 ? 's' : ''}</div>`;
+
+        matches.slice(0, 15).forEach((title, i) => {
+            html += `
+                <div class="autocomplete-item${i === selectedIndex ? ' selected' : ''}" data-index="${i}" data-value="${title}">
+                    <div class="ac-icon">
+                        <i class="fa-solid fa-graduation-cap"></i>
+                    </div>
+                    <div class="ac-text">
+                        <div class="ac-title">${highlightMatch(title, query)}</div>
+                    </div>
+                </div>`;
+        });
+
+        if (matches.length > 15) {
+            html += `<div class="autocomplete-count" style="border-top:1px solid var(--border-glass);border-bottom:none;margin-top:4px">+${matches.length - 15} más...</div>`;
+        }
+
+        acDropdown.innerHTML = html;
+        acDropdown.classList.add('open');
+        selectedIndex = -1;
+
+        acDropdown.querySelectorAll('.autocomplete-item').forEach(item => {
+            item.addEventListener('click', () => {
+                acInput.value = item.dataset.value;
+                acDropdown.classList.remove('open');
+            });
+            item.addEventListener('mouseenter', () => {
+                acDropdown.querySelectorAll('.autocomplete-item').forEach(el => el.classList.remove('selected'));
+                item.classList.add('selected');
+                selectedIndex = parseInt(item.dataset.index);
+            });
+        });
+    }
+
+    acInput.addEventListener('input', () => renderDropdown(acInput.value));
+    acInput.addEventListener('focus', () => { if (acInput.value.trim()) renderDropdown(acInput.value); });
+
+    // Close on click outside
+    document.addEventListener('click', (e) => {
+        if (!e.target.closest('.search-wrapper')) acDropdown.classList.remove('open');
+    });
+
+    // Keyboard navigation
+    acInput.addEventListener('keydown', (e) => {
+        const items = acDropdown.querySelectorAll('.autocomplete-item');
+        if (!items.length) return;
+
+        if (e.key === 'ArrowDown') {
+            e.preventDefault();
+            selectedIndex = Math.min(selectedIndex + 1, items.length - 1);
+            items.forEach((el, i) => el.classList.toggle('selected', i === selectedIndex));
+            items[selectedIndex]?.scrollIntoView({ block: 'nearest' });
+        } else if (e.key === 'ArrowUp') {
+            e.preventDefault();
+            selectedIndex = Math.max(selectedIndex - 1, 0);
+            items.forEach((el, i) => el.classList.toggle('selected', i === selectedIndex));
+            items[selectedIndex]?.scrollIntoView({ block: 'nearest' });
+        } else if (e.key === 'Enter' && selectedIndex >= 0 && acDropdown.classList.contains('open')) {
+            e.preventDefault();
+            acInput.value = items[selectedIndex].dataset.value;
+            acDropdown.classList.remove('open');
+        } else if (e.key === 'Escape') {
+            acDropdown.classList.remove('open');
+        }
+    });
+
+    // ===== SPARKLE PARTICLE SYSTEM =====
+    const sparkleCanvas = document.getElementById('sparkleCanvas');
+    const ctx = sparkleCanvas.getContext('2d');
+    let particles = [];
+    let animating = false;
+
+    function resizeCanvas() {
+        sparkleCanvas.width = window.innerWidth;
+        sparkleCanvas.height = window.innerHeight;
+    }
+    resizeCanvas();
+    window.addEventListener('resize', resizeCanvas);
+
+    class Particle {
+        constructor(x, y) {
+            this.x = x; this.y = y;
+            this.size = Math.random() * 4 + 2;
+            this.speedX = (Math.random() - 0.5) * 8;
+            this.speedY = (Math.random() - 0.5) * 8 - 3;
+            this.gravity = 0.12;
+            this.opacity = 1;
+            this.decay = Math.random() * 0.02 + 0.008;
+            this.color = ['#22c55e', '#3b82f6', '#f59e0b', '#8b5cf6', '#4ade80', '#60a5fa'][Math.floor(Math.random() * 6)];
+            this.rotation = Math.random() * 360;
+            this.rotSpeed = (Math.random() - 0.5) * 10;
+        }
+        update() {
+            this.x += this.speedX; this.y += this.speedY;
+            this.speedY += this.gravity; this.opacity -= this.decay;
+            this.rotation += this.rotSpeed; this.size *= 0.99;
+        }
+        draw() {
+            ctx.save();
+            ctx.translate(this.x, this.y);
+            ctx.rotate(this.rotation * Math.PI / 180);
+            ctx.globalAlpha = Math.max(0, this.opacity);
+            ctx.fillStyle = this.color;
+            ctx.beginPath();
+            for (let i = 0; i < 4; i++) {
+                ctx.lineTo(0, -this.size);
+                ctx.rotate(Math.PI / 4);
+                ctx.lineTo(0, -this.size * 0.4);
+                ctx.rotate(Math.PI / 4);
+            }
+            ctx.closePath();
+            ctx.shadowBlur = 10;
+            ctx.shadowColor = this.color;
+            ctx.fill();
+            ctx.restore();
+        }
+    }
+
+    function emitSparkles(cx, cy, count = 60) {
+        for (let i = 0; i < count; i++) {
+            particles.push(new Particle(cx + (Math.random() - 0.5) * 200, cy + (Math.random() - 0.5) * 100));
+        }
+        if (!animating) { animating = true; animateParticles(); }
+    }
+
+    function animateParticles() {
+        ctx.clearRect(0, 0, sparkleCanvas.width, sparkleCanvas.height);
+        particles = particles.filter(p => p.opacity > 0);
+        particles.forEach(p => { p.update(); p.draw(); });
+        if (particles.length > 0) { requestAnimationFrame(animateParticles); }
+        else { animating = false; ctx.clearRect(0, 0, sparkleCanvas.width, sparkleCanvas.height); }
+    }
+
+    // ===== TYPING ANIMATION =====
+    (function () {
+        const msgEl = document.getElementById('msg');
+        if (!msgEl) return;
+        const fullText = msgEl.dataset.fulltext;
+        const typedEl = document.getElementById('typedText');
+        const cursorEl = msgEl.querySelector('.cursor-blink');
+        const matches = fullText.match(/🔹/g);
+        const count = matches ? matches.length : 0;
+        const counter = document.getElementById('matchCount');
+
+        setTimeout(() => {
+            const rect = msgEl.getBoundingClientRect();
+            emitSparkles(rect.left + rect.width / 2, rect.top);
+        }, 300);
+
+        let charIndex = 0;
+        const speed = 8, chunkSize = 3;
+
+        function typeChar() {
+            if (charIndex < fullText.length) {
+                const end = Math.min(charIndex + chunkSize, fullText.length);
+                typedEl.textContent = fullText.substring(0, end);
+                charIndex = end;
+                setTimeout(typeChar, speed);
+            } else {
+                cursorEl.style.display = 'none';
+                msgEl.classList.remove('typing');
+                document.getElementById('btnGroup').style.opacity = '1';
+                if (counter) {
+                    let current = 0;
+                    const target = count;
+                    const step = Math.max(1, Math.floor(target / 10));
+                    const interval = setInterval(() => {
+                        current += step;
+                        if (current >= target) { current = target; clearInterval(interval); }
+                        counter.textContent = current;
+                    }, 80);
+                }
+                const rect = msgEl.getBoundingClientRect();
+                emitSparkles(rect.left + rect.width / 2, rect.top + rect.height / 2, 40);
+            }
+        }
+        typeChar();
+    })();
+
+    // ===== COPY MESSAGE =====
+    function copiarMensajeCompleto() {
+        const msgEl = document.getElementById('msg');
+        navigator.clipboard.writeText(msgEl.dataset.fulltext).then(() => {
+            showToast('¡Mensaje copiado al portapapeles!');
+            const rect = msgEl.getBoundingClientRect();
+            emitSparkles(rect.left + rect.width / 2, rect.top + rect.height / 2, 25);
+        });
+    }
+
+    // ===== CTRL+K =====
+    document.addEventListener('keydown', function (e) {
+        if ((e.ctrlKey || e.metaKey) && e.key === 'k') {
+            e.preventDefault();
+            acInput.focus();
+            acInput.select();
+        }
+    });
+
+    // ===== JL EASTER EGG =====
+    let jlClicks = 0;
+    function jlEasterEgg() {
+        jlClicks++;
+        const badge = document.getElementById('jlBadge');
+        const rect = badge.getBoundingClientRect();
+        emitSparkles(rect.left + rect.width / 2, rect.top, 20);
+
+        if (jlClicks >= 5) {
+            jlClicks = 0;
+            showToast('🚀 Hecho con ❤️ por Jorge Losada');
+            emitSparkles(window.innerWidth / 2, window.innerHeight / 2, 80);
+        }
+    }
+
+    // ===== MODAL PRECIOS (FIXED MATCHING) =====
+    function abrirModalPrecios() {
+        const msgEl = document.getElementById('msg');
+        if (!msgEl) return;
+        const text = msgEl.dataset.fulltext;
+        const regex = /🔹\s*\*?([^*\n]+)\*?/g;
+        let match;
+        const programas = [];
+        while ((match = regex.exec(text)) !== null) programas.push(match[1].trim());
+
+        const cardsContainer = document.getElementById('preciosCards');
+        const mensajeEl = document.getElementById('preciosMensaje');
+        cardsContainer.innerHTML = '';
+        let mensaje = '🎓 *Precios Universidad Areandina*\n\n';
+        let found = false;
+
+        programas.forEach(prog => {
+            const progNorm = prog.toUpperCase().replace(/[^A-ZÁÉÍÓÚÑ\s]/g, '').trim();
+            const progWords = progNorm.split(/\s+/).filter(w => w.length > 2);
+            let bestMatch = null, bestScore = 0;
+
+            preciosData.forEach(p => {
+                const pNorm = p.programa.toUpperCase().replace(/[^A-ZÁÉÍÓÚÑ\s]/g, '').trim();
+                const pWords = pNorm.split(/\s+/).filter(w => w.length > 2);
+                let matchingWords = 0;
+                const totalWords = Math.max(pWords.length, progWords.length);
+                pWords.forEach(pw => {
+                    if (progWords.some(gw => gw.includes(pw) || pw.includes(gw))) matchingWords++;
+                });
+                const score = matchingWords / totalWords;
+                if (score > 0.6 && score > bestScore) { bestScore = score; bestMatch = p; }
+            });
+
+            if (bestMatch) {
+                found = true;
+                const precio = bestMatch;
+                const valorFmt = precio.valor.toLocaleString('es-CO');
+                const descuento = 20;
+                const final_ = precio.valor - Math.round(precio.valor * descuento / 100);
+
+                cardsContainer.innerHTML += `
+                    <div class="precio-item">
+                        <div class="prog-name">${precio.programa}</div>
+                        <div class="prog-details">
+                            💰 Valor: $${valorFmt}<br>
+                            🏷️ Descuento SENA: ${descuento}%<br>
+                            ✅ <strong>Valor final: $${final_.toLocaleString('es-CO')}</strong><br>
+                            📚 Duración: ${precio.semestres} semestres
+                        </div>
+                    </div>`;
+
+                mensaje += `📌 *${precio.programa}*\n💰 Valor: $${valorFmt}\n🏷️ Descuento SENA: ${descuento}%\n✅ *Valor con descuento: $${final_.toLocaleString('es-CO')}*\n📚 Duración: ${precio.semestres} semestres\n\n`;
+            }
+        });
+
+        if (!found) {
+            cardsContainer.innerHTML = '<p style="color:var(--text-muted);text-align:center;padding:20px;">No se encontraron precios.</p>';
+            mensaje = 'No se encontraron precios.';
+        } else {
+            mensaje += '📅 *Inicio de clases:* 16 de marzo del 2026\n✔ Inscripción y estudio de homologación sin costo\n\n_Contamos con diferentes formas de financiación_ 👌';
+        }
+        mensajeEl.textContent = mensaje;
+        document.getElementById('modalPrecios').style.display = 'flex';
+        emitSparkles(window.innerWidth / 2, window.innerHeight / 2, 30);
+    }
+
+    function copiarPrecios() {
+        navigator.clipboard.writeText(document.getElementById('preciosMensaje').textContent).then(() => showToast('¡Precios copiados al portapapeles!'));
+    }
+
+    function cerrarModalPrecios(e) {
+        if (!e || e.target.id === 'modalPrecios') document.getElementById('modalPrecios').style.display = 'none';
+    }
+
+    // ===== SEARCH HISTORY =====
     const HISTORY_KEY = 'homo_search_history';
     const MAX_HISTORY = 5;
 
-    function getHistory() {
-        try { return JSON.parse(localStorage.getItem(HISTORY_KEY) || '[]'); }
-        catch { return []; }
-    }
+    function getHistory() { try { return JSON.parse(localStorage.getItem(HISTORY_KEY) || '[]'); } catch { return []; } }
 
     function saveToHistory(term) {
         if (!term.trim()) return;
@@ -273,13 +1148,9 @@
         const h = getHistory();
         const container = document.getElementById('historial');
         const chips = document.getElementById('historialChips');
-
         if (h.length === 0) { container.style.display = 'none'; return; }
-
         container.style.display = 'block';
-        chips.innerHTML = h.map(t =>
-            `<a class="historial-chip" href="/?autoSearch=${encodeURIComponent(t)}">${t}</a>`
-        ).join('');
+        chips.innerHTML = h.map(t => `<a class="historial-chip" href="/?autoSearch=${encodeURIComponent(t)}">${t}</a>`).join('');
     }
 
     function limpiarHistorial() {
@@ -288,25 +1159,18 @@
         showToast('Historial limpiado', 'info');
     }
 
-    // Save on form submit
-    document.querySelector('form').addEventListener('submit', () => {
-        const input = document.querySelector('input[name="titulo"]');
+    document.querySelector('#homoForm').addEventListener('submit', () => {
+        const input = document.getElementById('tituloInput');
         if (input.value) saveToHistory(input.value);
     });
 
-    // Auto-fill from history click
     const params = new URLSearchParams(window.location.search);
     const autoSearch = params.get('autoSearch');
     if (autoSearch) {
-        // Evitar bucle infinito borrando el parámetro de la URL antes de enviar
         window.history.replaceState({}, document.title, window.location.pathname);
-
-        const input = document.querySelector('input[name="titulo"]');
-        if (input) {
-            input.value = autoSearch;
-            saveToHistory(autoSearch);
-            document.querySelector('form').submit();
-        }
+        acInput.value = autoSearch;
+        saveToHistory(autoSearch);
+        document.querySelector('#homoForm').submit();
     }
 
     renderHistory();
