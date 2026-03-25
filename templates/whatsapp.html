@@ -1,0 +1,238 @@
+{% extends "layout.html" %}
+{% block content %}
+
+<style>
+    .wa-page {
+        max-width: 700px;
+        margin: 0 auto;
+        animation: slideUp 0.5s ease;
+    }
+
+    .wa-header {
+        text-align: center;
+        margin-bottom: 32px;
+    }
+
+    .wa-header h2 {
+        justify-content: center;
+        margin-bottom: 8px;
+    }
+
+    .wa-header p {
+        color: var(--text-muted);
+        font-size: 14px;
+    }
+
+    .wa-card {
+        background: var(--bg-card);
+        backdrop-filter: blur(12px);
+        border: 1px solid var(--border-glass);
+        border-radius: 20px;
+        padding: 36px;
+        position: relative;
+        overflow: hidden;
+    }
+
+    .wa-card::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        height: 4px;
+        background: linear-gradient(90deg, var(--accent), #059669, var(--accent));
+    }
+
+    .wa-form-group {
+        margin-bottom: 20px;
+    }
+
+    .wa-form-group label {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        font-weight: 600;
+        font-size: 14px;
+        color: var(--text-secondary);
+        margin-bottom: 10px;
+    }
+
+    .wa-form-group label i {
+        color: var(--accent);
+        font-size: 16px;
+    }
+
+    .wa-textarea {
+        width: 100%;
+        height: 240px;
+        padding: 18px;
+        border-radius: 16px;
+        border: 1px solid var(--border-glass);
+        background: rgba(15, 23, 42, 0.5);
+        color: var(--text-primary);
+        font-family: 'Inter', sans-serif;
+        font-size: 14px;
+        line-height: 1.6;
+        resize: none;
+        transition: var(--transition);
+    }
+
+    .wa-textarea:focus {
+        outline: none;
+        border-color: var(--accent);
+        box-shadow: 0 0 0 3px var(--accent-glow);
+    }
+
+    .wa-textarea::placeholder {
+        color: var(--text-muted);
+    }
+
+    .char-count {
+        text-align: right;
+        font-size: 12px;
+        color: var(--text-muted);
+        margin-top: 6px;
+    }
+
+    /* Checkbox */
+    .wa-checkbox {
+        display: flex;
+        align-items: center;
+        gap: 14px;
+        padding: 16px 20px;
+        border-radius: 14px;
+        border: 1px solid var(--border-glass);
+        background: rgba(34, 197, 94, 0.05);
+        cursor: pointer;
+        transition: var(--transition);
+        margin-bottom: 24px;
+    }
+
+    .wa-checkbox:hover {
+        border-color: rgba(34, 197, 94, 0.3);
+        background: rgba(34, 197, 94, 0.08);
+    }
+
+    .wa-checkbox input[type="checkbox"] {
+        width: 20px;
+        height: 20px;
+        accent-color: var(--accent);
+        cursor: pointer;
+        flex-shrink: 0;
+    }
+
+    .wa-checkbox label {
+        cursor: pointer;
+        font-weight: 600;
+        font-size: 14px;
+        color: var(--text-primary);
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        margin: 0;
+    }
+
+    .wa-checkbox label i {
+        color: var(--accent);
+    }
+
+    /* Submit button */
+    .btn-enviar {
+        width: 100%;
+        height: 56px;
+        border: none;
+        border-radius: 16px;
+        background: linear-gradient(135deg, var(--accent), #059669);
+        color: white;
+        font-size: 16px;
+        font-weight: 700;
+        cursor: pointer;
+        transition: var(--transition);
+        box-shadow: 0 6px 25px var(--accent-glow);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 10px;
+    }
+
+    .btn-enviar:hover {
+        transform: translateY(-3px);
+        box-shadow: 0 12px 40px rgba(34, 197, 94, 0.4);
+    }
+
+    .btn-enviar i {
+        font-size: 18px;
+    }
+
+    /* Info box */
+    .wa-info {
+        margin-top: 20px;
+        padding: 14px 18px;
+        border-radius: 12px;
+        background: rgba(59, 130, 246, 0.08);
+        border: 1px solid rgba(59, 130, 246, 0.15);
+        font-size: 13px;
+        color: var(--text-secondary);
+        line-height: 1.6;
+        display: flex;
+        gap: 10px;
+    }
+
+    .wa-info i {
+        color: var(--accent-blue);
+        font-size: 16px;
+        margin-top: 2px;
+        flex-shrink: 0;
+    }
+
+    @media (max-width: 480px) {
+        .wa-card {
+            padding: 24px;
+        }
+    }
+</style>
+
+<div class="wa-page">
+    <div class="wa-header">
+        <h2><i class="fa-brands fa-whatsapp" style="color:var(--accent)"></i> WhatsApp Masivo</h2>
+        <p>Envía mensajes personalizados a múltiples contactos</p>
+    </div>
+
+    <div class="wa-card">
+        <form method="POST">
+            <div class="wa-form-group">
+                <label><i class="fa-solid fa-list"></i> Listado de contactos</label>
+                <textarea class="wa-textarea" name="numeros" id="waTexto"
+                    placeholder="Formato: nombre, número, programa&#10;&#10;Ejemplo:&#10;Juan Perez,3001234567,Psicología&#10;Maria Lopez,3019876543,Ingeniería"
+                    required oninput="contarChars()"></textarea>
+                <div class="char-count" id="charCount">0 caracteres · 0 líneas</div>
+            </div>
+
+            <div class="wa-checkbox">
+                <input type="checkbox" name="usar_imagen" value="si" id="usar_imagen">
+                <label for="usar_imagen"><i class="fa-solid fa-image"></i> Incluir imagen en el envío</label>
+            </div>
+
+            <button type="submit" class="btn-enviar">
+                <i class="fa-solid fa-paper-plane"></i> Iniciar envío masivo
+            </button>
+        </form>
+
+        <div class="wa-info">
+            <i class="fa-solid fa-circle-info"></i>
+            <span>Asegúrate de que los números incluyan el código de país. Cada línea debe tener el formato:
+                <strong>nombre, número, programa</strong>.</span>
+        </div>
+    </div>
+</div>
+
+<script>
+    function contarChars() {
+        const ta = document.getElementById('waTexto');
+        const chars = ta.value.length;
+        const lines = ta.value.split('\n').filter(l => l.trim()).length;
+        document.getElementById('charCount').textContent = `${chars} caracteres · ${lines} línea${lines !== 1 ? 's' : ''}`;
+    }
+</script>
+
+{% endblock %}

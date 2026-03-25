@@ -1,0 +1,117 @@
+{% extends "layout.html" %}
+{% block content %}
+
+<style>
+    .admin-page { animation: fadeIn 0.5s ease; padding-bottom: 60px; }
+    .admin-header { margin-bottom: 24px; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 16px; }
+    .admin-header h2 { margin-bottom: 0; }
+    .back-link { color: var(--text-muted); text-decoration: none; font-size: 13px; display: inline-flex; align-items: center; gap: 6px; padding: 8px 16px; border-radius: 10px; border: 1px solid var(--border-glass); transition: all 0.3s ease; }
+    .back-link:hover { color: var(--accent-orange); border-color: rgba(245,158,11,0.3); background: rgba(245,158,11,0.1); }
+
+    .precio-table-wrap {
+        background: var(--bg-card);
+        border: 1px solid var(--border-glass);
+        border-radius: 16px;
+        overflow: hidden;
+    }
+    .precio-table-wrap table { margin: 0; }
+    .precio-table-wrap th { padding: 14px 16px; }
+    .precio-table-wrap td { padding: 10px 16px; vertical-align: middle; }
+    .precio-table-wrap input { padding: 8px 12px; font-size: 13px; }
+    .precio-table-wrap input[type="number"] { width: 110px; }
+    .precio-table-wrap input[type="text"] { min-width: 200px; }
+
+    .btn-sm { padding: 6px 12px; font-size: 12px; border-radius: 8px; }
+    .btn-icon { width: 32px; height: 32px; padding: 0; display: inline-flex; align-items: center; justify-content: center; border-radius: 8px; font-size: 13px; }
+
+    .add-section {
+        background: rgba(245,158,11,0.08);
+        border: 2px dashed rgba(245,158,11,0.3);
+        border-radius: 16px; padding: 28px;
+        margin-top: 24px;
+    }
+    .add-section h3 { color: var(--accent-orange); margin-bottom: 16px; display: flex; align-items: center; gap: 8px; }
+    .add-row { display: grid; grid-template-columns: 2fr 1fr 1fr 1fr auto; gap: 12px; align-items: end; }
+    .add-row label { display: block; font-size: 11px; font-weight: 600; color: var(--text-muted); margin-bottom: 4px; text-transform: uppercase; }
+
+    @media (max-width: 768px) {
+        .add-row { grid-template-columns: 1fr; }
+        .precio-table-wrap { overflow-x: auto; }
+    }
+</style>
+
+<div class="admin-page">
+    <div class="admin-header">
+        <h2><i class="fa-solid fa-tags" style="color: var(--accent-orange)"></i> Precios Pregrado</h2>
+        <a href="/admin/dashboard" class="back-link"><i class="fa-solid fa-arrow-left"></i> Volver al panel</a>
+    </div>
+
+    <div class="precio-table-wrap">
+        <table>
+            <thead>
+                <tr>
+                    <th>#</th>
+                    <th>Programa</th>
+                    <th>Valor</th>
+                    <th>Descuento %</th>
+                    <th>Semestres</th>
+                    <th>Acciones</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for p in precios %}
+                <tr>
+                    <form method="POST">
+                        <input type="hidden" name="action" value="update">
+                        <input type="hidden" name="index" value="{{ loop.index0 }}">
+                        <td style="color: var(--text-muted); font-size: 12px;">{{ p.id }}</td>
+                        <td><input type="text" name="programa" value="{{ p.programa }}"></td>
+                        <td><input type="number" name="valor" value="{{ p.valor }}"></td>
+                        <td><input type="number" name="descuento" value="{{ p.descuento }}" min="0" max="100"></td>
+                        <td><input type="number" name="semestres" value="{{ p.semestres }}" min="1" max="20"></td>
+                        <td style="display: flex; gap: 6px;">
+                            <button type="submit" class="btn btn-primary btn-icon" title="Guardar"><i class="fa-solid fa-save"></i></button>
+                    </form>
+                    <form method="POST" style="margin:0" onsubmit="return confirm('¿Eliminar?')">
+                        <input type="hidden" name="action" value="delete">
+                        <input type="hidden" name="index" value="{{ loop.index0 }}">
+                        <button type="submit" class="btn btn-danger btn-icon" title="Eliminar"><i class="fa-solid fa-trash"></i></button>
+                    </form>
+                        </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+
+    <div class="add-section">
+        <h3><i class="fa-solid fa-plus-circle"></i> Agregar programa</h3>
+        <form method="POST">
+            <input type="hidden" name="action" value="add">
+            <div class="add-row">
+                <div>
+                    <label>Programa</label>
+                    <input type="text" name="programa" placeholder="Nombre del programa" required>
+                </div>
+                <div>
+                    <label>Valor</label>
+                    <input type="number" name="valor" placeholder="2500000" required>
+                </div>
+                <div>
+                    <label>Descuento %</label>
+                    <input type="number" name="descuento" value="0" min="0" max="100">
+                </div>
+                <div>
+                    <label>Semestres</label>
+                    <input type="number" name="semestres" value="8" min="1" max="20">
+                </div>
+                <div>
+                    <label>&nbsp;</label>
+                    <button type="submit" class="btn btn-primary btn-sm"><i class="fa-solid fa-plus"></i> Agregar</button>
+                </div>
+            </div>
+        </form>
+    </div>
+</div>
+
+{% endblock %}

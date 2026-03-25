@@ -1,0 +1,506 @@
+{% extends "layout.html" %}
+{% block content %}
+
+<style>
+    .precios-page {
+        animation: fadeIn 0.5s ease;
+        padding-bottom: 60px;
+        /* Fix responsive cutoff */
+    }
+
+    .precios-header {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        flex-wrap: wrap;
+        gap: 16px;
+        margin-bottom: 28px;
+    }
+
+    .precios-header h2 {
+        margin-bottom: 0;
+    }
+
+    /* ===== TOP BAR ===== */
+    .top-controls {
+        display: flex;
+        gap: 12px;
+        margin-bottom: 24px;
+        position: sticky;
+        top: 0;
+        z-index: 10;
+        background: var(--bg-primary);
+        padding: 10px 0;
+    }
+
+    .search-input {
+        position: relative;
+        flex: 1;
+        max-width: 400px;
+    }
+
+    .search-input i {
+        position: absolute;
+        left: 14px;
+        top: 50%;
+        transform: translateY(-50%);
+        color: var(--text-muted);
+        pointer-events: none;
+    }
+
+    .search-input input {
+        padding-left: 42px;
+        height: 46px;
+        border-radius: 12px;
+    }
+
+    .btn-vista {
+        height: 46px;
+        padding: 0 20px;
+        border: 1px solid var(--border-glass);
+        border-radius: 12px;
+        background: rgba(255, 255, 255, 0.05);
+        color: var(--text-secondary);
+        font-size: 13px;
+        font-weight: 500;
+        cursor: pointer;
+        transition: var(--transition);
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        white-space: nowrap;
+    }
+
+    .btn-vista:hover {
+        background: rgba(255, 255, 255, 0.1);
+        color: var(--text-primary);
+    }
+
+    /* ===== GRID ===== */
+    .precio-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+        gap: 16px;
+    }
+
+    .precio-grid.compacta {
+        grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+    }
+
+    /* ===== CARD ===== */
+    .precio-card {
+        background: var(--bg-card);
+        backdrop-filter: blur(12px);
+        border: 1px solid var(--border-glass);
+        border-radius: var(--radius);
+        padding: 20px;
+        display: flex;
+        flex-direction: column;
+        gap: 10px;
+        transition: var(--transition);
+        animation: slideUp 0.5s ease both;
+    }
+
+    .precio-card:hover {
+        border-color: rgba(255, 255, 255, 0.12);
+        transform: translateY(-4px);
+        box-shadow: 0 12px 40px rgba(0, 0, 0, 0.3);
+    }
+
+    .precio-card h3 {
+        font-size: 14px;
+        font-weight: 600;
+        margin: 0;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        color: var(--text-primary);
+    }
+
+    .precio-fila {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        font-size: 13px;
+        color: var(--text-secondary);
+    }
+
+    .precio-fila strong {
+        color: var(--text-primary);
+    }
+
+    .precio-fila input {
+        width: 60px;
+        padding: 6px 8px;
+        text-align: center;
+        font-size: 13px;
+        border-radius: 8px;
+        height: auto;
+    }
+
+    .ahorro-text {
+        color: var(--accent) !important;
+        font-weight: 600;
+    }
+
+    .precio-final {
+        padding: 10px;
+        background: linear-gradient(135deg, var(--accent), var(--accent-dark));
+        color: white;
+        text-align: center;
+        border-radius: 10px;
+        font-weight: 700;
+        font-size: 16px;
+        box-shadow: 0 4px 15px var(--accent-glow);
+    }
+
+    .btn-oferta {
+        padding: 10px;
+        border-radius: 10px;
+        border: none;
+        background: linear-gradient(135deg, var(--accent-blue), #2563eb);
+        color: white;
+        font-size: 13px;
+        font-weight: 600;
+        cursor: pointer;
+        transition: var(--transition);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 6px;
+    }
+
+    .btn-oferta:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 6px 20px rgba(59, 130, 246, 0.3);
+    }
+
+    /* Stagger animation */
+    .precio-card:nth-child(1) {
+        animation-delay: 0.05s;
+    }
+
+    .precio-card:nth-child(2) {
+        animation-delay: 0.1s;
+    }
+
+    .precio-card:nth-child(3) {
+        animation-delay: 0.15s;
+    }
+
+    .precio-card:nth-child(4) {
+        animation-delay: 0.2s;
+    }
+
+    .precio-card:nth-child(5) {
+        animation-delay: 0.25s;
+    }
+
+    .precio-card:nth-child(6) {
+        animation-delay: 0.3s;
+    }
+
+    .precio-card:nth-child(7) {
+        animation-delay: 0.35s;
+    }
+
+    .precio-card:nth-child(8) {
+        animation-delay: 0.4s;
+    }
+
+    /* ===== TABLA ===== */
+    .precio-tabla {
+        width: 100%;
+        border-collapse: collapse;
+        font-size: 13px;
+    }
+
+    .precio-tabla th {
+        background: rgba(255, 255, 255, 0.05);
+        padding: 12px 14px;
+        text-align: left;
+        font-size: 11px;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+        color: var(--text-muted);
+        border-bottom: 1px solid var(--border-glass);
+    }
+
+    .precio-tabla td {
+        padding: 12px 14px;
+        border-bottom: 1px solid var(--border-glass);
+        color: var(--text-primary);
+    }
+
+    .precio-tabla tr:hover td {
+        background: rgba(255, 255, 255, 0.02);
+    }
+
+    .precio-tabla input {
+        width: 55px;
+        text-align: center;
+        font-size: 12px;
+        padding: 5px;
+        border-radius: 6px;
+        height: auto;
+    }
+
+    /* ===== MODAL ===== */
+    .modal-overlay {
+        position: fixed;
+        inset: 0;
+        background: rgba(0, 0, 0, 0.6);
+        backdrop-filter: blur(4px);
+        display: none;
+        align-items: center;
+        justify-content: center;
+        z-index: 9000;
+    }
+
+    .modal-box {
+        background: var(--bg-secondary);
+        border: 1px solid var(--border-glass);
+        max-width: 460px;
+        width: 92%;
+        padding: 28px;
+        border-radius: 20px;
+        animation: scaleIn 0.3s ease;
+        box-shadow: 0 25px 60px rgba(0, 0, 0, 0.5);
+    }
+
+    .modal-box h3 {
+        font-size: 18px;
+        margin-bottom: 16px;
+        display: flex;
+        align-items: center;
+        gap: 10px;
+    }
+
+    .modal-box h3 i {
+        color: var(--accent);
+    }
+
+    .modal-texto {
+        background: rgba(15, 23, 42, 0.5);
+        padding: 18px;
+        border-radius: 14px;
+        white-space: pre-wrap;
+        font-size: 14px;
+        line-height: 1.7;
+        color: var(--text-secondary);
+        border-left: 4px solid var(--accent);
+        margin-bottom: 16px;
+    }
+
+    .modal-btns {
+        display: flex;
+        gap: 10px;
+    }
+
+    .modal-btns button {
+        flex: 1;
+        height: 46px;
+        border: none;
+        border-radius: 12px;
+        font-size: 14px;
+        font-weight: 600;
+        cursor: pointer;
+        transition: var(--transition);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 6px;
+    }
+
+    .modal-btn-copy {
+        background: linear-gradient(135deg, var(--accent-blue), #2563eb);
+        color: white;
+    }
+
+    .modal-btn-close {
+        background: rgba(255, 255, 255, 0.05);
+        color: var(--text-secondary);
+        border: 1px solid var(--border-glass) !important;
+    }
+
+    @media (max-width: 480px) {
+        .precio-grid {
+            grid-template-columns: 1fr;
+        }
+
+        .top-controls {
+            flex-direction: column;
+        }
+
+        .search-input {
+            max-width: 100%;
+        }
+    }
+</style>
+
+<div class="precios-page">
+    <h2><i class="fa-solid fa-tags" style="color:var(--accent-orange)"></i> Precios Pregrado 2026</h2>
+
+    <!-- CONTROLES -->
+    <div class="top-controls">
+        <div class="search-input">
+            <i class="fa-solid fa-magnifying-glass"></i>
+            <input type="text" id="buscador" placeholder="Buscar programa..." oninput="filtrarProgramas()">
+        </div>
+        <button class="btn-vista" onclick="cambiarVista()">
+            <i class="fa-solid fa-table-columns"></i> Cambiar vista
+        </button>
+    </div>
+
+    <!-- GRID -->
+    <div id="grid" class="precio-grid">
+        {% for p in programas %}
+        <div class="precio-card" data-nombre="{{ p.programa | lower }}" data-valor="{{ p.valor }}">
+
+            <h3 title="{{ p.programa }}">{{ p.programa }}</h3>
+
+            <div class="precio-fila">
+                <span>Valor base</span>
+                <strong>$ {{ "{:,}".format(p.valor) }}</strong>
+            </div>
+
+            <div class="precio-fila">
+                <span>Descuento %</span>
+                <input type="number" value="{{ p.descuento }}" min="0" max="100" oninput="recalcularCard(this)">
+            </div>
+
+            <div class="precio-fila">
+                <span>Ahorro</span>
+                <strong class="ahorro-text">$0</strong>
+            </div>
+
+            <div class="precio-final">$0</div>
+
+            <button class="btn-oferta" onclick="abrirModal(this)">
+                <i class="fa-solid fa-paper-plane"></i> Ver oferta
+            </button>
+        </div>
+        {% endfor %}
+    </div>
+
+    <!-- TABLA -->
+    <table id="tabla" class="precio-tabla" style="display:none">
+        <thead>
+            <tr>
+                <th>Programa</th>
+                <th>Valor</th>
+                <th>%</th>
+                <th>Ahorro</th>
+                <th>Final</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for p in programas %}
+            <tr data-nombre="{{ p.programa | lower }}" data-valor="{{ p.valor }}">
+                <td>{{ p.programa }}</td>
+                <td>$ {{ "{:,}".format(p.valor) }}</td>
+                <td>
+                    <input type="number" value="{{ p.descuento }}" min="0" max="100" oninput="recalcularFila(this)">
+                </td>
+                <td class="ahorro-text">$0</td>
+                <td class="precio-final-td">$0</td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+
+<!-- MODAL -->
+<div id="modal" class="modal-overlay" onclick="cerrarModal(event)">
+    <div class="modal-box">
+        <h3><i class="fa-solid fa-graduation-cap"></i> Oferta Areandina</h3>
+        <div class="modal-texto" id="modal-texto"></div>
+        <div class="modal-btns">
+            <button class="modal-btn-copy" onclick="copiarOferta()">
+                <i class="fa-solid fa-copy"></i> Copiar
+            </button>
+            <button class="modal-btn-close" onclick="cerrarModal()">
+                <i class="fa-solid fa-xmark"></i> Cerrar
+            </button>
+        </div>
+    </div>
+</div>
+
+<script>
+    let modo = 0;
+
+    function cambiarVista() {
+        modo = (modo + 1) % 3;
+        document.getElementById("grid").style.display = modo === 2 ? "none" : "grid";
+        document.getElementById("tabla").style.display = modo === 2 ? "table" : "none";
+        document.getElementById("grid").classList.toggle("compacta", modo === 1);
+    }
+
+    function recalcularCard(input) {
+        const card = input.closest(".precio-card");
+        const valor = parseInt(card.dataset.valor);
+        const d = parseInt(input.value || 0);
+        const ahorro = Math.round(valor * d / 100);
+        const final_ = valor - ahorro;
+        card.querySelector(".ahorro-text").innerText = "$ " + ahorro.toLocaleString();
+        card.querySelector(".precio-final").innerText = "$ " + final_.toLocaleString();
+    }
+
+    function recalcularFila(input) {
+        const row = input.closest("tr");
+        const valor = parseInt(row.dataset.valor);
+        const d = parseInt(input.value || 0);
+        const ahorro = Math.round(valor * d / 100);
+        const final_ = valor - ahorro;
+        row.querySelector(".ahorro-text").innerText = "$ " + ahorro.toLocaleString();
+        row.querySelector(".precio-final-td").innerText = "$ " + final_.toLocaleString();
+    }
+
+    function filtrarProgramas() {
+        const q = document.getElementById("buscador").value.toLowerCase();
+        document.querySelectorAll(".precio-card, .precio-tabla tbody tr").forEach(el => {
+            el.style.display = el.dataset.nombre.includes(q) ? "" : "none";
+        });
+    }
+
+    function abrirModal(btn) {
+        const card = btn.closest(".precio-card");
+        const nombre = card.querySelector("h3").innerText;
+        const valor = parseInt(card.dataset.valor);
+        const d = parseInt(card.querySelector("input").value || 0);
+        const ahorro = Math.round(valor * d / 100);
+        const final_ = valor - ahorro;
+
+        const texto =
+            `🎓 Oferta Universidad Areandina
+*${nombre}* en la *Universidad Areandina* tiene un valor regular de *$${valor.toLocaleString()}*.
+
+Actualmente cuentas con un *${d}% de descuento*, lo que representa un ahorro de *$${ahorro.toLocaleString()}*.
+
+✅ El valor final de tu matrícula queda en *$${final_.toLocaleString()}*.
+
+📌 Cupos limitados. Aprovecha este beneficio exclusivo.`;
+
+        document.getElementById("modal-texto").innerText = texto;
+        document.getElementById("modal").style.display = "flex";
+    }
+
+    function copiarOferta() {
+        const texto = document.getElementById("modal-texto").innerText;
+        navigator.clipboard.writeText(texto).then(() => {
+            showToast('¡Oferta copiada al portapapeles!');
+        });
+    }
+
+    function cerrarModal(e) {
+        if (!e || e.target.id === "modal") {
+            document.getElementById("modal").style.display = "none";
+        }
+    }
+
+    // Init
+    document.querySelectorAll(".precio-card input").forEach(i => recalcularCard(i));
+    document.querySelectorAll(".precio-tabla input").forEach(i => recalcularFila(i));
+</script>
+
+{% endblock %}

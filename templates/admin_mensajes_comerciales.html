@@ -1,0 +1,102 @@
+{% extends "layout.html" %}
+{% block content %}
+
+<style>
+    .admin-page { animation: fadeIn 0.5s ease; padding-bottom: 60px; }
+    .admin-header { margin-bottom: 24px; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 16px; }
+    .admin-header h2 { margin-bottom: 0; }
+    .back-link { color: var(--text-muted); text-decoration: none; font-size: 13px; display: inline-flex; align-items: center; gap: 6px; padding: 8px 16px; border-radius: 10px; border: 1px solid var(--border-glass); transition: all 0.3s ease; }
+    .back-link:hover { color: var(--accent-purple); border-color: rgba(139,92,246,0.3); background: rgba(139,92,246,0.1); }
+
+    .msg-item {
+        background: var(--bg-card);
+        border: 1px solid var(--border-glass);
+        border-radius: 16px;
+        padding: 24px;
+        margin-bottom: 16px;
+        transition: all 0.3s ease;
+    }
+    .msg-item:hover { border-color: rgba(255,255,255,0.12); }
+
+    .msg-item-header {
+        display: flex; justify-content: space-between; align-items: center;
+        margin-bottom: 16px; padding-bottom: 12px;
+        border-bottom: 1px solid var(--border-glass);
+    }
+    .msg-badge {
+        padding: 4px 10px; border-radius: 6px; font-size: 11px; font-weight: 700;
+        text-transform: uppercase; letter-spacing: 0.5px;
+    }
+    .msg-badge.pre { background: rgba(34,197,94,0.15); color: var(--accent); }
+    .msg-badge.pos { background: rgba(139,92,246,0.15); color: var(--accent-purple); }
+
+    .msg-form label { display: block; font-size: 12px; font-weight: 600; color: var(--text-muted); margin-bottom: 6px; text-transform: uppercase; letter-spacing: 0.5px; }
+    .msg-form input, .msg-form textarea, .msg-form select { margin-bottom: 14px; }
+    .msg-form textarea { min-height: 140px; resize: vertical; }
+
+    .msg-actions { display: flex; gap: 10px; flex-wrap: wrap; }
+    .btn-sm { padding: 8px 16px; font-size: 13px; border-radius: 8px; }
+
+    .add-section {
+        background: rgba(59,130,246,0.08);
+        border: 2px dashed rgba(59,130,246,0.3);
+        border-radius: 16px; padding: 28px;
+        margin-top: 24px;
+    }
+    .add-section h3 { color: var(--accent-blue); margin-bottom: 16px; display: flex; align-items: center; gap: 8px; }
+</style>
+
+<div class="admin-page">
+    <div class="admin-header">
+        <h2><i class="fa-solid fa-comments" style="color: var(--accent-blue)"></i> Mensajes Comerciales</h2>
+        <a href="/admin/dashboard" class="back-link"><i class="fa-solid fa-arrow-left"></i> Volver al panel</a>
+    </div>
+
+    {% for m in mensajes %}
+    <div class="msg-item">
+        <div class="msg-item-header">
+            <span class="msg-badge {{ m.nivel }}">#{{ loop.index }} — {{ m.nivel|upper }}</span>
+            <form method="POST" style="margin:0" onsubmit="return confirm('¿Eliminar este mensaje?')">
+                <input type="hidden" name="action" value="delete">
+                <input type="hidden" name="index" value="{{ loop.index0 }}">
+                <button type="submit" class="btn btn-danger btn-sm"><i class="fa-solid fa-trash"></i></button>
+            </form>
+        </div>
+        <form method="POST" class="msg-form">
+            <input type="hidden" name="action" value="update">
+            <input type="hidden" name="index" value="{{ loop.index0 }}">
+            <label>Nivel</label>
+            <select name="nivel">
+                <option value="pre" {% if m.nivel == 'pre' %}selected{% endif %}>Pregrado</option>
+                <option value="pos" {% if m.nivel == 'pos' %}selected{% endif %}>Posgrado</option>
+            </select>
+            <label>Título</label>
+            <input type="text" name="titulo" value="{{ m.titulo }}">
+            <label>Texto</label>
+            <textarea name="texto">{{ m.texto }}</textarea>
+            <div class="msg-actions">
+                <button type="submit" class="btn btn-primary btn-sm"><i class="fa-solid fa-save"></i> Guardar</button>
+            </div>
+        </form>
+    </div>
+    {% endfor %}
+
+    <div class="add-section">
+        <h3><i class="fa-solid fa-plus-circle"></i> Agregar nuevo mensaje</h3>
+        <form method="POST" class="msg-form">
+            <input type="hidden" name="action" value="add">
+            <label>Nivel</label>
+            <select name="nivel">
+                <option value="pre">Pregrado</option>
+                <option value="pos">Posgrado</option>
+            </select>
+            <label>Título</label>
+            <input type="text" name="titulo" placeholder="Nombre del programa" required>
+            <label>Texto</label>
+            <textarea name="texto" placeholder="Texto del mensaje..." required></textarea>
+            <button type="submit" class="btn btn-primary btn-sm"><i class="fa-solid fa-plus"></i> Agregar</button>
+        </form>
+    </div>
+</div>
+
+{% endblock %}

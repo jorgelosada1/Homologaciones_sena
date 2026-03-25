@@ -1,0 +1,88 @@
+{% extends "layout.html" %}
+{% block content %}
+
+<style>
+    .admin-page { animation: fadeIn 0.5s ease; padding-bottom: 60px; }
+    .admin-header { margin-bottom: 24px; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 16px; }
+    .admin-header h2 { margin-bottom: 0; }
+    .back-link { color: var(--text-muted); text-decoration: none; font-size: 13px; display: inline-flex; align-items: center; gap: 6px; padding: 8px 16px; border-radius: 10px; border: 1px solid var(--border-glass); transition: all 0.3s ease; }
+    .back-link:hover { color: #ec4899; border-color: rgba(236,72,153,0.3); background: rgba(236,72,153,0.1); }
+
+    .upload-zone {
+        background: rgba(236,72,153,0.06);
+        border: 2px dashed rgba(236,72,153,0.3);
+        border-radius: 16px;
+        padding: 32px;
+        text-align: center;
+        margin-bottom: 32px;
+        transition: all 0.3s ease;
+    }
+    .upload-zone:hover { border-color: rgba(236,72,153,0.5); background: rgba(236,72,153,0.1); }
+    .upload-zone i { font-size: 36px; color: #ec4899; margin-bottom: 12px; }
+    .upload-zone p { color: var(--text-muted); font-size: 13px; margin-bottom: 16px; }
+    .upload-zone input[type="file"] { display: none; }
+    .upload-zone label { cursor: pointer; display: inline-flex; align-items: center; gap: 8px; padding: 10px 24px; border-radius: 10px; background: linear-gradient(135deg, #ec4899, #be185d); color: white; font-size: 14px; font-weight: 600; transition: all 0.3s ease; }
+    .upload-zone label:hover { transform: translateY(-2px); box-shadow: 0 8px 25px rgba(236,72,153,0.3); }
+
+    .img-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+        gap: 16px;
+    }
+    .img-card {
+        background: var(--bg-card);
+        border: 1px solid var(--border-glass);
+        border-radius: 14px;
+        overflow: hidden;
+        transition: all 0.3s ease;
+    }
+    .img-card:hover { border-color: rgba(255,255,255,0.15); transform: translateY(-2px); box-shadow: 0 8px 30px rgba(0,0,0,0.2); }
+    .img-card img { width: 100%; height: 160px; object-fit: cover; }
+    .img-card-info {
+        padding: 12px;
+        display: flex; justify-content: space-between; align-items: center;
+    }
+    .img-card-name { font-size: 11px; color: var(--text-muted); max-width: 120px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+    .btn-icon { width: 30px; height: 30px; padding: 0; display: inline-flex; align-items: center; justify-content: center; border-radius: 8px; font-size: 12px; }
+    .btn-sm { padding: 8px 16px; font-size: 13px; border-radius: 8px; }
+</style>
+
+<div class="admin-page">
+    <div class="admin-header">
+        <h2><i class="fa-solid fa-images" style="color: #ec4899"></i> Piezas Gráficas</h2>
+        <a href="/admin/dashboard" class="back-link"><i class="fa-solid fa-arrow-left"></i> Volver al panel</a>
+    </div>
+
+    <form method="POST" enctype="multipart/form-data" class="upload-zone" id="uploadForm">
+        <input type="hidden" name="action" value="upload">
+        <i class="fa-solid fa-cloud-arrow-up"></i>
+        <p>Arrastra imágenes aquí o haz clic para seleccionar<br><small>Formatos: PNG, JPG, JPEG, GIF, WEBP</small></p>
+        <input type="file" name="imagenes" id="fileInput" multiple accept=".png,.jpg,.jpeg,.gif,.webp">
+        <label for="fileInput"><i class="fa-solid fa-folder-open"></i> Seleccionar imágenes</label>
+        <br><br>
+        <button type="submit" class="btn btn-primary btn-sm" style="background: linear-gradient(135deg, #ec4899, #be185d)"><i class="fa-solid fa-upload"></i> Subir</button>
+    </form>
+
+    <h3 style="margin-bottom: 16px; color: var(--text-secondary); font-size: 14px;">
+        <i class="fa-solid fa-images" style="color: #ec4899"></i>
+        {{ imagenes|length }} imágenes subidas
+    </h3>
+
+    <div class="img-grid">
+        {% for img in imagenes %}
+        <div class="img-card">
+            <img src="/static/piezas/{{ img }}" alt="{{ img }}">
+            <div class="img-card-info">
+                <span class="img-card-name" title="{{ img }}">{{ img }}</span>
+                <form method="POST" style="margin:0" onsubmit="return confirm('¿Eliminar esta imagen?')">
+                    <input type="hidden" name="action" value="delete">
+                    <input type="hidden" name="filename" value="{{ img }}">
+                    <button type="submit" class="btn btn-danger btn-icon" title="Eliminar"><i class="fa-solid fa-trash"></i></button>
+                </form>
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+</div>
+
+{% endblock %}
