@@ -5,19 +5,49 @@ import csv
 import json
 from datetime import datetime, timedelta
 from flask import redirect, Response
-from flask import Flask, render_template, request, send_from_directory, session
+from flask import Flask, render_template, request, send_from_directory, session, url_for
+from functools import wraps
 from whatsapp import whatsapp_bp
 from werkzeug.utils import secure_filename
 
 
-# =====================================================
-# CONFIG
-# =====================================================
 app = Flask(__name__)
 app.secret_key = "homologaciones-aguachica-2026"
 app.config['MAX_CONTENT_LENGTH'] = 16 * 1024 * 1024  # 16MB max
 
 app.register_blueprint(whatsapp_bp)
+
+# =====================================================
+# GLOBAL LOGIN GATE
+# =====================================================
+GLOBAL_USER = "Innovacion"
+GLOBAL_PASSWORD = "0228"
+
+def login_required(f):
+    @wraps(f)
+    def decorated_function(*args, **kwargs):
+        if not session.get("logged_in"):
+            return redirect("/login")
+        return f(*args, **kwargs)
+    return decorated_function
+
+@app.route("/login", methods=["GET", "POST"])
+def global_login():
+    error = None
+    if request.method == "POST":
+        user = request.form.get("user", "")
+        password = request.form.get("password", "")
+        if user == GLOBAL_USER and password == GLOBAL_PASSWORD:
+            session["logged_in"] = True
+            return redirect("/")
+        else:
+            error = "Usuario o contraseña incorrectos"
+    return render_template("global_login.html", error=error)
+
+@app.route("/logout")
+def global_logout():
+    session.pop("logged_in", None)
+    return redirect("/login")
 
 # =====================================================
 # DATA PATHS
@@ -75,152 +105,9 @@ actas.columns = actas.columns.str.strip()
 
 
 # =====================================================
-# LISTA DE TÍTULOS PARA AUTOCOMPLETADO
+# LISTA DE TÍTULOS PARA AUTOCOMPLETADO (desde Excel)
 # =====================================================
-titulos_sena = [
-    "Técnico en Asistencia Administrativa",
-    "Técnico en Contabilización de Operaciones Comerciales y Financieras",
-    "Técnico en Asesoría Comercial y Operaciones de Entidades Financieras",
-    "Técnico en Nómina y Prestaciones Sociales",
-    "Técnico en Asistencia en Organización de Archivos",
-    "Técnico en Logística Empresarial",
-    "Técnico en Venta de Productos y Servicios",
-    "Técnico en Comercialización de Productos Masivos",
-    "Técnico en Asistencia en Análisis y Producción de información Administrativa",
-    "Técnico en Recursos Humanos",
-    "Técnico en Compras y Suministros",
-    "Técnico Profesional en Asistencia en la Administración de Recursos Físicos",
-    "Técnico en Operaciones Comerciales",
-    "Técnico en Gestión Comercial y telemercadeo en Contact Center",
-    "Técnico en Operación de Servicios de Contact Center",
-    "Técnico en Producción de Información Administrativa",
-    "Técnico en Integración de Operaciones Logísticas",
-    "Tecnología en Gestión de Empresas Agropecuarias",
-    "Técnico en Asesoría Comercial",
-    "Técnico en Ofimática",
-    "Técnico en Venta de Productos y Servicios Financieros",
-    "Técnico en Apoyo Administrativo en Salud",
-    "Técnico en Asistencia en la Función Pública",
-    "Técnico en Desarrollo de Operaciones Logísticas en la Cadena de Abastecimiento",
-    "Técnico en Operaciones Comerciales en Retail",
-    "Técnico en Programación para Analitica de Datos",
-    "Técnico en Proyectos Agropecuarios",
-    "Técnico en Produccion Agropecuaria",
-    "Técnico en Servicios y Operaciones Microfinancieras",
-    "Tecnología en Gestión Financiera y de Tesorería",
-    "Tecnología en Administración Hotelera",
-    "Tecnología en Gestión Integral del Riesgo en Seguros",
-    "Tecnología en Gestión del Talento Humano",
-    "Tecnología en Gestión Bancaria y de Entidades Financieras",
-    "Tecnología en Gestión Administrativa",
-    "Tecnología en Administración Empresarial",
-    "Tecnología en Formulación de Proyectos",
-    "Tecnología en Gestión de Negocios",
-    "Tecnología en Negociación Internacional",
-    "Tecnología en Contabilidad y Finanzas",
-    "Tecnología en Producción Multimedia",
-    "Tecnología en Comunicación Comercial",
-    "Tecnología en Dirección de Ventas",
-    "Tecnología en Gestión para el Establecimiento de Alimentos y Bebidas",
-    "Tecnología en Control Ambiental",
-    "Tecnología en Gestión de Mercados",
-    "Tecnología en Gestión Empresarial",
-    "Tecnología en Gestión Hotelera",
-    "Tecnología en Gestión Logística",
-    "Tecnología en Administración Bancaria y de Instituciones Financieras",
-    "Tecnología en Administración Documental",
-    "Tecnología en Gestión Documental",
-    "Tecnología en Gestión de Negocios Fiduciarios",
-    "Tecnología en Administración de Empresas Bananeras",
-    "Tecnología en Gestión de Procesos Administrativos de Salud",
-    "Tecnología en Administración de Empresas Agropecuarias",
-    "Tecnología en Gestión Integral en Fondos de Pensiones y Cesantías",
-    "Tecnología en Gestión Contable y Financiera",
-    "Tecnología en Gestión de Proyectos de Desarrollo Económico y Social",
-    "Tecnología en Biocomercio Sostenible",
-    "Tecnología en Distribución Física Internacional",
-    "Tecnología en Gestión Contable y de Información Financiera",
-    "Tecnología en Gestión de la Producción Industrial",
-    "Tecnología en Gestión de Recursos en Plantas de Producción",
-    "Tecnología en Organización de Eventos",
-    "Tecnología en Coordinación de Procesos Logísticos",
-    "Tecnología en Gestión Integrada de la Calidad, Medio Ambiente, Seguridad y Salud Ocupacional",
-    "Técnico en Contabilización de Operaciones Comerciales y Financieras",
-    "Técnico en Desarrollo de Operaciones Logísticas en la Cadena de Abastecimiento",
-    "Técnico en Comercio Internacional",
-    "Técnico en Compras y Suministros",
-    "Técnico en Asesoría Comercial",
-    "Tecnología en Distribución Física Internacional",
-    "Tecnología en Gestión Bancaria y de Entidades Financieras",
-    "Tecnología en Gestión Logística",
-    "Tecnología en Gestión Empresarial",
-    "Tecnología en Gestión de Negocios",
-    "Tecnología en Gestión Portuaria",
-    "Tecnología en Logística del Transporte",
-    "Tecnología en Negociación Internacional",
-    "Tecnología en Gestión Contable y de Información Financiera",
-    "Tecnología en Coordinación de Procesos Logísticos",
-    "Tecnología en Gestión Contable y Financiera",
-    "Tecnología en Gestión Financiera y de Tesorería",
-    "Tecnología en Gestión del Comercio Exterior de Bienes y Servicios",
-    "Tecnología en Gestión de Operaciones en Terminales Portuarias",
-    "Tecnología en Gestión de Recursos en Plantas de Producción",
-    "Tecnología en Gestión de Tesorería y Recursos Financieros",
-    "Técnico en Sistemas",
-    "Técnico en Instalación de Redes de Computadores",
-    "Técnico en Instalación de Redes Internas de Telecomunicaciones",
-    "Técnico en Instalación y Mantenimiento de Redes Internas de Telecomunicaciones",
-    "Técnico en Mantenimiento de Equipos de Computo",
-    "Técnico en Programación de Software",
-    "Tecnología en Producción Multimedia",
-    "Tecnología en Telecomunicaciones",
-    "Tecnología en Análisis y Desarrollo de Sistemas de Información",
-    "Tecnología en Administración del Ensamble y Mantenimiento de Computadores y Redes",
-    "Tecnología en Gestión de Redes de Datos",
-    "Tecnología en Administración de Redes de Computadores",
-    "Tecnología en Análisis y Desarrollo de Software",
-    "Tecnología en Diseño, Implementación y Mantenimiento de Telecomunicaciones",
-    "Tecnología en Implementación de Infraestructura de Tecnologías de la Información y las Comunicaciones",
-    "Tecnología en Mantenimiento de Equipos de Computo, Diseño e Instalación de Cableado Estructurado",
-    "Tecnología en Desarrollo de Medios Gráficos Visuales",
-    "Tecnología en Dibujo y Modelado Arquitectónico y de Ingeniería",
-    "Tecnología en Supervisión de Redes de Distribución de Energía Eléctrica",
-    "Tecnología en Implementación de Infraestructura de Tecnologías de la Información y las Comunicaciones",
-    "Tecnología en Gobierno Local",
-    "Tecnología en Salud Ocupacional",
-    "Tecnología en Mantenimiento Mecatrónico de Automotores",
-    "Tecnología en Mantenimiento Electromecánico Industrial",
-    "Tecnología en Control Ambiental",
-    "Tecnología SG Calidad, Medio ambiente y SST",
-    "Tecnología en Gestión del Talento Humano",
-    "Tecnología en Gestión Administrativa",
-    "Tecnología en Gestión de Mercados",
-    "Tecnología en Gestión Empresarial",
-    "Tecnología en Gestión Logística",
-    "Tecnología en Logística del Transporte",
-    "Tecnología en Coordinación de Procesos Logísticos",
-    "Tecnología en Gestión de la Seguridad y Salud en el Trabajo",
-    "Tecnología en Diseño de Elementos Mecánicos para su Fabricación con Máquinas Herramientas CNC",
-    "Tecnología en Diseño e Integración de Automatismos Mecatrónicos",
-    "Tecnología en Control de Calidad de Alimentos",
-    "Tecnología en Análisis y Desarrollo de Sistemas de Información",
-    "Tecnología en Prevención y Control Ambiental",
-    "Tecnología en Gestión de Recursos Naturales",
-    "Tecnología en Mantenimiento Electrónico e Instrumental Industrial",
-    "Tecnología en Producción Agrícola",
-    "Tecnología en Electricidad Industrial",
-    "Tecnología en Química Aplicada a la Industria",
-    "Tecnología en Gestión de la Producción Industrial",
-    "Técnico en Atención Integral a la Primera Infancia",
-    "Técnico en Atención Integral a la Primera Infancia",
-    "Tecnología en Formulación de Proyectos",
-    "Tecnología en Comunicación Comercial",
-    "Tecnología en Dirección de Ventas",
-    "Tecnología en Dirección Comercial",
-    "Tecnología en Gestión de Mercados",
-    "Tecnología en Biocomercio Sostenible",
-    "Tecnología en Gestión Comercial de Servicios"
-]
+titulos_sena = sorted(actas["TÉCNICO O TECNOLOGÍA"].dropna().astype(str).str.strip().unique().tolist())
 
 # =====================================================
 # FUNCIÓN DE MENSAJE
@@ -244,7 +131,7 @@ def generar_mensaje(titulo_input):
     )
 
     for _, fila in coincidencias.iterrows():
-        carrera = str(fila["gest"]).upper()
+        carrera = str(fila["PROGRAMA"]).upper()
         homologados = int(fila["SEMTR HOMOLOGADOS"])
         faltantes = int(fila["FALTANTES"])
 
@@ -277,6 +164,7 @@ def logo():
 
 
 @app.route("/", methods=["GET", "POST"])
+@login_required
 def homologaciones():
     mensaje = None
 
@@ -294,6 +182,7 @@ def homologaciones():
 
 
 @app.route("/mensajes")
+@login_required
 def mensajes():
     filtro = request.args.get("nivel", "pre")
     mensajes_programas = get_mensajes_programas()
@@ -310,6 +199,7 @@ def mensajes():
     )
 
 @app.route("/sena")
+@login_required
 def sena():
     q = request.args.get("q", "").lower()
     mensajes_sena = get_mensajes_sena()
@@ -326,6 +216,7 @@ def sena():
     )
 
 @app.route("/piezas")
+@login_required
 def piezas():
     carpeta = "static/piezas"
     imagenes = os.listdir(carpeta) if os.path.exists(carpeta) else []
@@ -336,6 +227,7 @@ def piezas():
     )
 
 @app.route("/aguachica", methods=["GET", "POST"])
+@login_required
 def aguachica_login():
     if request.method == "POST":
         user = request.form.get("user")
@@ -349,6 +241,7 @@ def aguachica_login():
 
 
 @app.route("/aguachica/dashboard", methods=["GET", "POST"])
+@login_required
 def aguachica_dashboard():
     if not session.get("aguachica"):
         return redirect("/aguachica")
@@ -499,6 +392,7 @@ def generar_mensaje_presencial(titulo_input, sede):
 
 
 @app.route("/presencial", methods=["GET", "POST"])
+@login_required
 def presencial_route():
     mensaje = None
 
@@ -515,6 +409,7 @@ def presencial_route():
 
 
 @app.route("/aguachica/borrar", methods=["POST"])
+@login_required
 def aguachica_borrar():
     if not session.get("aguachica"):
         return redirect("/aguachica")
@@ -530,6 +425,7 @@ def aguachica_borrar():
 
 
 @app.route("/precios")
+@login_required
 def precios():
     return render_template(
         "precios.html",
@@ -541,6 +437,7 @@ def precios():
 # ESTADÍSTICAS RÁPIDAS
 # =====================================================
 @app.route("/stats")
+@login_required
 def stats():
     PRECIOS_PREGRADO = get_precios()
     mensajes_programas = get_mensajes_programas()
@@ -565,9 +462,19 @@ def stats():
     return render_template("stats.html", stats=stats_data)
 
 # =====================================================
+# FLUJOS DE LLAMADAS
+# =====================================================
+@app.route("/flujos")
+@login_required
+def flujos():
+    return render_template("flujos.html")
+
+
+# =====================================================
 # PARAMETRIZACIÓN
 # =====================================================
 @app.route("/parametrizacion")
+@login_required
 def parametrizacion():
     return render_template("parametrizacion.html")
 
@@ -576,6 +483,7 @@ def parametrizacion():
 # EXPORTAR CSV AGUACHICA
 # =====================================================
 @app.route("/aguachica/exportar")
+@login_required
 def aguachica_exportar():
     if not session.get("aguachica"):
         return redirect("/aguachica")
@@ -600,6 +508,7 @@ def aguachica_exportar():
 # BROCHURES (PÚBLICO)
 # =====================================================
 @app.route("/brochures")
+@login_required
 def brochures():
     os.makedirs(BROCHURES_DIR, exist_ok=True)
     archivos = [f for f in os.listdir(BROCHURES_DIR) if f.lower().endswith('.pdf')]
@@ -609,9 +518,10 @@ def brochures():
 # =====================================================
 # ADMIN - LOGIN
 # =====================================================
-ADMIN_PASSWORD = "Jorge123"
+ADMIN_PASSWORD = "Jorsh123"
 
 @app.route("/admin", methods=["GET", "POST"])
+@login_required
 def admin_login():
     error = None
     if request.method == "POST":
@@ -625,6 +535,7 @@ def admin_login():
 
 
 @app.route("/admin/logout")
+@login_required
 def admin_logout():
     session.pop("admin", None)
     return redirect("/admin")
@@ -641,6 +552,7 @@ def admin_required():
 # ADMIN - DASHBOARD
 # =====================================================
 @app.route("/admin/dashboard")
+@login_required
 def admin_dashboard():
     check = admin_required()
     if check:
@@ -669,6 +581,7 @@ def admin_dashboard():
 # ADMIN - MENSAJES COMERCIALES
 # =====================================================
 @app.route("/admin/mensajes-comerciales", methods=["GET", "POST"])
+@login_required
 def admin_mensajes_comerciales():
     check = admin_required()
     if check:
@@ -711,6 +624,7 @@ def admin_mensajes_comerciales():
 # ADMIN - MENSAJES SENA
 # =====================================================
 @app.route("/admin/mensajes-sena", methods=["GET", "POST"])
+@login_required
 def admin_mensajes_sena():
     check = admin_required()
     if check:
@@ -751,6 +665,7 @@ def admin_mensajes_sena():
 # ADMIN - PRECIOS
 # =====================================================
 @app.route("/admin/precios", methods=["GET", "POST"])
+@login_required
 def admin_precios():
     check = admin_required()
     if check:
@@ -797,6 +712,7 @@ def admin_precios():
 # ADMIN - PIEZAS (SUBIR IMÁGENES)
 # =====================================================
 @app.route("/admin/piezas", methods=["GET", "POST"])
+@login_required
 def admin_piezas():
     check = admin_required()
     if check:
@@ -831,6 +747,7 @@ def admin_piezas():
 # ADMIN - BROCHURES (SUBIR PDF)
 # =====================================================
 @app.route("/admin/brochures", methods=["GET", "POST"])
+@login_required
 def admin_brochures():
     check = admin_required()
     if check:

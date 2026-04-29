@@ -1,0 +1,93 @@
+{% extends "layout.html" %}
+{% block content %}
+
+<h2>
+    <span class="icon" style="background: rgba(139,92,246,0.08); color: #8b5cf6;">
+        <i class="fa-solid fa-diagram-project"></i>
+    </span>
+    Flujos de Llamadas
+</h2>
+
+<p style="color: var(--text-secondary); margin-bottom: 24px; font-size: 14px;">
+    Simulador interactivo de flujo conversacional. Practica cómo responder en diferentes escenarios de llamadas.
+</p>
+
+<div class="glass-card" style="max-width: 700px; padding: 0; overflow: hidden;">
+    <div style="padding: 16px 22px; background: var(--bg-secondary); border-bottom: 1px solid var(--border-color); display: flex; align-items: center; gap: 12px;">
+        <div style="width: 38px; height: 38px; border-radius: 50%; background: var(--accent-purple); display: flex; align-items: center; justify-content: center; font-size: 16px; color: white;"><i class="fa-solid fa-headset"></i></div>
+        <div>
+            <div style="font-weight: 700; font-size: 14px;">Simulador de Llamada</div>
+            <div style="font-size: 11px; color: var(--accent); display: flex; align-items: center; gap: 5px;">
+                <span style="width: 6px; height: 6px; border-radius: 50%; background: var(--accent); display: inline-block; animation: sidebarPulse 2s infinite;"></span>Activo
+            </div>
+        </div>
+        <button onclick="reiniciarChat()" style="margin-left: auto; background: var(--bg-card); border: 1px solid var(--border-color); border-radius: 8px; color: var(--text-secondary); padding: 7px 12px; font-size: 12px; cursor: pointer; display: flex; align-items: center; gap: 5px;"><i class="fa-solid fa-rotate-right"></i> Reiniciar</button>
+    </div>
+    <div id="chatMessages" style="padding: 20px; min-height: 320px; max-height: 480px; overflow-y: auto; display: flex; flex-direction: column; gap: 14px; background: var(--bg-primary);"></div>
+    <div id="chatOptions" style="padding: 14px 20px; border-top: 1px solid var(--border-color); display: flex; flex-wrap: wrap; gap: 8px; background: var(--bg-secondary);"></div>
+</div>
+
+<div class="glass-card" style="max-width: 700px; margin-top: 20px;">
+    <h3 style="display: flex; align-items: center; gap: 8px; margin-bottom: 14px;"><i class="fa-solid fa-sitemap" style="color: var(--accent-purple);"></i>Mapa del Flujo</h3>
+    <div style="font-size: 13px; color: var(--text-secondary); line-height: 1.8;">
+        <div style="display:flex;gap:8px;margin-bottom:8px;"><span style="color:var(--accent);font-weight:700;min-width:18px;">1.</span><span>Saludo inicial → "Hola, ¿cómo estás?"</span></div>
+        <div style="display:flex;gap:8px;margin-bottom:8px;"><span style="color:var(--accent);font-weight:700;min-width:18px;">2.</span><span>Respuesta del cliente: <strong style="color:var(--accent);">Bien</strong> o <strong style="color:var(--danger);">Mal</strong></span></div>
+        <div style="display:flex;gap:8px;margin-bottom:8px;"><span style="color:var(--accent);font-weight:700;min-width:18px;">3.</span><span>Respuesta adaptada + oferta de programas</span></div>
+        <div style="display:flex;gap:8px;margin-bottom:8px;"><span style="color:var(--accent);font-weight:700;min-width:18px;">4.</span><span>Interés del cliente: <strong style="color:var(--accent-blue);">Sí, quiero info</strong> / <strong style="color:var(--accent-orange);">No, gracias</strong></span></div>
+        <div style="display:flex;gap:8px;"><span style="color:var(--accent);font-weight:700;min-width:18px;">5.</span><span>Cierre con datos o despedida cordial</span></div>
+    </div>
+</div>
+
+<style>
+    .chat-bubble { max-width: 80%; padding: 12px 16px; border-radius: 14px; font-size: 13px; line-height: 1.6; animation: msgAppear 0.3s ease; }
+    .chat-bubble.agent { background: var(--bg-secondary); border: 1px solid var(--border-color); align-self: flex-start; border-bottom-left-radius: 4px; color: var(--text-primary); }
+    .chat-bubble.client { background: rgba(127,181,54,0.08); border: 1px solid rgba(127,181,54,0.15); align-self: flex-end; border-bottom-right-radius: 4px; color: var(--text-primary); }
+    .chat-bubble .label { font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 4px; }
+    .chat-bubble.agent .label { color: var(--accent-purple); }
+    .chat-bubble.client .label { color: var(--accent); }
+    .chat-option-btn { padding: 8px 16px; border-radius: 10px; border: 1px solid var(--border-color); background: var(--bg-card); color: var(--text-primary); font-size: 12px; font-weight: 600; cursor: pointer; transition: var(--transition); font-family: 'Inter', sans-serif; display: flex; align-items: center; gap: 6px; }
+    .chat-option-btn:hover { transform: translateY(-1px); box-shadow: var(--shadow-sm); }
+    .chat-option-btn.positive { border-color: rgba(127,181,54,0.25); background: rgba(127,181,54,0.04); }
+    .chat-option-btn.positive:hover { background: rgba(127,181,54,0.1); border-color: rgba(127,181,54,0.4); }
+    .chat-option-btn.negative { border-color: rgba(239,68,68,0.25); background: rgba(239,68,68,0.04); }
+    .chat-option-btn.negative:hover { background: rgba(239,68,68,0.1); border-color: rgba(239,68,68,0.4); }
+    .chat-option-btn.info { border-color: rgba(59,130,246,0.25); background: rgba(59,130,246,0.04); }
+    .chat-option-btn.info:hover { background: rgba(59,130,246,0.1); border-color: rgba(59,130,246,0.4); }
+    .chat-option-btn.neutral { border-color: rgba(245,158,11,0.25); background: rgba(245,158,11,0.04); }
+    .chat-option-btn.neutral:hover { background: rgba(245,158,11,0.1); border-color: rgba(245,158,11,0.4); }
+    @keyframes msgAppear { from { opacity:0; transform:translateY(10px) scale(0.97); } to { opacity:1; transform:translateY(0) scale(1); } }
+    .typing-indicator { display: flex; gap: 4px; padding: 8px 14px; align-self: flex-start; }
+    .typing-indicator span { width: 7px; height: 7px; border-radius: 50%; background: var(--text-muted); animation: typingBounce 1.2s infinite; }
+    .typing-indicator span:nth-child(2) { animation-delay: 0.2s; }
+    .typing-indicator span:nth-child(3) { animation-delay: 0.4s; }
+    @keyframes typingBounce { 0%,80%,100% { transform:translateY(0); opacity:0.4; } 40% { transform:translateY(-6px); opacity:1; } }
+</style>
+
+<script>
+    const flowData = {
+        start: { agent: "👋 ¡Hola! Buenas tardes, ¿cómo estás? Te habla [Nombre del asesor] de la Universidad Areandina. ¿Tienes un momentico?", options: [{ text: "😊 Bien, gracias", value: "bien", class: "positive" }, { text: "😔 Mal / Regular", value: "mal", class: "negative" }, { text: "🤔 ¿Para qué me llaman?", value: "directo", class: "neutral" }] },
+        bien: { client: "Bien, gracias. ¿Qué necesitas?", agent: "¡Qué bueno! Me alegra mucho. 😊 Te cuento, te estoy contactando porque vi que eres egresado SENA y quiero contarte sobre una oportunidad increíble de *homologación* con Areandina. Podrías empezar tu carrera profesional con hasta *5 semestres ya homologados* y con un *20% de descuento*. ¿Te gustaría saber más?", options: [{ text: "✅ Sí, cuéntame más", value: "interes_si", class: "positive" }, { text: "❌ No me interesa", value: "interes_no", class: "negative" }, { text: "💰 ¿Cuánto cuesta?", value: "precios", class: "info" }] },
+        mal: { client: "No muy bien, la verdad...", agent: "Lamento escuchar eso 😔. Espero que todo mejore pronto. Precisamente te estoy contactando con algo que podría ser una buena noticia para ti. ¿Sabías que como egresado SENA puedes *homologar hasta 5 semestres* en Areandina y obtener un *20% de descuento*? Podría ser un gran paso para tu futuro. ¿Te interesa saber más?", options: [{ text: "✅ Sí, cuéntame más", value: "interes_si", class: "positive" }, { text: "❌ No me interesa", value: "interes_no", class: "negative" }, { text: "🤔 ¿Qué programas tienen?", value: "programas", class: "info" }] },
+        directo: { client: "¿Para qué me llaman?", agent: "¡Claro! Disculpa la intromisión. Soy [Nombre] de la Universidad Areandina. Te contacto porque identificamos que eres egresado SENA y queremos ofrecerte un beneficio especial: puedes *homologar semestres* de tu formación técnica o tecnológica y avanzar más rápido en tu carrera profesional, con un *20% de descuento*. ¿Tienes un momentico para contarte?", options: [{ text: "✅ Sí, dale", value: "interes_si", class: "positive" }, { text: "❌ No, gracias", value: "interes_no", class: "negative" }] },
+        interes_si: { client: "Sí, cuéntame más sobre eso.", agent: "¡Perfecto! 🎓 Con la homologación SENA en Areandina:\n\n📍 *No pagas inscripción* (ahorras $70.000)\n📍 *No pagas estudio de homologación* (ahorras $450.000)\n📍 Se te homologan entre *3 y 5 semestres* dependiendo del programa\n📍 *20% de descuento* en el valor del semestre\n📍 Clases 100% virtuales, sincrónicas después de las 6pm\n📍 *Inicio: Agosto 2026*\n\n¿Te gustaría que te envíe información del programa que más te interesa por WhatsApp?", options: [{ text: "📲 Sí, envíame info por WhatsApp", value: "cierre_positivo", class: "positive" }, { text: "🤔 ¿Qué programas tienen?", value: "programas", class: "info" }, { text: "⏰ Ahora no puedo, llámame después", value: "reagendar", class: "neutral" }] },
+        interes_no: { client: "No, gracias. No me interesa por ahora.", agent: "Entiendo perfectamente, no te preocupes. 🙂 Solo para que lo tengas en cuenta: este beneficio del *20% de descuento* es por ser egresado SENA y está disponible para *Agosto 2026*. Si en algún momento te interesa, puedes escribirnos. ¿Te puedo dejar mi contacto por si cambias de opinión?", options: [{ text: "👍 Sí, déjame tu contacto", value: "cierre_contacto", class: "positive" }, { text: "🚫 No, gracias. Adiós", value: "cierre_final", class: "negative" }] },
+        precios: { client: "¿Cuánto cuesta el semestre?", agent: "¡Buena pregunta! 💰 Los valores varían según el programa, pero te doy algunos ejemplos con el 20% de descuento SENA:\n\n🔹 *Adm. de Empresas:* $2.168.000/sem\n🔹 *Ingeniería Industrial:* $2.280.000/sem\n🔹 *Ingeniería de Sistemas:* $2.408.000/sem\n🔹 *Psicología:* $2.424.000/sem\n🔹 *Derecho:* $1.768.000/sem\n\nAdemás, tenemos *diferentes formas de financiación*. ¿Cuál programa te interesa?", options: [{ text: "📲 Envíame info completa", value: "cierre_positivo", class: "positive" }, { text: "🤔 Necesito pensarlo", value: "reagendar", class: "neutral" }] },
+        programas: { client: "¿Qué programas tienen disponibles?", agent: "¡Tenemos muchas opciones! 📚 Algunos de los más solicitados:\n\n🔹 Administración de Empresas\n🔹 Ingeniería Industrial\n🔹 Ingeniería de Sistemas\n🔹 Psicología\n🔹 Derecho\n🔹 Marketing de Negocios\n🔹 Seguridad y Salud en el Trabajo\n🔹 Licenciatura en Educación Infantil\n🔹 Y muchos más...\n\nTodos son *100% virtuales* con clases sincrónicas. ¿Alguno te llama la atención?", options: [{ text: "✅ Sí, me interesa uno", value: "cierre_positivo", class: "positive" }, { text: "💰 ¿Cuánto cuestan?", value: "precios", class: "info" }, { text: "⏰ Déjame pensarlo", value: "reagendar", class: "neutral" }] },
+        reagendar: { client: "Ahora no puedo / necesito pensarlo.", agent: "¡Sin problema! 🕐 Entiendo que es una decisión importante. ¿Te parece si te vuelvo a llamar mañana a la misma hora? O si prefieres, te puedo enviar toda la información por *WhatsApp* para que la revises con calma. ¿Qué prefieres?", options: [{ text: "📲 Envíame por WhatsApp", value: "cierre_positivo", class: "positive" }, { text: "📞 Llámame mañana", value: "cierre_reagenda", class: "info" }, { text: "🚫 No, gracias", value: "cierre_final", class: "negative" }] },
+        cierre_positivo: { client: "Sí, envíame la info.", agent: "¡Excelente! 🎉 Te voy a enviar toda la información detallada del programa a tu WhatsApp. Incluiré:\n\n✅ Brochure del programa\n✅ Valor con descuento SENA\n✅ Proceso de inscripción\n✅ Documento de homologación\n\n¿Me confirmas que este es tu número de WhatsApp? Muchas gracias por tu tiempo, ¡que tengas un excelente día! 💚", options: [{ text: "🔁 Reiniciar flujo", value: "restart", class: "info" }] },
+        cierre_contacto: { client: "Sí, déjame tu contacto.", agent: "¡Perfecto! 📱 Te voy a enviar un mensaje a tu WhatsApp con mi información de contacto y un pequeño resumen de los beneficios. Así cuando estés listo/a, me puedes escribir sin compromiso. ¡Que tengas un excelente día y espero poder ayudarte pronto! 💚", options: [{ text: "🔁 Reiniciar flujo", value: "restart", class: "info" }] },
+        cierre_reagenda: { client: "Llámame mañana.", agent: "¡Listo! 📞 Te agendo para mañana a la misma hora. Mientras tanto, te envío un pequeño resumen por WhatsApp para que lo revises. ¡Muchas gracias por tu tiempo y que tengas un excelente día! 💚", options: [{ text: "🔁 Reiniciar flujo", value: "restart", class: "info" }] },
+        cierre_final: { client: "No, gracias. Adiós.", agent: "¡Entendido! Muchas gracias por tu tiempo. 🙂 Recuerda que el beneficio de homologación SENA con *20% de descuento* está disponible para *Agosto 2026*. Si cambias de opinión, no dudes en contactarnos. ¡Que tengas un excelente día! 💚", options: [{ text: "🔁 Reiniciar flujo", value: "restart", class: "info" }] }
+    };
+    const chatMessages = document.getElementById('chatMessages');
+    const chatOptions = document.getElementById('chatOptions');
+    function addMessage(text, type, delay = 0) { return new Promise(resolve => { setTimeout(() => { const bubble = document.createElement('div'); bubble.className = `chat-bubble ${type}`; bubble.innerHTML = `<div class="label">${type === 'agent' ? '🎧 Asesor' : '👤 Cliente'}</div><div>${text.replace(/\n/g, '<br>').replace(/\*([^*]+)\*/g, '<strong>$1</strong>')}</div>`; chatMessages.appendChild(bubble); chatMessages.scrollTop = chatMessages.scrollHeight; resolve(); }, delay); }); }
+    function showTyping() { const t = document.createElement('div'); t.className = 'typing-indicator'; t.id = 'typingIndicator'; t.innerHTML = '<span></span><span></span><span></span>'; chatMessages.appendChild(t); chatMessages.scrollTop = chatMessages.scrollHeight; }
+    function hideTyping() { const t = document.getElementById('typingIndicator'); if (t) t.remove(); }
+    function showOptions(options) { chatOptions.innerHTML = ''; options.forEach(opt => { const btn = document.createElement('button'); btn.className = `chat-option-btn ${opt.class || ''}`; btn.textContent = opt.text; btn.onclick = () => handleOption(opt.value); chatOptions.appendChild(btn); }); }
+    async function handleOption(value) { if (value === 'restart') { reiniciarChat(); return; } const step = flowData[value]; if (!step) return; chatOptions.innerHTML = ''; if (step.client) await addMessage(step.client, 'client', 200); showTyping(); setTimeout(async () => { hideTyping(); await addMessage(step.agent, 'agent'); showOptions(step.options); }, 1000); }
+    async function reiniciarChat() { chatMessages.innerHTML = ''; chatOptions.innerHTML = ''; showTyping(); setTimeout(async () => { hideTyping(); await addMessage(flowData.start.agent, 'agent'); showOptions(flowData.start.options); }, 600); }
+    reiniciarChat();
+</script>
+
+{% endblock %}
