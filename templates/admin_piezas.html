@@ -7,6 +7,22 @@
     .admin-header h2 { margin-bottom: 0; }
     .back-link { color: var(--text-muted); text-decoration: none; font-size: 13px; display: inline-flex; align-items: center; gap: 6px; padding: 7px 14px; border-radius: 8px; border: 1px solid var(--border-color); transition: var(--transition); }
     .back-link:hover { color: var(--accent-pink); border-color: rgba(230,0,126,0.3); background: rgba(230,0,126,0.04); }
+
+    /* Breadcrumb */
+    .admin-breadcrumb { display: flex; align-items: center; gap: 6px; margin-bottom: 20px; flex-wrap: wrap; padding: 10px 16px; background: var(--bg-card); border: 1px solid var(--border-color); border-radius: 10px; }
+    .admin-breadcrumb a { color: var(--accent-pink); text-decoration: none; font-size: 13px; font-weight: 500; padding: 3px 8px; border-radius: 6px; transition: var(--transition); }
+    .admin-breadcrumb a:hover { background: var(--accent-pink-glow); }
+    .admin-breadcrumb .sep { color: var(--text-muted); font-size: 10px; }
+    .admin-breadcrumb .current { color: var(--text-primary); font-size: 13px; font-weight: 600; padding: 3px 8px; }
+
+    /* Create folder */
+    .create-folder-zone { background: var(--bg-card); border: 1px solid var(--border-color); border-radius: 14px; padding: 20px 24px; margin-bottom: 20px; display: flex; align-items: center; gap: 12px; flex-wrap: wrap; }
+    .create-folder-zone .zone-label { font-size: 13px; font-weight: 600; color: var(--text-secondary); display: flex; align-items: center; gap: 8px; white-space: nowrap; }
+    .create-folder-zone .zone-label i { color: #f59e0b; font-size: 16px; }
+    .create-folder-zone input[type="text"] { flex: 1; min-width: 180px; padding: 9px 14px; font-size: 13px; }
+    .create-folder-zone button { padding: 9px 18px; font-size: 12px; border-radius: 8px; }
+
+    /* Upload zone */
     .upload-zone { background: rgba(230,0,126,0.03); border: 2px dashed rgba(230,0,126,0.2); border-radius: 14px; padding: 32px 28px; text-align: center; margin-bottom: 28px; transition: var(--transition); display: flex; flex-direction: column; align-items: center; gap: 6px; }
     .upload-zone:hover { border-color: rgba(230,0,126,0.4); }
     .upload-zone .upload-icon { font-size: 32px; color: var(--accent-pink); }
@@ -15,6 +31,20 @@
     .upload-zone label { cursor: pointer; display: inline-flex; align-items: center; gap: 6px; padding: 8px 20px; border-radius: 8px; background: var(--accent-pink); color: white; font-size: 13px; font-weight: 600; transition: var(--transition); }
     .upload-zone label:hover { opacity: 0.9; transform: translateY(-1px); }
     .upload-zone .upload-actions { display: flex; align-items: center; gap: 10px; margin-top: 8px; }
+
+    /* Folders grid */
+    .folders-section { margin-bottom: 24px; }
+    .folders-section h3 { font-size: 14px; color: var(--text-secondary); margin-bottom: 12px; display: flex; align-items: center; gap: 8px; }
+    .folders-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); gap: 12px; }
+    .folder-card-admin { background: var(--bg-card); border: 1px solid var(--border-color); border-radius: 12px; padding: 14px 16px; display: flex; align-items: center; gap: 12px; transition: var(--transition); box-shadow: var(--shadow-sm); }
+    .folder-card-admin:hover { box-shadow: var(--shadow-md); transform: translateY(-2px); }
+    .folder-icon { width: 40px; height: 40px; border-radius: 10px; background: linear-gradient(135deg, #fbbf24, #f59e0b); display: flex; align-items: center; justify-content: center; font-size: 18px; color: white; flex-shrink: 0; }
+    .folder-info { flex: 1; min-width: 0; }
+    .folder-name-link { font-weight: 600; font-size: 13px; color: var(--text-primary); text-decoration: none; display: block; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; transition: var(--transition); }
+    .folder-name-link:hover { color: var(--accent-pink); }
+    .folder-actions { display: flex; gap: 6px; align-items: center; flex-shrink: 0; }
+
+    /* Images grid */
     .img-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(180px, 1fr)); gap: 14px; }
     .img-card { background: var(--bg-card); border: 1px solid var(--border-color); border-radius: 12px; overflow: hidden; transition: var(--transition); box-shadow: var(--shadow-sm); }
     .img-card:hover { box-shadow: var(--shadow-md); transform: translateY(-2px); }
@@ -23,6 +53,16 @@
     .img-card-name { font-size: 11px; color: var(--text-muted); max-width: 110px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
     .btn-icon { width: 28px; height: 28px; padding: 0; display: inline-flex; align-items: center; justify-content: center; border-radius: 6px; font-size: 11px; }
     .btn-sm { padding: 7px 14px; font-size: 12px; border-radius: 8px; }
+
+    /* Empty state */
+    .empty-state { text-align: center; padding: 40px 20px; color: var(--text-muted); }
+    .empty-state i { font-size: 40px; margin-bottom: 12px; opacity: 0.3; }
+    .empty-state p { font-size: 13px; }
+
+    @media (max-width: 540px) {
+        .create-folder-zone { flex-direction: column; align-items: stretch; }
+        .folders-grid { grid-template-columns: 1fr; }
+    }
 </style>
 
 <div class="admin-page">
@@ -30,31 +70,92 @@
         <h2><i class="fa-solid fa-images" style="color: var(--accent-pink)"></i> Piezas Gráficas</h2>
         <a href="/admin/dashboard" class="back-link"><i class="fa-solid fa-arrow-left"></i> Volver al panel</a>
     </div>
+
+    <!-- Breadcrumb -->
+    <div class="admin-breadcrumb">
+        <a href="/admin/piezas"><i class="fa-solid fa-house"></i> Raíz</a>
+        {% for crumb in breadcrumb %}
+        <span class="sep"><i class="fa-solid fa-chevron-right"></i></span>
+        {% if loop.last %}
+        <span class="current">{{ crumb.name }}</span>
+        {% else %}
+        <a href="/admin/piezas/{{ crumb.path }}">{{ crumb.name }}</a>
+        {% endif %}
+        {% endfor %}
+    </div>
+
+    <!-- Create folder -->
+    <form method="POST" class="create-folder-zone">
+        <input type="hidden" name="action" value="create_folder">
+        <span class="zone-label"><i class="fa-solid fa-folder-plus"></i> Nueva Carpeta</span>
+        <input type="text" name="folder_name" placeholder="Nombre de la carpeta..." required style="max-width: 300px;">
+        <button type="submit" class="btn btn-primary btn-sm" style="background: #f59e0b; box-shadow: 0 2px 8px rgba(245,158,11,0.2);"><i class="fa-solid fa-plus"></i> Crear</button>
+    </form>
+
+    <!-- Upload images -->
     <form method="POST" enctype="multipart/form-data" class="upload-zone" id="uploadForm">
         <input type="hidden" name="action" value="upload">
         <i class="fa-solid fa-cloud-arrow-up upload-icon"></i>
-        <p>Arrastra imágenes aquí o haz clic para seleccionar<br><small>Formatos: PNG, JPG, JPEG, GIF, WEBP</small></p>
+        <p>Subir imágenes a {% if subfolder %}<strong>{{ breadcrumb[-1].name if breadcrumb else 'esta carpeta' }}</strong>{% else %}la carpeta <strong>raíz</strong>{% endif %}<br><small>Formatos: PNG, JPG, JPEG, GIF, WEBP</small></p>
         <input type="file" name="imagenes" id="fileInput" multiple accept=".png,.jpg,.jpeg,.gif,.webp">
         <div class="upload-actions">
             <label for="fileInput"><i class="fa-solid fa-folder-open"></i> Seleccionar</label>
             <button type="submit" class="btn btn-primary btn-sm" style="background:var(--accent-pink)"><i class="fa-solid fa-upload"></i> Subir</button>
         </div>
     </form>
-    <h3 style="margin-bottom:14px;color:var(--text-secondary);font-size:14px;"><i class="fa-solid fa-images" style="color:var(--accent-pink)"></i> {{ imagenes|length }} imágenes subidas</h3>
+
+    <!-- Folders -->
+    {% if carpetas %}
+    <div class="folders-section">
+        <h3><i class="fa-solid fa-folder" style="color: #f59e0b;"></i> {{ carpetas|length }} carpeta{{ 's' if carpetas|length > 1 else '' }}</h3>
+        <div class="folders-grid">
+            {% for folder in carpetas %}
+            <div class="folder-card-admin">
+                <div class="folder-icon"><i class="fa-solid fa-folder-open"></i></div>
+                <div class="folder-info">
+                    <a href="/admin/piezas/{{ (subfolder + '/' + folder) if subfolder else folder }}" class="folder-name-link" title="{{ folder }}">{{ folder }}</a>
+                </div>
+                <div class="folder-actions">
+                    <a href="/admin/piezas/{{ (subfolder + '/' + folder) if subfolder else folder }}" class="btn btn-secondary btn-icon" title="Abrir"><i class="fa-solid fa-arrow-right"></i></a>
+                    <form method="POST" style="margin:0" onsubmit="return confirm('¿Eliminar esta carpeta y todo su contenido?')">
+                        <input type="hidden" name="action" value="delete_folder">
+                        <input type="hidden" name="folder_name" value="{{ folder }}">
+                        <button type="submit" class="btn btn-danger btn-icon" title="Eliminar carpeta"><i class="fa-solid fa-trash"></i></button>
+                    </form>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+    {% endif %}
+
+    <!-- Images -->
+    {% if imagenes %}
+    <h3 style="margin-bottom:14px;color:var(--text-secondary);font-size:14px;"><i class="fa-solid fa-images" style="color:var(--accent-pink)"></i> {{ imagenes|length }} imagen{{ 'es' if imagenes|length > 1 else '' }}</h3>
     <div class="img-grid">
         {% for img in imagenes %}
+        {% set img_path = 'piezas/' + (subfolder + '/' if subfolder else '') + img %}
         <div class="img-card">
-            <img src="/static/piezas/{{ img }}" alt="{{ img }}">
+            <img src="{{ url_for('static', filename=img_path) }}" alt="{{ img }}">
             <div class="img-card-info">
                 <span class="img-card-name" title="{{ img }}">{{ img }}</span>
                 <form method="POST" style="margin:0" onsubmit="return confirm('¿Eliminar esta imagen?')">
-                    <input type="hidden" name="action" value="delete"><input type="hidden" name="filename" value="{{ img }}">
+                    <input type="hidden" name="action" value="delete">
+                    <input type="hidden" name="filename" value="{{ img }}">
                     <button type="submit" class="btn btn-danger btn-icon" title="Eliminar"><i class="fa-solid fa-trash"></i></button>
                 </form>
             </div>
         </div>
         {% endfor %}
     </div>
+    {% endif %}
+
+    {% if not carpetas and not imagenes %}
+    <div class="empty-state">
+        <i class="fa-solid fa-folder-open"></i>
+        <p>Esta carpeta está vacía. Crea una subcarpeta o sube imágenes.</p>
+    </div>
+    {% endif %}
 </div>
 
 {% endblock %}

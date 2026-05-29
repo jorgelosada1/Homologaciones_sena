@@ -5,6 +5,28 @@
     .piezas-page { animation: fadeIn 0.5s ease; }
     .piezas-header { margin-bottom: 24px; }
     .piezas-header p { color: var(--text-muted); font-size: 14px; margin-top: -18px; }
+
+    /* Breadcrumb */
+    .piezas-breadcrumb { display: flex; align-items: center; gap: 6px; margin-bottom: 20px; flex-wrap: wrap; }
+    .piezas-breadcrumb a { color: var(--accent); text-decoration: none; font-size: 13px; font-weight: 500; padding: 4px 10px; border-radius: 6px; transition: var(--transition); }
+    .piezas-breadcrumb a:hover { background: var(--accent-glow); }
+    .piezas-breadcrumb .sep { color: var(--text-muted); font-size: 11px; }
+    .piezas-breadcrumb .current { color: var(--text-primary); font-size: 13px; font-weight: 600; padding: 4px 10px; }
+
+    /* Folders */
+    .folders-section { margin-bottom: 28px; }
+    .folders-section h3 { font-size: 14px; color: var(--text-secondary); margin-bottom: 12px; display: flex; align-items: center; gap: 8px; }
+    .folders-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 12px; }
+    .folder-card { background: var(--bg-card); border: 1px solid var(--border-color); border-radius: var(--radius); padding: 18px 16px; display: flex; align-items: center; gap: 14px; cursor: pointer; transition: var(--transition); text-decoration: none; color: var(--text-primary); box-shadow: var(--shadow-sm); }
+    .folder-card:hover { box-shadow: var(--shadow-md); transform: translateY(-3px); border-color: var(--accent); }
+    .folder-icon { width: 44px; height: 44px; border-radius: 12px; background: linear-gradient(135deg, #fbbf24, #f59e0b); display: flex; align-items: center; justify-content: center; font-size: 20px; color: white; flex-shrink: 0; }
+    .folder-info { flex: 1; min-width: 0; }
+    .folder-name { font-weight: 600; font-size: 14px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .folder-meta { font-size: 11px; color: var(--text-muted); margin-top: 2px; }
+    .folder-arrow { color: var(--text-muted); font-size: 12px; transition: var(--transition); }
+    .folder-card:hover .folder-arrow { color: var(--accent); transform: translateX(3px); }
+
+    /* Images grid */
     .piezas-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(240px, 1fr)); gap: 16px; }
     .pieza-card { background: var(--bg-card); border: 1px solid var(--border-color); border-radius: var(--radius); overflow: hidden; transition: var(--transition); animation: slideUp 0.5s ease both; cursor: pointer; box-shadow: var(--shadow-sm); }
     .pieza-card:hover { box-shadow: var(--shadow-md); transform: translateY(-4px); }
@@ -18,10 +40,20 @@
     .pieza-name { font-size: 12px; color: var(--text-secondary); font-weight: 500; }
     .btn-download { display: inline-flex; align-items: center; gap: 5px; padding: 6px 12px; border: none; border-radius: 6px; background: var(--accent); color: white; font-size: 11px; font-weight: 600; text-decoration: none; transition: var(--transition); cursor: pointer; }
     .btn-download:hover { background: var(--accent-dark); }
+
+    /* Empty state */
+    .empty-state { text-align: center; padding: 60px 20px; color: var(--text-muted); }
+    .empty-state i { font-size: 48px; margin-bottom: 16px; opacity: 0.3; }
+    .empty-state p { font-size: 14px; }
+
+    /* Lightbox */
     .lightbox { position: fixed; inset: 0; background: rgba(0,0,0,0.8); backdrop-filter: blur(6px); display: none; align-items: center; justify-content: center; z-index: 9000; cursor: pointer; }
     .lightbox img { max-width: 90vw; max-height: 85vh; border-radius: 12px; box-shadow: 0 20px 60px rgba(0,0,0,0.4); animation: scaleIn 0.3s ease; }
     .lightbox-close { position: absolute; top: 16px; right: 20px; width: 40px; height: 40px; border: none; border-radius: 10px; background: rgba(255,255,255,0.15); color: white; font-size: 18px; cursor: pointer; display: flex; align-items: center; justify-content: center; }
-    @media (max-width: 540px) { .piezas-grid { grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 10px; } }
+    @media (max-width: 540px) {
+        .piezas-grid { grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 10px; }
+        .folders-grid { grid-template-columns: repeat(auto-fill, minmax(160px, 1fr)); gap: 10px; }
+    }
 </style>
 
 <div class="piezas-page">
@@ -29,20 +61,66 @@
         <h2><i class="fa-solid fa-images" style="color:var(--accent-purple)"></i> Piezas Gráficas</h2>
         <p>Material gráfico disponible para campañas y promociones</p>
     </div>
+
+    <!-- Breadcrumb -->
+    {% if breadcrumb %}
+    <div class="piezas-breadcrumb">
+        <a href="/piezas"><i class="fa-solid fa-house"></i> Inicio</a>
+        {% for crumb in breadcrumb %}
+        <span class="sep"><i class="fa-solid fa-chevron-right"></i></span>
+        {% if loop.last %}
+        <span class="current">{{ crumb.name }}</span>
+        {% else %}
+        <a href="/piezas/{{ crumb.path }}">{{ crumb.name }}</a>
+        {% endif %}
+        {% endfor %}
+    </div>
+    {% endif %}
+
+    <!-- Folders -->
+    {% if carpetas %}
+    <div class="folders-section">
+        <h3><i class="fa-solid fa-folder" style="color: #f59e0b;"></i> Carpetas</h3>
+        <div class="folders-grid">
+            {% for folder in carpetas %}
+            <a href="/piezas/{{ (subfolder + '/' + folder) if subfolder else folder }}" class="folder-card">
+                <div class="folder-icon"><i class="fa-solid fa-folder-open"></i></div>
+                <div class="folder-info">
+                    <div class="folder-name">{{ folder }}</div>
+                    <div class="folder-meta">Carpeta</div>
+                </div>
+                <i class="fa-solid fa-chevron-right folder-arrow"></i>
+            </a>
+            {% endfor %}
+        </div>
+    </div>
+    {% endif %}
+
+    <!-- Images -->
+    {% if imagenes %}
     <div class="piezas-grid">
         {% for img in imagenes %}
-        <div class="pieza-card" onclick="abrirLightbox('{{ url_for('static', filename='piezas/' + img) }}')">
+        {% set img_path = 'piezas/' + (subfolder + '/' if subfolder else '') + img %}
+        <div class="pieza-card" onclick="abrirLightbox('{{ url_for('static', filename=img_path) }}')">
             <div class="pieza-img-wrap">
-                <img src="{{ url_for('static', filename='piezas/' + img) }}" alt="{{ img }}" loading="lazy">
+                <img src="{{ url_for('static', filename=img_path) }}" alt="{{ img }}" loading="lazy">
                 <div class="pieza-overlay"><span class="pieza-overlay-btn"><i class="fa-solid fa-expand"></i> Ver</span></div>
             </div>
             <div class="pieza-actions">
                 <span class="pieza-name">{{ img }}</span>
-                <a href="{{ url_for('static', filename='piezas/' + img) }}" download class="btn-download" onclick="event.stopPropagation()"><i class="fa-solid fa-download"></i> Descargar</a>
+                <a href="{{ url_for('static', filename=img_path) }}" download class="btn-download" onclick="event.stopPropagation()"><i class="fa-solid fa-download"></i> Descargar</a>
             </div>
         </div>
         {% endfor %}
     </div>
+    {% endif %}
+
+    {% if not carpetas and not imagenes %}
+    <div class="empty-state">
+        <i class="fa-solid fa-folder-open"></i>
+        <p>Esta carpeta está vacía</p>
+    </div>
+    {% endif %}
 </div>
 
 <div class="lightbox" id="lightbox" onclick="cerrarLightbox(event)">

@@ -1,0 +1,353 @@
+{% extends "layout.html" %}
+
+{% block content %}
+<style>
+    .cap-header{display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:16px;margin-bottom:32px}
+    .cap-header h2{margin-bottom:0}
+    .cap-header h2 .icon{background:linear-gradient(135deg,rgba(34,197,94,.2),rgba(34,197,94,.05));color:var(--accent)}
+    .cap-tabs{display:flex;gap:8px;margin-bottom:28px;flex-wrap:wrap}
+    .cap-tab{padding:10px 22px;border-radius:var(--radius-sm);background:var(--bg-card);border:1px solid var(--border-glass);color:var(--text-secondary);font-size:13.5px;font-weight:600;cursor:pointer;transition:var(--transition)}
+    .cap-tab:hover{color:var(--text-primary);border-color:rgba(255,255,255,.15)}
+    .cap-tab.active{background:linear-gradient(135deg,rgba(34,197,94,.15),rgba(34,197,94,.05));border-color:rgba(34,197,94,.3);color:var(--accent)}
+    .cap-section{display:none}.cap-section.active{display:block;animation:fadeIn .4s ease}
+    .accordion{margin-bottom:12px;border-radius:var(--radius);border:1px solid var(--border-glass);overflow:hidden;background:var(--bg-card);backdrop-filter:blur(12px)}
+    .accordion-head{padding:18px 22px;display:flex;align-items:center;justify-content:space-between;cursor:pointer;transition:var(--transition);gap:12px}
+    .accordion-head:hover{background:rgba(255,255,255,.03)}
+    .accordion-head .acc-left{display:flex;align-items:center;gap:12px}
+    .accordion-head .acc-num{width:32px;height:32px;border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:700;color:#fff;flex-shrink:0}
+    .accordion-head .acc-title{font-weight:600;font-size:15px;color:var(--text-primary)}
+    .accordion-head .acc-arrow{transition:transform .3s ease;color:var(--text-muted);font-size:14px}
+    .accordion.open .acc-arrow{transform:rotate(180deg)}
+    .accordion-body{max-height:0;overflow:hidden;transition:max-height .4s ease}
+    .accordion.open .accordion-body{max-height:3000px}
+    .acc-content{padding:0 22px 22px}
+    .acc-content h4{font-size:14px;font-weight:700;color:var(--accent);margin:16px 0 8px;display:flex;align-items:center;gap:8px}
+    .acc-content p,.acc-content li{font-size:13.5px;color:var(--text-secondary);line-height:1.7}
+    .acc-content ul{list-style:none;padding:0;margin:8px 0}
+    .acc-content ul li{padding:6px 0 6px 20px;position:relative}
+    .acc-content ul li::before{content:'';position:absolute;left:0;top:14px;width:6px;height:6px;border-radius:50%;background:var(--accent)}
+    .acc-content .sub-list li::before{background:var(--accent-blue);width:5px;height:5px}
+    .acc-content .badge-pill{display:inline-block;padding:3px 12px;border-radius:20px;font-size:11px;font-weight:700;margin:2px 4px}
+    .badge-green{background:rgba(34,197,94,.15);color:var(--accent);border:1px solid rgba(34,197,94,.2)}
+    .badge-blue{background:rgba(59,130,246,.15);color:var(--accent-blue);border:1px solid rgba(59,130,246,.2)}
+    .badge-orange{background:rgba(245,158,11,.15);color:var(--accent-orange);border:1px solid rgba(245,158,11,.2)}
+    .badge-purple{background:rgba(139,92,246,.15);color:var(--accent-purple);border:1px solid rgba(139,92,246,.2)}
+    .badge-pink{background:rgba(233,30,140,.15);color:#E91E8C;border:1px solid rgba(233,30,140,.2)}
+    .docs-table{width:100%;border-collapse:collapse;margin:12px 0}
+    .docs-table th{background:rgba(255,255,255,.05);padding:10px 14px;font-size:11px;text-transform:uppercase;letter-spacing:.5px;color:var(--text-secondary);font-weight:600;text-align:left;border-bottom:1px solid var(--border-glass)}
+    .docs-table td{padding:10px 14px;border-bottom:1px solid var(--border-glass);font-size:13px;color:var(--text-primary)}
+    .docs-table tr:hover td{background:rgba(255,255,255,.02)}
+    .step-flow{display:flex;flex-wrap:wrap;gap:8px;margin:12px 0;align-items:center}
+    .step-box{padding:8px 16px;border-radius:var(--radius-sm);background:rgba(34,197,94,.08);border:1px solid rgba(34,197,94,.15);font-size:12px;font-weight:600;color:var(--accent)}
+    .step-arrow{color:var(--text-muted);font-size:12px}
+    .warn-box{padding:14px 18px;border-radius:var(--radius-sm);background:rgba(245,158,11,.08);border:1px solid rgba(245,158,11,.15);font-size:13px;color:var(--accent-orange);margin:12px 0;line-height:1.6}
+    .link-ext{color:var(--accent-blue);text-decoration:none;font-weight:600;word-break:break-all}
+    .link-ext:hover{text-decoration:underline}
+    /* CHATBOT */
+    .chat-container{max-width:800px}
+    .chat-messages{min-height:300px;max-height:500px;overflow-y:auto;margin-bottom:16px;display:flex;flex-direction:column;gap:12px;padding:4px 0}
+    .chat-bubble{max-width:85%;padding:14px 18px;border-radius:var(--radius);font-size:13.5px;line-height:1.7;animation:slideUp .3s ease}
+    .chat-bubble.user{align-self:flex-end;background:linear-gradient(135deg,var(--accent),var(--accent-dark));color:#fff;border-bottom-right-radius:4px}
+    .chat-bubble.bot{align-self:flex-start;background:var(--bg-card);border:1px solid var(--border-glass);color:var(--text-secondary);border-bottom-left-radius:4px}
+    .chat-bubble.bot strong{color:var(--text-primary)}
+    .chat-input-row{display:flex;gap:10px}
+    .chat-input-row input{flex:1}
+    .chat-input-row .btn{flex-shrink:0}
+    .chat-typing{font-size:12px;color:var(--text-muted);padding:8px 0;display:none;align-items:center;gap:8px}
+    .chat-typing.show{display:flex}
+    .typing-dots span{width:6px;height:6px;border-radius:50%;background:var(--text-muted);display:inline-block;animation:typingBounce 1.2s infinite}
+    .typing-dots span:nth-child(2){animation-delay:.2s}
+    .typing-dots span:nth-child(3){animation-delay:.4s}
+    @keyframes typingBounce{0%,80%,100%{transform:translateY(0)}40%{transform:translateY(-6px)}}
+    .chat-welcome{text-align:center;padding:60px 20px;color:var(--text-muted)}
+    .chat-welcome i{font-size:48px;margin-bottom:16px;display:block;color:var(--accent);opacity:.4}
+    @media(max-width:768px){.cap-tabs{gap:6px}.cap-tab{padding:8px 14px;font-size:12px}.chat-bubble{max-width:95%}}
+</style>
+
+<!-- HEADER -->
+<div class="cap-header">
+    <h2>
+        <span class="icon"><i class="fa-solid fa-user-graduate"></i></span>
+        Capacitación
+    </h2>
+    <span class="badge-pill badge-green">Guía interna — Asesores Areandina</span>
+</div>
+
+<!-- TABS -->
+<div class="cap-tabs">
+    <button class="cap-tab active" onclick="switchTab('guia')" id="tabGuia">
+        <i class="fa-solid fa-book"></i> Guía / Wiki
+    </button>
+    <button class="cap-tab" onclick="switchTab('chat')" id="tabChat">
+        <i class="fa-solid fa-robot"></i> Chatbot IA
+    </button>
+</div>
+
+<!-- ============ SECCIÓN 1: GUÍA ============ -->
+<div class="cap-section active" id="secGuia">
+
+<!-- TEMA 1 -->
+<div class="accordion open" onclick="toggleAcc(this)">
+    <div class="accordion-head">
+        <div class="acc-left">
+            <div class="acc-num" style="background:linear-gradient(135deg,var(--accent),var(--accent-dark))">1</div>
+            <span class="acc-title">Líneas de admisión</span>
+        </div>
+        <i class="fa-solid fa-chevron-down acc-arrow"></i>
+    </div>
+    <div class="accordion-body"><div class="acc-content">
+        <h4><i class="fa-solid fa-graduation-cap"></i> Pregrado (PRE)</h4>
+        <ul>
+            <li><strong>Primera vez:</strong> Ingreso estándar. El estudiante nunca ha cursado estudios universitarios.</li>
+            <li><strong>SENA:</strong> Tienen título SENA y homologan materias. Se inscriben en FDI como <span class="badge-pill badge-green">SENA primera vez</span>. Al finalizar, se descarga el acta de homologación para que el estudiante la firme a mano.</li>
+            <li><strong>Transferencia externa:</strong> Vienen de otra universidad (sin convenio) y aplican a estudio de homologación. Se debe crear un <span class="badge-pill badge-orange">caso en HubSpot</span> indicando "transferencia externa".</li>
+        </ul>
+        <h4><i class="fa-solid fa-award"></i> Posgrado (POS)</h4>
+        <ul>
+            <li><strong>Normal:</strong> Ingreso estándar a especialización o maestría.</li>
+            <li><strong>Extensión:</strong> El estudiante tomó créditos de la especialización como opción de grado en el pregrado y quiere continuar. Se crea <span class="badge-pill badge-orange">caso en HubSpot</span> indicando "extensión".</li>
+        </ul>
+        <h4><i class="fa-solid fa-clone"></i> Segundo pregrado / Segundo posgrado</h4>
+        <p>Persona que ya tiene un pregrado y quiere otro, o ya tiene una especialización y va a maestría. El proceso es el mismo según la línea (PRE o POS).</p>
+    </div></div>
+</div>
+
+<!-- TEMA 2 -->
+<div class="accordion" onclick="toggleAcc(this)">
+    <div class="accordion-head">
+        <div class="acc-left">
+            <div class="acc-num" style="background:linear-gradient(135deg,var(--accent-blue),#2563eb)">2</div>
+            <span class="acc-title">Documentos requeridos por línea</span>
+        </div>
+        <i class="fa-solid fa-chevron-down acc-arrow"></i>
+    </div>
+    <div class="accordion-body"><div class="acc-content">
+        <table class="docs-table">
+            <thead><tr><th>Línea</th><th>Documentos</th></tr></thead>
+            <tbody>
+                <tr><td><span class="badge-pill badge-green">PRE Primera vez</span></td><td>Cédula, EPS, Título de bachiller, ICFES</td></tr>
+                <tr><td><span class="badge-pill badge-green">PRE SENA</span></td><td>Cédula, EPS, Título SENA, Acta de homologación firmada a mano (la entregamos nosotros), Nota SENA</td></tr>
+                <tr><td><span class="badge-pill badge-blue">POS Normal</span></td><td>Cédula, EPS, Título de pregrado</td></tr>
+                <tr><td><span class="badge-pill badge-blue">POS Extensión</span></td><td>Cédula, EPS, Título de pregrado + Caso HubSpot creado</td></tr>
+            </tbody>
+        </table>
+        <div class="warn-box">
+            <strong>⚠ Casos especiales — Compromisos:</strong><br>
+            • <strong>SENA pendiente de grado:</strong> puede inscribirse, pero debe firmar un compromiso indicando que en los siguientes 4 meses entrega el título.<br>
+            • <strong>Extensión pendiente de grado de pregrado:</strong> mismo compromiso de 4 meses + debe compartir comprobante de pago de derechos de grado.
+        </div>
+    </div></div>
+</div>
+
+<!-- TEMA 3 -->
+<div class="accordion" onclick="toggleAcc(this)">
+    <div class="accordion-head">
+        <div class="acc-left">
+            <div class="acc-num" style="background:linear-gradient(135deg,var(--accent-purple),#6d28d9)">3</div>
+            <span class="acc-title">Proceso de inscripción paso a paso</span>
+        </div>
+        <i class="fa-solid fa-chevron-down acc-arrow"></i>
+    </div>
+    <div class="accordion-body"><div class="acc-content">
+        <h4><i class="fa-solid fa-1"></i> Inscripción en plataforma FDI</h4>
+        <ul>
+            <li><strong>Pregrado →</strong> <a class="link-ext" href="https://fdifuaa.ilumno.com/inscripcion/pregrado/home/andina/pregrado" target="_blank">fdifuaa.ilumno.com/.../pregrado</a></li>
+            <li><strong>Posgrado →</strong> <a class="link-ext" href="https://fdifuaa.ilumno.com/inscripcion/pregrado/home/andina/posgrado" target="_blank">fdifuaa.ilumno.com/.../posgrado</a></li>
+        </ul>
+        <h4><i class="fa-solid fa-2"></i> Cargue de documentos</h4>
+        <p>Se realiza en la misma plataforma FDI, después de la inscripción.</p>
+        <h4><i class="fa-solid fa-3"></i> Creación de caso en HubSpot</h4>
+        <p>Solo aplica para <span class="badge-pill badge-orange">transferencia externa</span> y <span class="badge-pill badge-orange">extensión</span>. Crear el caso indicando el tipo correspondiente.</p>
+        <h4><i class="fa-solid fa-4"></i> Seguimiento en Tablero-2026</h4>
+        <p>Excel interno donde se monitorea el estado de revisión documental o del caso.</p>
+    </div></div>
+</div>
+
+<!-- TEMA 4 -->
+<div class="accordion" onclick="toggleAcc(this)">
+    <div class="accordion-head">
+        <div class="acc-left">
+            <div class="acc-num" style="background:linear-gradient(135deg,var(--accent-orange),#d97706)">4</div>
+            <span class="acc-title">Gestión en HubSpot</span>
+        </div>
+        <i class="fa-solid fa-chevron-down acc-arrow"></i>
+    </div>
+    <div class="accordion-body"><div class="acc-content">
+        <ul>
+            <li>Para ver cómo pagó el prospecto, el asesor debe ser <strong>propietario del negocio</strong> en HubSpot.</li>
+            <li>Si <strong>no es propietario</strong>, el negocio debe estar en Bogotá y tener el CSU del asesor en el campo <span class="badge-pill badge-purple">"site"</span> del negocio.</li>
+            <li>Si <strong>eres propietario</strong>, ninguna restricción adicional aplica.</li>
+            <li>Se deben dejar <span class="badge-pill badge-pink">4 actividades de seguimiento</span> programadas en fechas diferentes dentro del negocio en HubSpot.</li>
+        </ul>
+    </div></div>
+</div>
+
+<!-- TEMA 5 -->
+<div class="accordion" onclick="toggleAcc(this)">
+    <div class="accordion-head">
+        <div class="acc-left">
+            <div class="acc-num" style="background:linear-gradient(135deg,#E91E8C,#be185d)">5</div>
+            <span class="acc-title">Gestión en Zoho CRM (CRM personal)</span>
+        </div>
+        <i class="fa-solid fa-chevron-down acc-arrow"></i>
+    </div>
+    <div class="accordion-body"><div class="acc-content">
+        <ul>
+            <li>Registrar <strong>toda gestión</strong> en Zoho.</li>
+        </ul>
+        <h4><i class="fa-solid fa-list-ol"></i> Estados en Zoho</h4>
+        <div class="step-flow">
+            <span class="step-box">Inscrito pendiente revisión docs</span>
+            <i class="fa-solid fa-arrow-right step-arrow"></i>
+            <span class="step-box">Admitido</span>
+            <i class="fa-solid fa-arrow-right step-arrow"></i>
+            <span class="step-box">MTR (matrícula en trámite)</span>
+            <i class="fa-solid fa-arrow-right step-arrow"></i>
+            <span class="step-box" style="background:rgba(34,197,94,.15);border-color:rgba(34,197,94,.25)">Matriculado ✓</span>
+        </div>
+        <ul>
+            <li><strong>Matriculado</strong> se asigna una vez el estudiante pague.</li>
+            <li>Si el prospecto está en cualquiera de los primeros tres estados, se registra también en el <span class="badge-pill badge-blue">Excel Funnel</span>.</li>
+            <li>Cada acción de seguimiento (llamada, WhatsApp, etc.) debe actualizar el estado en Zoho.</li>
+        </ul>
+    </div></div>
+</div>
+
+<!-- TEMA 6 -->
+<div class="accordion" onclick="toggleAcc(this)">
+    <div class="accordion-head">
+        <div class="acc-left">
+            <div class="acc-num" style="background:linear-gradient(135deg,#06b6d4,#0891b2)">6</div>
+            <span class="acc-title">Cohortes</span>
+        </div>
+        <i class="fa-solid fa-chevron-down acc-arrow"></i>
+    </div>
+    <div class="accordion-body"><div class="acc-content">
+        <ul>
+            <li><strong>Pregrado:</strong> Cohortes A, B y C por semestre.</li>
+            <li><strong>Posgrado:</strong> Cohortes propias por semestre (pueden ser B, D, F u otras según el periodo).</li>
+            <li><strong>Maestrías:</strong> Cohortes propias.</li>
+        </ul>
+        <div class="warn-box">
+            Cada cohorte tiene una <strong>fecha de inicio distinta</strong>. Consultar el <strong>Tablero-2026</strong> o al líder para las fechas vigentes de cada semestre activo.
+        </div>
+    </div></div>
+</div>
+
+<!-- TEMA 7 -->
+<div class="accordion" onclick="toggleAcc(this)">
+    <div class="accordion-head">
+        <div class="acc-left">
+            <div class="acc-num" style="background:linear-gradient(135deg,#10b981,#059669)">7</div>
+            <span class="acc-title">Seguimiento al prospecto</span>
+        </div>
+        <i class="fa-solid fa-chevron-down acc-arrow"></i>
+    </div>
+    <div class="accordion-body"><div class="acc-content">
+        <p>El seguimiento se hace por múltiples canales: <strong>llamada telefónica, WhatsApp, correo</strong>. Cada contacto debe quedar registrado en <strong>Zoho</strong> y las actividades programadas en <strong>HubSpot</strong>.</p>
+        <h4><i class="fa-solid fa-rotate"></i> Ciclo del prospecto</h4>
+        <div class="step-flow">
+            <span class="step-box">Inscrito</span>
+            <i class="fa-solid fa-arrow-right step-arrow"></i>
+            <span class="step-box">Revisión docs</span>
+            <i class="fa-solid fa-arrow-right step-arrow"></i>
+            <span class="step-box">Admitido</span>
+            <i class="fa-solid fa-arrow-right step-arrow"></i>
+            <span class="step-box">MTR</span>
+            <i class="fa-solid fa-arrow-right step-arrow"></i>
+            <span class="step-box" style="background:rgba(34,197,94,.15);border-color:rgba(34,197,94,.25)">Matriculado ✓</span>
+        </div>
+    </div></div>
+</div>
+
+</div><!-- /secGuia -->
+
+<!-- ============ SECCIÓN 2: CHATBOT ============ -->
+<div class="cap-section" id="secChat">
+    <div class="glass-card chat-container">
+        <h3 style="display:flex;align-items:center;gap:10px;margin-bottom:20px">
+            <i class="fa-solid fa-robot" style="color:var(--accent)"></i>
+            Asistente de Capacitación
+            <span class="badge-pill badge-green" style="font-size:10px">IA Claude</span>
+        </h3>
+        <div class="chat-messages" id="chatMessages">
+            <div class="chat-welcome">
+                <i class="fa-solid fa-comments"></i>
+                <p>Pregunta lo que necesites sobre el proceso comercial de Areandina.<br>
+                <strong>Ej:</strong> "¿Qué documentos necesita un SENA pendiente de grado?"</p>
+            </div>
+        </div>
+        <div class="chat-typing" id="chatTyping">
+            <div class="typing-dots"><span></span><span></span><span></span></div>
+            Pensando...
+        </div>
+        <div class="chat-input-row">
+            <input type="text" id="chatInput" placeholder="Escríbeme tu duda sobre el proceso..." onkeydown="if(event.key==='Enter')sendChat()">
+            <button class="btn btn-primary" onclick="sendChat()" id="btnSendChat">
+                <i class="fa-solid fa-paper-plane"></i> Enviar
+            </button>
+        </div>
+    </div>
+</div>
+
+<!-- FOOTER -->
+<div class="app-footer">
+    <span>Módulo de Capacitación — Asesores Areandina</span>
+    <span class="footer-version">v1.0</span>
+</div>
+
+<script>
+function switchTab(tab){
+    document.querySelectorAll('.cap-tab').forEach(t=>t.classList.remove('active'));
+    document.querySelectorAll('.cap-section').forEach(s=>s.classList.remove('active'));
+    if(tab==='guia'){document.getElementById('tabGuia').classList.add('active');document.getElementById('secGuia').classList.add('active')}
+    else{document.getElementById('tabChat').classList.add('active');document.getElementById('secChat').classList.add('active')}
+}
+function toggleAcc(el){
+    event.stopPropagation();
+    const head=event.target.closest('.accordion-head');
+    if(!head)return;
+    const acc=head.closest('.accordion');
+    acc.classList.toggle('open');
+}
+async function sendChat(){
+    const input=document.getElementById('chatInput');
+    const msg=input.value.trim();
+    if(!msg)return;
+    const msgs=document.getElementById('chatMessages');
+    // Clear welcome
+    const welcome=msgs.querySelector('.chat-welcome');
+    if(welcome)welcome.remove();
+    // User bubble
+    const ub=document.createElement('div');
+    ub.className='chat-bubble user';
+    ub.textContent=msg;
+    msgs.appendChild(ub);
+    input.value='';
+    msgs.scrollTop=msgs.scrollHeight;
+    // Show typing
+    document.getElementById('chatTyping').classList.add('show');
+    document.getElementById('btnSendChat').disabled=true;
+    try{
+        const res=await fetch('/capacitacion/api/chat',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({message:msg})});
+        const data=await res.json();
+        const bb=document.createElement('div');
+        bb.className='chat-bubble bot';
+        if(data.response){
+            bb.innerHTML=data.response.replace(/\*\*(.*?)\*\*/g,'<strong>$1</strong>').replace(/\n/g,'<br>');
+        }else{
+            bb.textContent=data.error||'Error al obtener respuesta.';
+        }
+        msgs.appendChild(bb);
+    }catch(e){
+        const eb=document.createElement('div');
+        eb.className='chat-bubble bot';
+        eb.textContent='Error de conexión. Intenta de nuevo.';
+        msgs.appendChild(eb);
+    }
+    document.getElementById('chatTyping').classList.remove('show');
+    document.getElementById('btnSendChat').disabled=false;
+    msgs.scrollTop=msgs.scrollHeight;
+}
+</script>
+{% endblock %}

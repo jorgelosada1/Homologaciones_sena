@@ -216,14 +216,39 @@ def sena():
     )
 
 @app.route("/piezas")
+@app.route("/piezas/<path:subfolder>")
 @login_required
-def piezas():
-    carpeta = "static/piezas"
-    imagenes = os.listdir(carpeta) if os.path.exists(carpeta) else []
+def piezas(subfolder=""):
+    carpeta = os.path.join("static", "piezas", subfolder)
+    # Security: prevent path traversal
+    abs_carpeta = os.path.abspath(carpeta)
+    abs_base = os.path.abspath(os.path.join("static", "piezas"))
+    if not abs_carpeta.startswith(abs_base):
+        return redirect("/piezas")
+
+    if not os.path.exists(carpeta):
+        return redirect("/piezas")
+
+    items = os.listdir(carpeta) if os.path.exists(carpeta) else []
+    carpetas = sorted([d for d in items if os.path.isdir(os.path.join(carpeta, d))])
+    imagenes = sorted([f for f in items if os.path.isfile(os.path.join(carpeta, f)) and allowed_file(f, ALLOWED_IMAGE_EXTENSIONS)])
+
+    # Build breadcrumb
+    breadcrumb = []
+    if subfolder:
+        parts = subfolder.replace("\\", "/").split("/")
+        for i, part in enumerate(parts):
+            breadcrumb.append({
+                "name": part,
+                "path": "/".join(parts[:i+1])
+            })
 
     return render_template(
         "piezas.html",
-        imagenes=imagenes
+        carpetas=carpetas,
+        imagenes=imagenes,
+        subfolder=subfolder,
+        breadcrumb=breadcrumb
     )
 
 @app.route("/aguachica", methods=["GET", "POST"])
@@ -709,16 +734,24 @@ def admin_precios():
 
 
 # =====================================================
-# ADMIN - PIEZAS (SUBIR IMÁGENES)
+# ADMIN - PIEZAS (SUBIR IMÁGENES CON CARPETAS)
 # =====================================================
 @app.route("/admin/piezas", methods=["GET", "POST"])
+@app.route("/admin/piezas/<path:subfolder>", methods=["GET", "POST"])
 @login_required
-def admin_piezas():
+def admin_piezas(subfolder=""):
     check = admin_required()
     if check:
         return check
 
-    os.makedirs(PIEZAS_DIR, exist_ok=True)
+    current_dir = os.path.join(PIEZAS_DIR, subfolder)
+    # Security: prevent path traversal
+    abs_current = os.path.abspath(current_dir)
+    abs_base = os.path.abspath(PIEZAS_DIR)
+    if not abs_current.startswith(abs_base):
+        return redirect("/admin/piezas")
+
+    os.makedirs(current_dir, exist_ok=True)
 
     if request.method == "POST":
         action = request.form.get("action")
@@ -728,19 +761,55 @@ def admin_piezas():
             for file in files:
                 if file and file.filename and allowed_file(file.filename, ALLOWED_IMAGE_EXTENSIONS):
                     filename = secure_filename(file.filename)
-                    file.save(os.path.join(PIEZAS_DIR, filename))
+                    file.save(os.path.join(current_dir, filename))
 
         elif action == "delete":
             filename = request.form.get("filename")
             if filename:
-                filepath = os.path.join(PIEZAS_DIR, secure_filename(filename))
+                filepath = os.path.join(current_dir, secure_filename(filename))
                 if os.path.exists(filepath):
                     os.remove(filepath)
 
-        return redirect("/admin/piezas")
+        elif action == "create_folder":
+            folder_name = request.form.get("folder_name", "").strip()
+            if folder_name:
+                safe_name = secure_filename(folder_name)
+                if safe_name:
+                    new_folder = os.path.join(current_dir, safe_name)
+                    os.makedirs(new_folder, exist_ok=True)
 
-    imagenes = os.listdir(PIEZAS_DIR) if os.path.exists(PIEZAS_DIR) else []
-    return render_template("admin_piezas.html", imagenes=imagenes)
+        elif action == "delete_folder":
+            folder_name = request.form.get("folder_name")
+            if folder_name:
+                folder_path = os.path.join(current_dir, secure_filename(folder_name))
+                if os.path.exists(folder_path) and os.path.isdir(folder_path):
+                    import shutil
+                    shutil.rmtree(folder_path)
+
+        redirect_url = "/admin/piezas" + ("/" + subfolder if subfolder else "")
+        return redirect(redirect_url)
+
+    items = os.listdir(current_dir) if os.path.exists(current_dir) else []
+    carpetas = sorted([d for d in items if os.path.isdir(os.path.join(current_dir, d))])
+    imagenes = sorted([f for f in items if os.path.isfile(os.path.join(current_dir, f)) and allowed_file(f, ALLOWED_IMAGE_EXTENSIONS)])
+
+    # Build breadcrumb
+    breadcrumb = []
+    if subfolder:
+        parts = subfolder.replace("\\", "/").split("/")
+        for i, part in enumerate(parts):
+            breadcrumb.append({
+                "name": part,
+                "path": "/".join(parts[:i+1])
+            })
+
+    return render_template(
+        "admin_piezas.html",
+        carpetas=carpetas,
+        imagenes=imagenes,
+        subfolder=subfolder,
+        breadcrumb=breadcrumb
+    )
 
 
 # =====================================================
