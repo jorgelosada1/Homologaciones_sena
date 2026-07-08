@@ -7,7 +7,7 @@
     <title>Acceso – Areandina</title>
     <meta name="description" content="Inicio de sesión al Sistema de Homologaciones SENA – Areandina.">
     <link rel="icon" type="image/jpeg" href="{{ url_for('logo') }}">
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap"
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&family=Inter:wght@300;400;500;600&display=swap"
         rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
 
@@ -24,159 +24,173 @@
             display: flex;
             align-items: center;
             justify-content: center;
-            background: #ffffff;
+            background: #0b0f19;
             position: relative;
             overflow: hidden;
         }
 
-        /* Elegant geometric background */
+        /* Premium animated mesh background */
+        .mesh-bg {
+            position: fixed;
+            inset: 0;
+            z-index: 0;
+            background: radial-gradient(at 0% 0%, #15220c 0px, transparent 50%),
+                        radial-gradient(at 100% 0%, #1e111d 0px, transparent 50%),
+                        radial-gradient(at 100% 100%, #1c2712 0px, transparent 50%),
+                        radial-gradient(at 0% 100%, #0e1628 0px, transparent 50%);
+            opacity: 0.8;
+        }
+
+        .bg-grid {
+            position: fixed;
+            inset: 0;
+            background-image: linear-gradient(rgba(255, 255, 255, 0.015) 1px, transparent 1px),
+                              linear-gradient(90deg, rgba(255, 255, 255, 0.015) 1px, transparent 1px);
+            background-size: 40px 40px;
+            z-index: 0;
+            pointer-events: none;
+        }
+
+        /* Elegant geometric shapes floating */
         .bg-shapes {
             position: fixed;
             inset: 0;
             pointer-events: none;
-            z-index: 0;
+            z-index: 1;
             overflow: hidden;
         }
 
         .bg-shapes .shape {
             position: absolute;
             border-radius: 50%;
-            opacity: 0;
+            opacity: 0.15;
+            filter: blur(12px);
             animation: floatShape linear infinite;
         }
 
         .bg-shapes .shape.circle {
-            background: rgba(127, 181, 54, 0.18);
+            background: linear-gradient(135deg, #7fb536, #4ade80);
         }
 
         .bg-shapes .shape.ring {
             background: transparent;
-            border: 2.5px solid rgba(127, 181, 54, 0.22);
+            border: 4px solid rgba(127, 181, 54, 0.3);
         }
 
         .bg-shapes .shape.square {
-            border-radius: 12px;
-            background: rgba(230, 0, 126, 0.12);
+            border-radius: 24px;
+            background: linear-gradient(135deg, #e6007e, #f43f5e);
         }
 
         .bg-shapes .shape.dot {
-            background: rgba(245, 156, 47, 0.25);
+            background: #f59c2f;
         }
 
         @keyframes floatShape {
             0% {
                 opacity: 0;
-                transform: translateY(100vh) rotate(0deg) scale(0.5);
+                transform: translateY(110vh) rotate(0deg) scale(0.6);
             }
-            10% {
-                opacity: 1;
+            15% {
+                opacity: 0.25;
             }
-            90% {
-                opacity: 1;
+            85% {
+                opacity: 0.25;
             }
             100% {
                 opacity: 0;
-                transform: translateY(-20vh) rotate(360deg) scale(1);
+                transform: translateY(-20vh) rotate(360deg) scale(1.2);
             }
-        }
-
-        /* Subtle grid pattern */
-        body::before {
-            content: '';
-            position: fixed;
-            inset: 0;
-            background-image:
-                linear-gradient(rgba(127, 181, 54, 0.06) 1px, transparent 1px),
-                linear-gradient(90deg, rgba(127, 181, 54, 0.06) 1px, transparent 1px);
-            background-size: 60px 60px;
-            pointer-events: none;
-            z-index: 0;
-        }
-
-        /* Soft gradient corners */
-        body::after {
-            content: '';
-            position: fixed;
-            inset: 0;
-            background:
-                radial-gradient(ellipse at 0% 0%, rgba(127, 181, 54, 0.15) 0%, transparent 50%),
-                radial-gradient(ellipse at 100% 100%, rgba(230, 0, 126, 0.10) 0%, transparent 50%),
-                radial-gradient(ellipse at 100% 0%, rgba(245, 156, 47, 0.08) 0%, transparent 40%);
-            pointer-events: none;
-            z-index: 0;
         }
 
         .login-container {
             position: relative;
-            z-index: 1;
+            z-index: 2;
             width: 100%;
-            max-width: 420px;
-            padding: 20px;
+            max-width: 440px;
+            padding: 24px;
+            animation: cardFadeIn 0.6s cubic-bezier(0.16, 1, 0.3, 1) both;
+        }
+
+        @keyframes cardFadeIn {
+            from { opacity: 0; transform: translateY(30px); }
+            to { opacity: 1; transform: translateY(0); }
         }
 
         .login-card {
-            background: #ffffff;
-            border: 1px solid #e5e7eb;
-            border-radius: 20px;
+            background: rgba(17, 24, 39, 0.7);
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+            border: 1px solid rgba(255, 255, 255, 0.08);
+            border-radius: 24px;
             padding: 48px 40px;
-            box-shadow: 0 8px 40px rgba(0, 0, 0, 0.06);
-            animation: cardIn 0.5s cubic-bezier(0.4, 0, 0.2, 1);
+            box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
+            position: relative;
+            overflow: hidden;
         }
 
-        @keyframes cardIn {
-            from { opacity: 0; transform: translateY(20px); }
-            to { opacity: 1; transform: translateY(0); }
+        .login-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 4px;
+            background: linear-gradient(90deg, #7fb536, #e6007e);
         }
 
         .login-logo {
             text-align: center;
-            margin-bottom: 12px;
+            margin-bottom: 36px;
         }
 
         .login-logo .icon-circle {
-            width: 64px;
-            height: 64px;
-            border-radius: 16px;
-            background: #7fb536;
+            width: 68px;
+            height: 68px;
+            border-radius: 18px;
+            background: linear-gradient(135deg, #7fb536, #5d8b22);
             display: inline-flex;
             align-items: center;
             justify-content: center;
-            font-size: 28px;
+            font-size: 30px;
             color: #ffffff;
-            margin-bottom: 16px;
+            margin-bottom: 18px;
+            box-shadow: 0 8px 24px rgba(127, 181, 54, 0.3);
         }
 
         .login-logo h1 {
-            font-size: 24px;
-            font-weight: 700;
-            color: #1f2937;
-            margin-bottom: 4px;
+            font-family: 'Outfit', sans-serif;
+            font-size: 26px;
+            font-weight: 800;
+            color: #ffffff;
+            margin-bottom: 6px;
+            letter-spacing: -0.02em;
         }
 
         .login-logo p {
-            font-size: 12px;
-            color: #9ca3af;
-            letter-spacing: 1.5px;
+            font-size: 11px;
+            color: rgba(255, 255, 255, 0.45);
+            letter-spacing: 2.5px;
             text-transform: uppercase;
-            font-weight: 500;
+            font-weight: 700;
         }
 
         .login-form {
-            margin-top: 32px;
+            margin-top: 24px;
         }
 
         .form-group {
-            margin-bottom: 20px;
+            margin-bottom: 22px;
         }
 
         .form-group label {
             display: block;
-            font-size: 12px;
-            font-weight: 600;
-            color: #6b7280;
+            font-size: 11px;
+            font-weight: 700;
+            color: rgba(255, 255, 255, 0.6);
             margin-bottom: 8px;
             text-transform: uppercase;
-            letter-spacing: 0.5px;
+            letter-spacing: 0.8px;
         }
 
         .input-wrapper {
@@ -185,30 +199,31 @@
 
         .input-wrapper i {
             position: absolute;
-            left: 14px;
+            left: 16px;
             top: 50%;
             transform: translateY(-50%);
-            color: #9ca3af;
+            color: rgba(255, 255, 255, 0.3);
             font-size: 14px;
             transition: color 0.25s;
         }
 
         .input-wrapper input {
             width: 100%;
-            padding: 12px 14px 12px 42px;
-            border-radius: 10px;
-            border: 1px solid #e5e7eb;
-            background: #ffffff;
-            color: #1f2937;
+            padding: 14px 16px 14px 44px;
+            border-radius: 12px;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            background: rgba(255, 255, 255, 0.03);
+            color: #ffffff;
             font-family: 'Inter', sans-serif;
             font-size: 14px;
-            transition: all 0.25s;
+            transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
         }
 
         .input-wrapper input:focus {
             outline: none;
             border-color: #7fb536;
-            box-shadow: 0 0 0 3px rgba(127, 181, 54, 0.12);
+            background: rgba(255, 255, 255, 0.06);
+            box-shadow: 0 0 0 4px rgba(127, 181, 54, 0.15);
         }
 
         .input-wrapper input:focus ~ i {
@@ -216,32 +231,39 @@
         }
 
         .input-wrapper input::placeholder {
-            color: #d1d5db;
+            color: rgba(255, 255, 255, 0.2);
+        }
+
+        .input-wrapper input[readonly] {
+            color: rgba(255, 255, 255, 0.7);
+            background: rgba(255, 255, 255, 0.01);
+            border-color: rgba(255, 255, 255, 0.05);
+            cursor: not-allowed;
         }
 
         .login-btn {
             width: 100%;
-            padding: 12px;
+            padding: 14px;
             border: none;
-            border-radius: 10px;
-            background: #7fb536;
+            border-radius: 12px;
+            background: linear-gradient(135deg, #7fb536, #5d8b22);
             color: #ffffff;
             font-family: 'Inter', sans-serif;
-            font-size: 14px;
-            font-weight: 600;
+            font-size: 14.5px;
+            font-weight: 700;
             cursor: pointer;
-            transition: all 0.25s;
+            transition: all 0.25s ease;
             display: flex;
             align-items: center;
             justify-content: center;
             gap: 8px;
-            margin-top: 8px;
+            margin-top: 30px;
+            box-shadow: 0 8px 24px rgba(127, 181, 54, 0.25);
         }
 
         .login-btn:hover {
-            background: #6a9a2d;
-            transform: translateY(-1px);
-            box-shadow: 0 4px 12px rgba(127, 181, 54, 0.2);
+            transform: translateY(-2px);
+            box-shadow: 0 12px 28px rgba(127, 181, 54, 0.35);
         }
 
         .login-btn:active {
@@ -249,59 +271,53 @@
         }
 
         .error-msg {
-            background: #fef2f2;
-            border: 1px solid #fecaca;
-            color: #dc2626;
-            padding: 10px 14px;
-            border-radius: 10px;
-            font-size: 13px;
-            font-weight: 500;
-            margin-bottom: 20px;
+            background: rgba(239, 68, 68, 0.1);
+            border: 1px solid rgba(239, 68, 68, 0.25);
+            color: #f87171;
+            padding: 12px 16px;
+            border-radius: 12px;
+            font-size: 13.5px;
+            font-weight: 600;
+            margin-bottom: 24px;
             display: flex;
             align-items: center;
-            gap: 8px;
+            gap: 10px;
             animation: shake 0.4s ease;
         }
 
         @keyframes shake {
             0%, 100% { transform: translateX(0); }
-            25% { transform: translateX(-5px); }
-            75% { transform: translateX(5px); }
+            20%, 60% { transform: translateX(-6px); }
+            40%, 80% { transform: translateX(6px); }
         }
 
         .login-footer {
             text-align: center;
-            margin-top: 24px;
-            font-size: 11px;
-            color: #9ca3af;
+            margin-top: 36px;
+            font-size: 12px;
+            color: rgba(255, 255, 255, 0.35);
         }
 
         .login-footer span {
             color: #7fb536;
-            font-weight: 600;
-        }
-
-        /* Accent line */
-        .accent-line {
-            height: 3px;
-            border-radius: 3px;
-            background: #7fb536;
-            margin-bottom: 32px;
+            font-weight: 700;
         }
 
         @media (max-width: 480px) {
             .login-card {
-                padding: 36px 24px;
+                padding: 40px 24px;
             }
         }
     </style>
 </head>
 
 <body>
+    <div class="mesh-bg"></div>
+    <div class="bg-grid"></div>
+
     <div class="login-container">
         <div class="login-card">
-            <div class="accent-line"></div>
-
+            
             <div class="login-logo">
                 <div class="icon-circle">
                     <i class="fa-solid fa-graduation-cap"></i>
@@ -353,14 +369,14 @@
         (function() {
             const container = document.getElementById('bgShapes');
             const types = ['circle', 'ring', 'square', 'dot'];
-            const count = 18;
+            const count = 15;
 
             for (let i = 0; i < count; i++) {
                 const shape = document.createElement('div');
                 const type = types[Math.floor(Math.random() * types.length)];
-                const size = type === 'dot' ? (6 + Math.random() * 10) : (30 + Math.random() * 80);
+                const size = type === 'dot' ? (6 + Math.random() * 8) : (40 + Math.random() * 80);
                 const left = Math.random() * 100;
-                const duration = 18 + Math.random() * 25;
+                const duration = 20 + Math.random() * 20;
                 const delay = Math.random() * duration;
 
                 shape.className = `shape ${type}`;

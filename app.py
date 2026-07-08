@@ -3,8 +3,10 @@ import os
 import io
 import csv
 import json
+import uuid
+import time
 from datetime import datetime, timedelta
-from flask import redirect, Response
+from flask import redirect, Response, jsonify
 from flask import Flask, render_template, request, send_from_directory, session, url_for
 from functools import wraps
 from whatsapp import whatsapp_bp
@@ -847,8 +849,84 @@ def admin_brochures():
     return render_template("admin_brochures.html", archivos=archivos)
 
 
+
+# =====================================================
+# TABLÓN DE MENSAJES COLABORATIVO
+# =====================================================
+TABLON_FILE = "tablon.json"
+
+def get_tablon():
+    return load_json(TABLON_FILE)
+
+def save_tablon(data):
+    save_json(TABLON_FILE, data)
+
+
+@app.route("/tablon")
+@login_required
+def tablon():
+    return render_template("tablon.html")
+
+
+@app.route("/api/tablon", methods=["GET"])
+@login_required
+def api_tablon_get():
+    mensajes = get_tablon()
+    return jsonify({"mensajes": mensajes, "total": len(mensajes)})
+
+
+@app.route("/api/tablon", methods=["POST"])
+@login_required
+def api_tablon_post():
+    data = request.get_json(silent=True) or {}
+    titulo = (data.get("titulo") or "").strip()
+    texto = (data.get("texto") or "").strip()
+    categoria = (data.get("categoria") or "general").strip()
+    autor = (data.get("autor") or "").strip()
+
+    if not titulo or not texto:
+        return jsonify({"error": "Título y texto son requeridos"}), 400
+
+    # Sanitize inputs
+    titulo = titulo[:100]
+    texto = texto[:1000]
+    autor = autor[:50]
+
+    CATEGORIAS_VALIDAS = {"general", "comercial", "recordatorio", "urgente", "reunion", "anuncio"}
+    if categoria not in CATEGORIAS_VALIDAS:
+        categoria = "general"
+
+    nuevo = {
+        "id": str(uuid.uuid4()),
+        "titulo": titulo,
+        "categoria": categoria,
+        "autor": autor if autor else "Anónimo",
+        "texto": texto,
+        "timestamp": time.time(),
+    }
+
+    mensajes = get_tablon()
+    mensajes.append(nuevo)
+    save_tablon(mensajes)
+
+    return jsonify({"ok": True, "id": nuevo["id"]}), 201
+
+
+@app.route("/api/tablon/<msg_id>", methods=["DELETE"])
+@login_required
+def api_tablon_delete(msg_id):
+    mensajes = get_tablon()
+    original_len = len(mensajes)
+    mensajes = [m for m in mensajes if m.get("id") != msg_id]
+    if len(mensajes) == original_len:
+        return jsonify({"error": "Mensaje no encontrado"}), 404
+    save_tablon(mensajes)
+    return jsonify({"ok": True})
+
+
 # =====================================================
 # MAIN
 # =====================================================
 if __name__ == "__main__":
     app.run(debug=True, port=8000)
+

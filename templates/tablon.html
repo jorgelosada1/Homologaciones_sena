@@ -1,0 +1,703 @@
+{% extends "layout.html" %}
+{% block content %}
+
+<style>
+/* ===== TABLÓN — PREMIUM REDESIGN ===== */
+.tablon-wrap { max-width: 980px; margin: 0 auto; animation: fadeIn 0.5s ease; }
+
+/* ── HERO ── */
+.hero-banner {
+    position: relative;
+    border-radius: 20px;
+    overflow: hidden;
+    margin-bottom: 32px;
+    padding: 40px 40px 36px;
+    background: linear-gradient(135deg, #1a2a0e 0%, #2d4a1a 40%, #3d1a2a 100%);
+    box-shadow: 0 20px 60px rgba(0,0,0,0.2);
+}
+.hero-banner::before {
+    content: '';
+    position: absolute; inset: 0;
+    background:
+        radial-gradient(ellipse at 10% 50%, rgba(127,181,54,0.35) 0%, transparent 60%),
+        radial-gradient(ellipse at 90% 20%, rgba(230,0,126,0.25) 0%, transparent 55%),
+        radial-gradient(ellipse at 60% 90%, rgba(245,156,47,0.15) 0%, transparent 50%);
+    pointer-events: none;
+}
+.hero-grid {
+    position: absolute; inset: 0;
+    background-image:
+        linear-gradient(rgba(255,255,255,0.03) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(255,255,255,0.03) 1px, transparent 1px);
+    background-size: 32px 32px;
+    pointer-events: none;
+}
+.hero-content { position: relative; z-index: 2; }
+.hero-eyebrow {
+    display: inline-flex; align-items: center; gap: 8px;
+    background: rgba(127,181,54,0.2); border: 1px solid rgba(127,181,54,0.4);
+    color: #a8d96e; font-size: 11px; font-weight: 700;
+    letter-spacing: 2px; text-transform: uppercase;
+    padding: 5px 14px; border-radius: 20px; margin-bottom: 16px;
+}
+.hero-eyebrow .pulse { width: 6px; height: 6px; background: #4ade80; border-radius: 50%; animation: livePulse 1.8s infinite; }
+.hero-banner h1 {
+    font-size: 36px; font-weight: 800; color: #ffffff;
+    margin: 0 0 8px; line-height: 1.15;
+    text-shadow: 0 2px 20px rgba(0,0,0,0.3);
+}
+.hero-banner h1 span { color: #a8d96e; }
+.hero-sub { color: rgba(255,255,255,0.6); font-size: 14px; margin: 0 0 24px; }
+.hero-stats {
+    display: flex; gap: 20px; flex-wrap: wrap;
+}
+.hero-stat {
+    background: rgba(255,255,255,0.08);
+    border: 1px solid rgba(255,255,255,0.12);
+    border-radius: 12px; padding: 12px 18px;
+    text-align: center; backdrop-filter: blur(6px);
+    min-width: 90px;
+}
+.hero-stat .num { display: block; font-size: 22px; font-weight: 800; color: #fff; }
+.hero-stat .lbl { display: block; font-size: 10px; color: rgba(255,255,255,0.55); text-transform: uppercase; letter-spacing: 1px; margin-top: 2px; }
+.hero-deco {
+    position: absolute; right: 40px; top: 50%; transform: translateY(-50%);
+    font-size: 120px; opacity: 0.06; color: #fff; pointer-events: none;
+    z-index: 1;
+}
+@keyframes livePulse {
+    0%,100% { box-shadow: 0 0 0 0 rgba(74,222,128,0.5); }
+    50% { box-shadow: 0 0 0 5px rgba(74,222,128,0); }
+}
+
+/* ── LAYOUT SPLIT ── */
+.tablon-body { display: grid; grid-template-columns: 340px 1fr; gap: 24px; align-items: start; }
+
+/* ── FORM PANEL ── */
+.form-panel {
+    background: var(--bg-card);
+    border: 1px solid var(--border-color);
+    border-radius: 18px;
+    overflow: hidden;
+    box-shadow: var(--shadow-md);
+    position: sticky; top: 20px;
+}
+.form-panel-header {
+    padding: 20px 22px 16px;
+    background: linear-gradient(135deg, #f9fafb, #f3f4f6);
+    border-bottom: 1px solid var(--border-color);
+    display: flex; align-items: center; gap: 10px;
+}
+.form-panel-header .icon-wrap {
+    width: 36px; height: 36px; border-radius: 10px;
+    background: linear-gradient(135deg, var(--accent), var(--accent-dark));
+    color: white; display: flex; align-items: center; justify-content: center; font-size: 15px;
+    box-shadow: 0 4px 10px var(--accent-glow);
+}
+.form-panel-header h3 { margin: 0; font-size: 15px; color: var(--text-primary); }
+.form-panel-header p { margin: 2px 0 0; font-size: 11px; color: var(--text-muted); }
+.form-panel-body { padding: 20px 22px; }
+
+.field-group { margin-bottom: 14px; }
+.field-label {
+    display: block; font-size: 11px; font-weight: 700;
+    color: var(--text-secondary); text-transform: uppercase;
+    letter-spacing: 0.8px; margin-bottom: 6px;
+}
+.field-input {
+    width: 100%; padding: 10px 13px;
+    border: 1.5px solid var(--border-color);
+    border-radius: 10px; font-size: 13.5px;
+    background: var(--bg-primary); color: var(--text-primary);
+    font-family: 'Inter', sans-serif;
+    transition: all 0.2s ease;
+}
+.field-input:focus {
+    outline: none; border-color: var(--accent);
+    box-shadow: 0 0 0 3px rgba(127,181,54,0.15);
+    background: #fff;
+}
+.field-input::placeholder { color: var(--text-muted); }
+textarea.field-input { resize: vertical; min-height: 100px; line-height: 1.6; }
+.field-footer { display: flex; justify-content: space-between; align-items: center; margin-top: 4px; }
+.char-pill { font-size: 10px; color: var(--text-muted); }
+.char-pill.warn { color: var(--accent-orange); }
+.char-pill.limit { color: var(--danger); }
+
+.cat-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 6px; }
+.cat-option { display: none; }
+.cat-label {
+    display: flex; align-items: center; justify-content: center; gap: 5px;
+    padding: 7px 6px; border-radius: 8px; border: 1.5px solid var(--border-color);
+    font-size: 11px; font-weight: 600; cursor: pointer; transition: all 0.18s ease;
+    color: var(--text-secondary); text-align: center; user-select: none;
+}
+.cat-option:checked + .cat-label {
+    border-color: currentColor; background: rgba(127,181,54,0.1); color: var(--accent);
+    box-shadow: 0 2px 8px rgba(127,181,54,0.15);
+}
+.cat-label:hover { border-color: var(--accent); color: var(--accent); background: var(--accent-glow); }
+.cat-label[data-cat="general"]:has(~ .cat-option-check:checked) { color: #3b82f6; }
+.cat-option.cat-comercial:checked + .cat-label { color: #7fb536; border-color: #7fb536; background: rgba(127,181,54,0.1); }
+.cat-option.cat-recordatorio:checked + .cat-label { color: #d97706; border-color: #d97706; background: rgba(245,156,47,0.1); }
+.cat-option.cat-urgente:checked + .cat-label { color: #ef4444; border-color: #ef4444; background: rgba(239,68,68,0.1); }
+.cat-option.cat-reunion:checked + .cat-label { color: #8b5cf6; border-color: #8b5cf6; background: rgba(139,92,246,0.1); }
+.cat-option.cat-anuncio:checked + .cat-label { color: #e6007e; border-color: #e6007e; background: rgba(230,0,126,0.1); }
+.cat-option.cat-general:checked + .cat-label { color: #3b82f6; border-color: #3b82f6; background: rgba(59,130,246,0.1); }
+
+.btn-publish {
+    width: 100%; padding: 13px 20px; margin-top: 18px;
+    background: linear-gradient(135deg, #7fb536 0%, #5a8f22 100%);
+    color: #fff; border: none; border-radius: 12px;
+    font-size: 14px; font-weight: 700; font-family: 'Inter', sans-serif;
+    cursor: pointer; transition: all 0.25s ease;
+    display: flex; align-items: center; justify-content: center; gap: 8px;
+    box-shadow: 0 4px 14px rgba(127,181,54,0.4);
+    position: relative; overflow: hidden;
+}
+.btn-publish::before {
+    content: ''; position: absolute; inset: 0;
+    background: linear-gradient(135deg, rgba(255,255,255,0.15), transparent);
+    opacity: 0; transition: opacity 0.2s;
+}
+.btn-publish:hover::before { opacity: 1; }
+.btn-publish:hover { transform: translateY(-2px); box-shadow: 0 8px 24px rgba(127,181,54,0.45); }
+.btn-publish:active { transform: translateY(0); }
+.btn-publish:disabled { opacity: 0.6; pointer-events: none; }
+
+/* ── FEED PANEL ── */
+.feed-panel { min-width: 0; }
+
+.feed-toolbar {
+    display: flex; gap: 10px; margin-bottom: 18px; flex-wrap: wrap;
+}
+.search-field {
+    flex: 1; min-width: 180px; position: relative;
+}
+.search-field i { position: absolute; left: 13px; top: 50%; transform: translateY(-50%); color: var(--text-muted); font-size: 13px; pointer-events: none; }
+.search-field input {
+    width: 100%; padding: 10px 13px 10px 38px;
+    border: 1.5px solid var(--border-color); border-radius: 10px;
+    font-size: 13.5px; font-family: 'Inter', sans-serif;
+    background: var(--bg-card); color: var(--text-primary);
+    transition: all 0.2s; height: 42px;
+}
+.search-field input:focus { outline: none; border-color: var(--accent); box-shadow: 0 0 0 3px rgba(127,181,54,0.12); }
+.search-field input::placeholder { color: var(--text-muted); }
+
+.toolbar-select {
+    height: 42px; padding: 0 12px; border-radius: 10px;
+    border: 1.5px solid var(--border-color); background: var(--bg-card);
+    color: var(--text-primary); font-size: 13px; font-family: 'Inter', sans-serif;
+    cursor: pointer; min-width: 150px;
+}
+.toolbar-btn {
+    height: 42px; padding: 0 14px; border-radius: 10px;
+    border: 1.5px solid var(--border-color); background: var(--bg-card);
+    color: var(--text-secondary); font-size: 13px; font-family: 'Inter', sans-serif;
+    cursor: pointer; display: flex; align-items: center; gap: 6px;
+    transition: all 0.2s; white-space: nowrap;
+}
+.toolbar-btn:hover, .toolbar-btn.active { border-color: var(--accent); color: var(--accent); background: var(--accent-glow); }
+
+/* ── CATEGORY PILLS ROW ── */
+.cat-pills {
+    display: flex; gap: 6px; margin-bottom: 18px; flex-wrap: wrap;
+}
+.cat-pill {
+    padding: 5px 12px; border-radius: 20px;
+    border: 1.5px solid var(--border-color);
+    font-size: 11px; font-weight: 600; cursor: pointer;
+    background: var(--bg-card); color: var(--text-secondary);
+    transition: all 0.18s ease; user-select: none;
+    display: flex; align-items: center; gap: 4px;
+}
+.cat-pill:hover { border-color: var(--text-secondary); }
+.cat-pill.active-pill { border-color: var(--accent); color: var(--accent); background: var(--accent-glow); }
+.cat-pill[data-cat-pill="urgente"].active-pill { border-color: #ef4444; color: #ef4444; background: rgba(239,68,68,0.08); }
+.cat-pill[data-cat-pill="comercial"].active-pill { border-color: #7fb536; color: #5a8f22; background: rgba(127,181,54,0.1); }
+.cat-pill[data-cat-pill="recordatorio"].active-pill { border-color: #d97706; color: #d97706; background: rgba(245,156,47,0.1); }
+.cat-pill[data-cat-pill="reunion"].active-pill { border-color: #8b5cf6; color: #8b5cf6; background: rgba(139,92,246,0.1); }
+.cat-pill[data-cat-pill="anuncio"].active-pill { border-color: #e6007e; color: #e6007e; background: rgba(230,0,126,0.08); }
+.cat-pill[data-cat-pill="general"].active-pill { border-color: #3b82f6; color: #3b82f6; background: rgba(59,130,246,0.08); }
+
+/* ── FEED ── */
+#msgFeed {}
+.msg-card {
+    background: var(--bg-card);
+    border: 1px solid var(--border-color);
+    border-radius: 14px;
+    margin-bottom: 12px;
+    transition: all 0.25s ease;
+    position: relative; overflow: hidden;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.04);
+    animation: cardIn 0.4s ease both;
+}
+@keyframes cardIn {
+    from { opacity: 0; transform: translateY(12px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+.msg-card:hover { box-shadow: 0 8px 28px rgba(0,0,0,0.09); transform: translateY(-2px); }
+.msg-card.flash-new {
+    animation: flashNew 1s ease;
+}
+@keyframes flashNew {
+    0% { background: rgba(127,181,54,0.12); box-shadow: 0 0 0 2px rgba(127,181,54,0.4); }
+    100% { background: var(--bg-card); box-shadow: 0 2px 8px rgba(0,0,0,0.04); }
+}
+
+.card-accent { position: absolute; left: 0; top: 0; bottom: 0; width: 4px; border-radius: 14px 0 0 14px; }
+.card-inner { padding: 18px 20px 18px 24px; }
+
+.card-top { display: flex; align-items: flex-start; gap: 12px; margin-bottom: 12px; }
+.cat-icon-box {
+    width: 40px; height: 40px; border-radius: 10px; flex-shrink: 0;
+    display: flex; align-items: center; justify-content: center; font-size: 18px;
+}
+.card-titles { flex: 1; min-width: 0; }
+.card-title { font-size: 14.5px; font-weight: 700; color: var(--text-primary); margin: 0 0 5px; line-height: 1.3; }
+.card-meta { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
+.meta-chip {
+    display: inline-flex; align-items: center; gap: 4px;
+    font-size: 11px; color: var(--text-muted);
+}
+.meta-chip i { font-size: 10px; }
+.cat-tag {
+    display: inline-flex; align-items: center; gap: 4px;
+    padding: 2px 9px; border-radius: 20px;
+    font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.5px;
+}
+
+.card-body {
+    font-size: 13.5px; line-height: 1.75; color: var(--text-secondary);
+    white-space: pre-wrap; padding: 12px 14px;
+    background: var(--bg-secondary); border-radius: 10px;
+    margin-bottom: 12px;
+    border-left: 3px solid var(--border-color);
+}
+
+.card-footer { display: flex; align-items: center; gap: 8px; }
+.btn-sm {
+    display: inline-flex; align-items: center; gap: 5px;
+    padding: 6px 14px; border-radius: 8px;
+    font-size: 12px; font-weight: 600; font-family: 'Inter', sans-serif;
+    cursor: pointer; transition: all 0.2s ease; border: none;
+}
+.btn-copy-sm { background: var(--accent); color: white; }
+.btn-copy-sm:hover { background: var(--accent-dark); transform: translateY(-1px); }
+.btn-del-sm {
+    background: transparent; color: var(--text-muted);
+    border: 1px solid var(--border-color) !important;
+    border: none; margin-left: auto;
+}
+.btn-del-sm:hover { color: var(--danger); border-color: var(--danger) !important; background: rgba(239,68,68,0.06); }
+
+/* ── CATEGORY COLORS ── */
+:root {
+    --c-general: #3b82f6; --c-general-bg: rgba(59,130,246,0.1);
+    --c-comercial: #7fb536; --c-comercial-bg: rgba(127,181,54,0.12);
+    --c-recordatorio: #d97706; --c-recordatorio-bg: rgba(245,156,47,0.12);
+    --c-urgente: #ef4444; --c-urgente-bg: rgba(239,68,68,0.1);
+    --c-reunion: #8b5cf6; --c-reunion-bg: rgba(139,92,246,0.1);
+    --c-anuncio: #e6007e; --c-anuncio-bg: rgba(230,0,126,0.1);
+}
+
+/* ── EMPTY ── */
+.empty-board {
+    display: none; text-align: center; padding: 60px 20px;
+}
+.empty-board .empty-icon {
+    width: 72px; height: 72px; border-radius: 20px;
+    background: var(--bg-secondary); border: 1px solid var(--border-color);
+    display: flex; align-items: center; justify-content: center;
+    font-size: 28px; margin: 0 auto 18px; color: var(--text-muted);
+}
+.empty-board p { color: var(--text-muted); font-size: 14px; margin: 0; }
+.empty-board strong { display: block; color: var(--text-secondary); font-size: 16px; margin-bottom: 6px; }
+
+/* ── LIVE BAR ── */
+.live-bar {
+    display: flex; align-items: center; justify-content: space-between;
+    margin-bottom: 14px; padding: 8px 12px;
+    background: var(--bg-card); border: 1px solid var(--border-color);
+    border-radius: 10px; font-size: 12px; color: var(--text-muted);
+    box-shadow: var(--shadow-sm);
+}
+.live-dot-wrap { display: flex; align-items: center; gap: 6px; }
+.live-dot { width: 6px; height: 6px; border-radius: 50%; background: #4ade80; animation: livePulse 2s infinite; flex-shrink: 0; }
+.msg-count-badge {
+    background: var(--accent-glow); color: var(--accent);
+    padding: 2px 8px; border-radius: 10px; font-weight: 700; font-size: 11px;
+}
+
+/* ── RESPONSIVE ── */
+@media (max-width: 768px) {
+    .tablon-body { grid-template-columns: 1fr; }
+    .form-panel { position: static; }
+    .hero-banner h1 { font-size: 24px; }
+    .hero-deco { display: none; }
+    .hero-stats { gap: 10px; }
+    .hero-stat { padding: 10px 14px; }
+}
+@media (max-width: 480px) {
+    .hero-banner { padding: 24px 20px; }
+    .cat-grid { grid-template-columns: 1fr 1fr 1fr; }
+    .feed-toolbar { flex-direction: column; }
+    .toolbar-select, .toolbar-btn { width: 100%; }
+}
+</style>
+
+<div class="tablon-wrap">
+
+    <!-- ═══ HERO ═══ -->
+    <div class="hero-banner">
+        <div class="hero-grid"></div>
+        <div class="hero-content">
+            <div class="hero-eyebrow">
+                <div class="pulse"></div>
+                Tablón colaborativo · En vivo
+            </div>
+            <h1>Tablón de <span>Mensajes</span></h1>
+            <p class="hero-sub">Espacio compartido del equipo Areandina · Los mensajes se sincronizan para todos</p>
+            <div class="hero-stats">
+                <div class="hero-stat">
+                    <span class="num" id="heroTotal">—</span>
+                    <span class="lbl">Mensajes</span>
+                </div>
+                <div class="hero-stat">
+                    <span class="num">6</span>
+                    <span class="lbl">Categorías</span>
+                </div>
+                <div class="hero-stat">
+                    <span class="num" id="heroTime">—</span>
+                    <span class="lbl">Últ. sync</span>
+                </div>
+            </div>
+        </div>
+        <div class="hero-deco"><i class="fa-solid fa-bullhorn"></i></div>
+    </div>
+
+    <!-- ═══ BODY ═══ -->
+    <div class="tablon-body">
+
+        <!-- ── LEFT: FORM ── -->
+        <div class="form-panel">
+            <div class="form-panel-header">
+                <div class="icon-wrap"><i class="fa-solid fa-pen-to-square"></i></div>
+                <div>
+                    <h3>Nuevo mensaje</h3>
+                    <p>Visible para todo el equipo</p>
+                </div>
+            </div>
+            <div class="form-panel-body">
+                <form id="postForm" onsubmit="publicarMensaje(event)">
+
+                    <div class="field-group">
+                        <label class="field-label">Título</label>
+                        <input id="inpTitulo" type="text" class="field-input" placeholder="Ej: Reunión viernes 3pm" maxlength="100" required>
+                    </div>
+
+                    <div class="field-group">
+                        <label class="field-label">Categoría</label>
+                        <div class="cat-grid">
+                            <input type="radio" name="categoria" id="cat_general" value="general" class="cat-option cat-general" checked>
+                            <label for="cat_general" class="cat-label">📋 General</label>
+
+                            <input type="radio" name="categoria" id="cat_comercial" value="comercial" class="cat-option cat-comercial">
+                            <label for="cat_comercial" class="cat-label">💼 Comercial</label>
+
+                            <input type="radio" name="categoria" id="cat_recordatorio" value="recordatorio" class="cat-option cat-recordatorio">
+                            <label for="cat_recordatorio" class="cat-label">⏰ Recordatorio</label>
+
+                            <input type="radio" name="categoria" id="cat_urgente" value="urgente" class="cat-option cat-urgente">
+                            <label for="cat_urgente" class="cat-label">🔴 Urgente</label>
+
+                            <input type="radio" name="categoria" id="cat_reunion" value="reunion" class="cat-option cat-reunion">
+                            <label for="cat_reunion" class="cat-label">👥 Reunión</label>
+
+                            <input type="radio" name="categoria" id="cat_anuncio" value="anuncio" class="cat-option cat-anuncio">
+                            <label for="cat_anuncio" class="cat-label">📣 Anuncio</label>
+                        </div>
+                    </div>
+
+                    <div class="field-group">
+                        <label class="field-label">Tu nombre <span style="color:var(--text-muted);text-transform:none;font-weight:400">(opcional)</span></label>
+                        <input id="inpAutor" type="text" class="field-input" placeholder="Ej: Carlos · Equipo Bogotá" maxlength="50">
+                    </div>
+
+                    <div class="field-group">
+                        <label class="field-label">Mensaje</label>
+                        <textarea id="inpTexto" class="field-input" rows="5" placeholder="Escribe el contenido del mensaje aquí..." maxlength="1000" oninput="updateChar()" required></textarea>
+                        <div class="field-footer">
+                            <span></span>
+                            <span class="char-pill" id="charPill">0 / 1000</span>
+                        </div>
+                    </div>
+
+                    <button type="submit" class="btn-publish" id="btnPublicar">
+                        <i class="fa-solid fa-paper-plane"></i>
+                        Publicar mensaje
+                    </button>
+                </form>
+            </div>
+        </div>
+
+        <!-- ── RIGHT: FEED ── -->
+        <div class="feed-panel">
+
+            <!-- Toolbar -->
+            <div class="feed-toolbar">
+                <div class="search-field">
+                    <i class="fa-solid fa-magnifying-glass"></i>
+                    <input type="text" id="buscador" placeholder="Buscar en el tablón..." oninput="filtrar()">
+                </div>
+                <button class="toolbar-btn active" id="sortBtn" onclick="toggleSort()">
+                    <i class="fa-solid fa-arrow-down-wide-short" id="sortIcon"></i>
+                    <span id="sortLabel">Reciente</span>
+                </button>
+            </div>
+
+            <!-- Category pills -->
+            <div class="cat-pills">
+                <div class="cat-pill active-pill" data-cat-pill="" onclick="setCat('')">
+                    <i class="fa-solid fa-border-all"></i> Todas
+                </div>
+                <div class="cat-pill" data-cat-pill="general" onclick="setCat('general')">📋 General</div>
+                <div class="cat-pill" data-cat-pill="comercial" onclick="setCat('comercial')">💼 Comercial</div>
+                <div class="cat-pill" data-cat-pill="recordatorio" onclick="setCat('recordatorio')">⏰ Recordatorio</div>
+                <div class="cat-pill" data-cat-pill="urgente" onclick="setCat('urgente')">🔴 Urgente</div>
+                <div class="cat-pill" data-cat-pill="reunion" onclick="setCat('reunion')">👥 Reunión</div>
+                <div class="cat-pill" data-cat-pill="anuncio" onclick="setCat('anuncio')">📣 Anuncio</div>
+            </div>
+
+            <!-- Live bar -->
+            <div class="live-bar">
+                <div class="live-dot-wrap">
+                    <div class="live-dot"></div>
+                    <span id="liveText">Sincronizando...</span>
+                </div>
+                <span class="msg-count-badge" id="msgBadge">0 msgs</span>
+            </div>
+
+            <!-- Feed -->
+            <div id="msgFeed"></div>
+            <div class="empty-board" id="emptyBoard">
+                <div class="empty-icon"><i class="fa-solid fa-inbox"></i></div>
+                <strong>Sin mensajes aquí</strong>
+                <p>Sé el primero en publicar algo en el tablón</p>
+            </div>
+
+        </div>
+    </div>
+</div>
+
+<script>
+// ===== DATA & STATE =====
+let allMsgs = [];
+let sortAsc = false;
+let activeCat = '';
+let lastCount = -1;
+
+const CAT = {
+    general:      { label: '📋 General',      color: '#3b82f6', bg: 'rgba(59,130,246,0.12)',  icon: '📋' },
+    comercial:    { label: '💼 Comercial',     color: '#7fb536', bg: 'rgba(127,181,54,0.12)', icon: '💼' },
+    recordatorio: { label: '⏰ Recordatorio',  color: '#d97706', bg: 'rgba(245,156,47,0.12)', icon: '⏰' },
+    urgente:      { label: '🔴 Urgente',       color: '#ef4444', bg: 'rgba(239,68,68,0.1)',   icon: '🚨' },
+    reunion:      { label: '👥 Reunión',        color: '#8b5cf6', bg: 'rgba(139,92,246,0.1)',  icon: '👥' },
+    anuncio:      { label: '📣 Anuncio',       color: '#e6007e', bg: 'rgba(230,0,126,0.1)',   icon: '📣' },
+};
+
+// ===== CHAR COUNT =====
+function updateChar() {
+    const v = document.getElementById('inpTexto').value.length;
+    const pill = document.getElementById('charPill');
+    pill.textContent = `${v} / 1000`;
+    pill.className = 'char-pill' + (v > 900 ? ' limit' : v > 750 ? ' warn' : '');
+}
+
+// ===== SORT =====
+function toggleSort() {
+    sortAsc = !sortAsc;
+    document.getElementById('sortLabel').textContent = sortAsc ? 'Antiguo' : 'Reciente';
+    document.getElementById('sortIcon').className = sortAsc ? 'fa-solid fa-arrow-up-wide-short' : 'fa-solid fa-arrow-down-wide-short';
+    render(allMsgs);
+}
+
+// ===== CATEGORY FILTER =====
+function setCat(cat) {
+    activeCat = cat;
+    document.querySelectorAll('.cat-pill').forEach(p => {
+        const match = (p.dataset.catPill === cat);
+        p.classList.toggle('active-pill', match);
+    });
+    render(allMsgs);
+}
+
+// ===== RENDER =====
+function render(msgs, newIds = []) {
+    const q = document.getElementById('buscador').value.toLowerCase();
+
+    let filtered = msgs.filter(m => {
+        const catOk = !activeCat || m.categoria === activeCat;
+        const srchOk = !q || [m.titulo, m.texto, m.autor || '', m.categoria].some(s => s.toLowerCase().includes(q));
+        return catOk && srchOk;
+    });
+
+    filtered.sort((a, b) => sortAsc ? a.timestamp - b.timestamp : b.timestamp - a.timestamp);
+
+    // Hero stats
+    document.getElementById('heroTotal').textContent = msgs.length;
+    document.getElementById('msgBadge').textContent = `${filtered.length} msg${filtered.length !== 1 ? 's' : ''}`;
+
+    const feed = document.getElementById('msgFeed');
+    const empty = document.getElementById('emptyBoard');
+
+    if (filtered.length === 0) {
+        feed.innerHTML = '';
+        empty.style.display = 'block';
+        return;
+    }
+    empty.style.display = 'none';
+    feed.innerHTML = filtered.map((m, i) => cardHTML(m, i, newIds)).join('');
+}
+
+function cardHTML(m, idx, newIds) {
+    const isNew = newIds.includes(m.id);
+    const c = CAT[m.categoria] || CAT.general;
+    const delay = Math.min(idx * 0.04, 0.35);
+    const autor = (m.autor || 'Anónimo').trim();
+    const time = fmtTime(m.timestamp);
+
+    return `
+    <div class="msg-card ${isNew ? 'flash-new' : ''}" style="animation-delay:${delay}s" data-id="${m.id}">
+        <div class="card-accent" style="background:${c.color}"></div>
+        <div class="card-inner">
+            <div class="card-top">
+                <div class="cat-icon-box" style="background:${c.bg}; font-size:20px">${c.icon}</div>
+                <div class="card-titles">
+                    <div class="card-title">${esc(m.titulo)}</div>
+                    <div class="card-meta">
+                        <span class="cat-tag" style="background:${c.bg};color:${c.color}">${c.label}</span>
+                        <span class="meta-chip"><i class="fa-regular fa-clock"></i>${time}</span>
+                        <span class="meta-chip"><i class="fa-regular fa-user"></i>${esc(autor)}</span>
+                    </div>
+                </div>
+            </div>
+            <div class="card-body" style="border-left-color:${c.color}" id="cb_${m.id}">${esc(m.texto)}</div>
+            <div class="card-footer">
+                <button class="btn-sm btn-copy-sm" onclick="copyCard('cb_${m.id}')">
+                    <i class="fa-solid fa-copy"></i> Copiar
+                </button>
+                <button class="btn-sm btn-del-sm" onclick="delMsg('${m.id}')">
+                    <i class="fa-solid fa-trash-can"></i>
+                </button>
+            </div>
+        </div>
+    </div>`;
+}
+
+function esc(s) {
+    return String(s || '')
+        .replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;')
+        .replace(/"/g,'&quot;').replace(/'/g,'&#039;');
+}
+
+function fmtTime(ts) {
+    const diff = Date.now()/1000 - ts;
+    if (diff < 60) return 'Ahora';
+    if (diff < 3600) return `Hace ${Math.floor(diff/60)}min`;
+    if (diff < 86400) return `Hace ${Math.floor(diff/3600)}h`;
+    const d = new Date(ts*1000);
+    return d.toLocaleDateString('es-CO',{day:'2-digit',month:'short',hour:'2-digit',minute:'2-digit'});
+}
+
+// ===== FETCH =====
+async function fetchAll(isInit = false) {
+    try {
+        const r = await fetch('/api/tablon');
+        if (!r.ok) return;
+        const data = await r.json();
+        const msgs = data.mensajes || [];
+
+        const newIds = [];
+        if (!isInit && lastCount >= 0 && msgs.length > lastCount) {
+            const existing = new Set(allMsgs.map(m => m.id));
+            msgs.forEach(m => { if (!existing.has(m.id)) newIds.push(m.id); });
+            if (newIds.length) showToast(`¡${newIds.length} nuevo${newIds.length > 1 ? 's' : ''} mensaje${newIds.length > 1 ? 's' : ''}!`, 'info');
+        }
+        allMsgs = msgs;
+        lastCount = msgs.length;
+        render(allMsgs, newIds);
+
+        const t = new Date().toLocaleTimeString('es-CO',{hour:'2-digit',minute:'2-digit'});
+        document.getElementById('heroTime').textContent = t;
+        document.getElementById('liveText').textContent = `Sync · ${t}`;
+    } catch {
+        document.getElementById('liveText').textContent = 'Sin conexión · reintentando...';
+    }
+}
+
+// ===== PUBLISH =====
+async function publicarMensaje(e) {
+    e.preventDefault();
+    const titulo = document.getElementById('inpTitulo').value.trim();
+    const texto  = document.getElementById('inpTexto').value.trim();
+    const autor  = document.getElementById('inpAutor').value.trim();
+    const cat    = document.querySelector('input[name="categoria"]:checked')?.value || 'general';
+
+    if (!titulo || !texto) return;
+
+    const btn = document.getElementById('btnPublicar');
+    btn.disabled = true;
+    btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Publicando...';
+
+    try {
+        const r = await fetch('/api/tablon', {
+            method: 'POST',
+            headers: {'Content-Type':'application/json'},
+            body: JSON.stringify({titulo, categoria: cat, autor, texto})
+        });
+        if (r.ok) {
+            document.getElementById('inpTitulo').value = '';
+            document.getElementById('inpTexto').value  = '';
+            document.getElementById('inpAutor').value  = '';
+            updateChar();
+            showToast('¡Mensaje publicado!', 'success');
+            await fetchAll(true);
+            document.getElementById('msgFeed').scrollIntoView({behavior:'smooth', block:'start'});
+        } else {
+            showToast('Error al publicar', 'error');
+        }
+    } catch {
+        showToast('Error de conexión', 'error');
+    } finally {
+        btn.disabled = false;
+        btn.innerHTML = '<i class="fa-solid fa-paper-plane"></i> Publicar mensaje';
+    }
+}
+
+// ===== DELETE =====
+async function delMsg(id) {
+    if (!confirm('¿Eliminar este mensaje del tablón?')) return;
+    try {
+        const r = await fetch(`/api/tablon/${id}`, {method:'DELETE'});
+        if (r.ok) { showToast('Mensaje eliminado', 'info'); await fetchAll(true); }
+        else showToast('Error al eliminar', 'error');
+    } catch { showToast('Error de conexión', 'error'); }
+}
+
+// ===== COPY =====
+function copyCard(id) {
+    const el = document.getElementById(id);
+    if (!el) return;
+    navigator.clipboard.writeText(el.innerText).then(() => showToast('¡Copiado al portapapeles!', 'success'));
+}
+
+function filtrar() { render(allMsgs); }
+
+// ===== INIT =====
+fetchAll(true);
+setInterval(() => fetchAll(false), 8000);
+</script>
+
+{% endblock %}
