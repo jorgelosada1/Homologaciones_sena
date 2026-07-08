@@ -491,23 +491,6 @@
     const autoSearch = params.get('autoSearch');
     if (autoSearch) { window.history.replaceState({}, document.title, window.location.pathname); acInput.value = autoSearch; saveToHistory(autoSearch); document.querySelector('#homoForm').submit(); }
     renderHistory();
-
-    // ===== GENERADOR PDF =====
-    function descargarEstudioPDF() {
-        const msgEl = document.getElementById('msg');
-        if (!msgEl) return;
-
-        const fullText = msgEl.dataset.fulltext;
-        const tituloSena = document.getElementById('tituloInput').value || 'TÃ­tulo SENA';
-
-        showToast('Generando PDF...', 'info');
-
-        // Extraer programas del mensaje
-        const regex = /ðŸ”¹\s*\*?([^*\n]+)\*?/g;
-        let match;
-        const programas = [];
-        while ((match = regex.exec(fullText)) !== null) programas.push(match[1].trim());
-
 </script>
 
 {% endblock %}
