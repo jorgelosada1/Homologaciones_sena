@@ -70,6 +70,8 @@
             color: var(--text-primary);
             display: flex;
             min-height: 100vh;
+            width: 100vw;
+            max-width: 100vw;
             overflow-x: hidden;
             letter-spacing: -0.01em;
         }
@@ -437,12 +439,22 @@
             display: flex;
             flex-direction: column;
             min-height: 100vh;
+            min-width: 0;
+            width: calc(100vw - var(--sidebar-width));
+            max-width: calc(100vw - var(--sidebar-width));
+            overflow-x: hidden;
+            box-sizing: border-box;
             transition: margin 0.35s cubic-bezier(0.4, 0, 0.2, 1);
         }
 
         .content {
             flex: 1;
-            padding: 40px;
+            padding: 36px 40px;
+            min-width: 0;
+            width: 100%;
+            max-width: 100%;
+            box-sizing: border-box;
+            overflow-x: hidden;
             animation: fadeIn 0.4s ease;
         }
 
@@ -741,6 +753,7 @@
 
             .content-wrapper {
                 margin-left: 0;
+                max-width: 100vw;
             }
 
             .topbar {
@@ -818,11 +831,6 @@
                     <i class="fa-solid fa-graduation-cap"></i>
                     Mensajes SENA
                 </a>
-
-                <a href="/tablon" class="{% if request.path == '/tablon' %}active{% endif %}">
-                    <i class="fa-solid fa-bullhorn"></i>
-                    Tablón de Mensajes
-                </a>
             </div>
 
             <div class="menu-divider"></div>
@@ -830,9 +838,14 @@
             <div class="menu-section">
                 <div class="menu-title">Gestión</div>
 
-                <a href="/piezas" class="{% if request.path == '/piezas' %}active{% endif %}">
+                <a href="/piezas" class="{% if '/piezas' in request.path %}active{% endif %}">
                     <i class="fa-solid fa-images"></i>
                     Piezas Gráficas
+                </a>
+
+                <a href="/cruce" class="{% if request.path == '/cruce' %}active{% endif %}">
+                    <i class="fa-solid fa-shuffle"></i>
+                    Cruce de Datos
                 </a>
             </div>
 
@@ -861,8 +874,8 @@
                     Catálogos / Brochures
                 {% elif '/admin' in request.path %}
                     Panel de Administración
-                {% elif request.path == '/tablon' %}
-                    Tablón de Mensajes
+                {% elif request.path == '/cruce' %}
+                    Cruce de Datos
                 {% else %}
                     Areandina
                 {% endif %}

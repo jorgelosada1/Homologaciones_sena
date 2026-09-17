@@ -1,0 +1,970 @@
+{% extends "layout.html" %}
+{% block content %}
+
+<style>
+    .cruce-page {
+        animation: fadeIn 0.4s ease;
+        min-width: 0;
+        width: 100%;
+        max-width: 100%;
+        box-sizing: border-box;
+    }
+    .cruce-header { margin-bottom: 20px; }
+    .cruce-header p { color: var(--text-muted); font-size: 14px; margin-top: -18px; }
+
+    /* Sync Grid (GEN NACIONAL + FUNNEL) */
+    .sync-grid {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 14px;
+        margin-bottom: 20px;
+    }
+    .sync-card {
+        background: var(--bg-card);
+        border: 1px solid var(--border-color);
+        border-radius: var(--radius);
+        padding: 16px 18px;
+        box-shadow: var(--shadow-sm);
+        display: flex;
+        flex-direction: column;
+        justify-content: space-between;
+        gap: 12px;
+    }
+    .sync-card-header {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 10px;
+        flex-wrap: wrap;
+    }
+    .sheet-title {
+        font-size: 13.5px;
+        font-weight: 700;
+        color: var(--text-primary);
+        display: flex;
+        align-items: center;
+        gap: 8px;
+    }
+    .sheet-badge-ok {
+        background: rgba(16, 185, 129, 0.12);
+        color: #065f46;
+        border: 1px solid rgba(16, 185, 129, 0.25);
+        padding: 3px 10px;
+        border-radius: 14px;
+        font-size: 11px;
+        font-weight: 700;
+        display: inline-flex;
+        align-items: center;
+        gap: 5px;
+    }
+    .sheet-badge-missing {
+        background: rgba(245, 158, 11, 0.12);
+        color: #b45309;
+        border: 1px solid rgba(245, 158, 11, 0.25);
+        padding: 3px 10px;
+        border-radius: 14px;
+        font-size: 11px;
+        font-weight: 700;
+    }
+    .sync-meta {
+        font-size: 11.5px;
+        color: var(--text-muted);
+        line-height: 1.4;
+    }
+    .sync-meta strong {
+        color: var(--text-secondary);
+    }
+    .sync-btn-row {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        flex-wrap: wrap;
+        padding-top: 6px;
+    }
+
+    /* Buttons */
+    .btn-sync {
+        background: linear-gradient(135deg, #10b981, #059669);
+        color: white;
+        border: none;
+        padding: 8px 14px;
+        border-radius: 8px;
+        font-size: 12px;
+        font-weight: 600;
+        cursor: pointer;
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+        transition: var(--transition);
+        box-shadow: 0 2px 6px rgba(16, 185, 129, 0.2);
+    }
+    .btn-sync:hover {
+        opacity: 0.92;
+        transform: translateY(-1px);
+    }
+    .btn-sync:disabled {
+        opacity: 0.6;
+        cursor: not-allowed;
+        transform: none;
+    }
+    .btn-sync-funnel {
+        background: linear-gradient(135deg, #3b82f6, #2563eb);
+        box-shadow: 0 2px 6px rgba(59, 130, 246, 0.2);
+    }
+    .btn-sheet {
+        background: var(--bg-secondary);
+        color: var(--text-secondary);
+        border: 1px solid var(--border-color);
+        padding: 7px 12px;
+        border-radius: 8px;
+        font-size: 11.5px;
+        font-weight: 600;
+        text-decoration: none;
+        display: inline-flex;
+        align-items: center;
+        gap: 5px;
+        transition: var(--transition);
+    }
+    .btn-sheet:hover {
+        background: #f1f5f9;
+        color: var(--accent);
+        border-color: var(--accent);
+    }
+    .btn-upload-subtle {
+        background: transparent;
+        color: var(--text-muted);
+        border: 1px dashed var(--border-color);
+        padding: 7px 10px;
+        border-radius: 8px;
+        font-size: 11.5px;
+        cursor: pointer;
+        display: inline-flex;
+        align-items: center;
+        gap: 5px;
+        transition: var(--transition);
+    }
+    .btn-upload-subtle:hover {
+        border-color: var(--text-secondary);
+        color: var(--text-primary);
+        background: #f8fafc;
+    }
+
+    /* Permission Alert */
+    .sheet-permission-alert {
+        display: none;
+        background: #fffbeb;
+        border: 1px solid #fef3c7;
+        border-left: 4px solid #f59e0b;
+        border-radius: 8px;
+        padding: 12px 16px;
+        margin-bottom: 20px;
+        font-size: 12.5px;
+        color: #92400e;
+        line-height: 1.5;
+    }
+    .sheet-permission-alert.visible { display: block; }
+    .sheet-permission-alert strong { color: #78350f; }
+
+    /* Control Card */
+    .date-filters-card {
+        background: var(--bg-card);
+        border: 1px solid var(--border-color);
+        border-radius: var(--radius);
+        padding: 18px 22px;
+        margin-bottom: 20px;
+        box-shadow: var(--shadow-sm);
+    }
+
+    /* Radar Filter Pills */
+    .radar-filter-row {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        flex-wrap: wrap;
+        margin-bottom: 14px;
+        padding-bottom: 12px;
+        border-bottom: 1px dashed var(--border-color);
+    }
+    .filter-section-title {
+        font-size: 12px;
+        font-weight: 700;
+        color: var(--text-muted);
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+        display: flex;
+        align-items: center;
+        gap: 6px;
+        min-width: 130px;
+    }
+    .radar-pill {
+        padding: 6px 14px;
+        border-radius: 20px;
+        border: 1px solid var(--border-color);
+        background: var(--bg-secondary);
+        color: var(--text-secondary);
+        font-size: 12px;
+        font-weight: 600;
+        cursor: pointer;
+        transition: var(--transition);
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+    }
+    .radar-pill:hover {
+        border-color: #10b981;
+        background: rgba(16, 185, 129, 0.05);
+    }
+    .radar-pill.active {
+        background: #059669;
+        color: white;
+        border-color: #059669;
+        box-shadow: 0 2px 8px rgba(5, 150, 105, 0.25);
+    }
+    .radar-pill.active-sin {
+        background: #64748b;
+        color: white;
+        border-color: #64748b;
+    }
+
+    /* Date Pills */
+    .date-pills {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 7px;
+        margin-bottom: 12px;
+    }
+    .date-pill {
+        padding: 6px 13px;
+        border-radius: 18px;
+        border: 1px solid var(--border-color);
+        background: var(--bg-secondary);
+        color: var(--text-secondary);
+        font-size: 12px;
+        font-weight: 600;
+        cursor: pointer;
+        transition: var(--transition);
+        display: inline-flex;
+        align-items: center;
+        gap: 5px;
+    }
+    .date-pill:hover {
+        border-color: var(--accent);
+        color: var(--accent-dark);
+    }
+    .date-pill.active {
+        background: var(--accent);
+        color: white;
+        border-color: var(--accent);
+        box-shadow: 0 2px 8px var(--accent-glow);
+    }
+
+    /* Date Inputs Row */
+    .date-inputs-row {
+        display: grid;
+        grid-template-columns: 1fr 1fr auto;
+        gap: 12px;
+        align-items: end;
+        padding-top: 10px;
+    }
+    .date-input-group {
+        display: flex;
+        flex-direction: column;
+        gap: 4px;
+    }
+    .date-input-group label {
+        font-size: 11px;
+        font-weight: 700;
+        color: var(--text-muted);
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+    }
+    .date-input-group input, .date-input-group select {
+        padding: 8px 12px;
+        font-size: 12.5px;
+        border-radius: 8px;
+        height: 38px;
+    }
+
+    /* Search bar */
+    .search-bar { position: relative; margin-bottom: 16px; }
+    .search-bar i { position: absolute; left: 14px; top: 50%; transform: translateY(-50%); color: var(--text-muted); }
+    .search-bar input { padding-left: 40px; height: 44px; border-radius: 10px; font-size: 13.5px; }
+
+    /* Results Header */
+    .results-header {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        margin-bottom: 10px;
+        flex-wrap: wrap;
+        gap: 12px;
+    }
+    .stats-chips {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        flex-wrap: wrap;
+    }
+    .stat-chip {
+        padding: 4px 12px;
+        border-radius: 16px;
+        font-size: 12px;
+        font-weight: 700;
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+    }
+    .stat-chip-total { background: #e2e8f0; color: #334155; }
+    .stat-chip-funnel { background: #d1fae5; color: #065f46; border: 1px solid #a7f3d0; }
+    .stat-chip-sin { background: #f1f5f9; color: #64748b; }
+
+    .table-nav-controls {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        flex-wrap: wrap;
+    }
+    .btn-scroll {
+        background: #ffffff;
+        border: 1px solid var(--border-color);
+        color: var(--text-primary);
+        padding: 6px 13px;
+        border-radius: 8px;
+        font-size: 12px;
+        font-weight: 600;
+        cursor: pointer;
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+        transition: var(--transition);
+        box-shadow: 0 1px 2px rgba(0,0,0,0.04);
+    }
+    .btn-scroll:hover {
+        background: #f8fafc;
+        border-color: var(--accent);
+        color: var(--accent-dark);
+        transform: translateY(-1px);
+    }
+
+    /* ===== TABLE SCROLL CONTAINER ===== */
+    .table-container {
+        width: 100% !important;
+        max-width: 100% !important;
+        min-width: 0 !important;
+        box-sizing: border-box !important;
+        background: #ffffff;
+        border: 1.5px solid #cbd5e1 !important;
+        border-radius: var(--radius);
+        box-shadow: var(--shadow-sm);
+        overflow-x: scroll !important;
+        overflow-y: auto !important;
+        max-height: 64vh;
+        margin-top: 6px;
+        margin-bottom: 24px;
+        -webkit-overflow-scrolling: touch;
+    }
+
+    .table-container::-webkit-scrollbar {
+        height: 14px !important;
+        width: 10px !important;
+        display: block !important;
+    }
+    .table-container::-webkit-scrollbar-track {
+        background: #f1f5f9 !important;
+        border-radius: 8px;
+    }
+    .table-container::-webkit-scrollbar-thumb {
+        background: #7fb536 !important;
+        border-radius: 8px;
+        border: 3px solid #f1f5f9 !important;
+    }
+    .table-container::-webkit-scrollbar-thumb:hover {
+        background: #6a9a2d !important;
+    }
+
+    .table-container table {
+        width: max-content !important;
+        min-width: 100% !important;
+        border-collapse: separate !important;
+        border-spacing: 0 !important;
+    }
+
+    .table-container th {
+        font-size: 11px;
+        font-weight: 700;
+        letter-spacing: 0.6px;
+        text-transform: uppercase;
+        padding: 13px 18px;
+        white-space: nowrap;
+        position: sticky;
+        top: 0;
+        background: #f8fafc;
+        color: #334155;
+        z-index: 5;
+        border-bottom: 2px solid #cbd5e1;
+        border-right: 1px solid #e2e8f0;
+        box-shadow: 0 1px 2px rgba(0,0,0,0.05);
+    }
+
+    .table-container td {
+        font-size: 12.5px;
+        padding: 11px 18px;
+        white-space: nowrap;
+        border-bottom: 1px solid #e2e8f0;
+        border-right: 1px solid #f8fafc;
+        color: var(--text-primary);
+        max-width: 340px;
+        overflow: hidden;
+        text-overflow: ellipsis;
+    }
+
+    /* Highlight rows in FUNNEL / RADAR */
+    tr.row-in-funnel td {
+        background: #f0fdf4 !important;
+    }
+    tr.row-in-funnel td:first-child {
+        border-left: 5px solid #10b981 !important;
+    }
+    tr.row-in-funnel:hover td {
+        background: #dcfce7 !important;
+    }
+
+    /* Radar Badges */
+    .badge-radar-yes {
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+        background: #d1fae5;
+        color: #065f46;
+        border: 1.5px solid #34d399;
+        padding: 4px 10px;
+        border-radius: 12px;
+        font-size: 11px;
+        font-weight: 800;
+        letter-spacing: 0.2px;
+    }
+    .badge-radar-no {
+        display: inline-flex;
+        align-items: center;
+        gap: 5px;
+        color: #94a3b8;
+        font-size: 11px;
+        font-weight: 500;
+    }
+
+    /* Observation badges */
+    .obs-badge { display: inline-block; padding: 3px 10px; border-radius: 20px; font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.3px; }
+    .obs-completo { background: rgba(127,181,54,0.14); color: #4d731e; }
+    .obs-incompleto { background: rgba(245,156,47,0.14); color: #b45309; }
+    .obs-otro { background: rgba(107,114,128,0.12); color: #4b5563; }
+
+    /* Loading overlay */
+    .loading-overlay { display: none; align-items: center; justify-content: center; padding: 60px; flex-direction: column; gap: 12px; }
+    .loading-overlay.active { display: flex; }
+    .spinner { width: 36px; height: 36px; border: 3px solid var(--border-color); border-top-color: var(--accent); border-radius: 50%; animation: spin 0.8s linear infinite; }
+    @keyframes spin { to { transform: rotate(360deg); } }
+    .loading-text { font-size: 13px; color: var(--text-muted); }
+
+    .empty-state { text-align: center; padding: 60px 20px; color: var(--text-muted); }
+    .empty-state i { font-size: 48px; margin-bottom: 16px; opacity: 0.2; }
+    .empty-state p { font-size: 14px; }
+
+    .btn-export { padding: 7px 16px; border: none; border-radius: 8px; font-size: 12px; font-weight: 600; cursor: pointer; background: var(--accent); color: white; display: inline-flex; align-items: center; gap: 6px; transition: var(--transition); }
+    .btn-export:hover { background: var(--accent-dark); }
+    .btn-reset { padding: 8px 14px; border-radius: 8px; border: 1px solid var(--border-color); background: var(--bg-secondary); color: var(--text-secondary); font-size: 12px; font-weight: 600; cursor: pointer; display: inline-flex; align-items: center; gap: 6px; transition: var(--transition); }
+    .btn-reset:hover { background: var(--bg-card-hover); }
+
+    @media (max-width: 768px) {
+        .sync-grid { grid-template-columns: 1fr; }
+        .date-inputs-row { grid-template-columns: 1fr; }
+    }
+</style>
+
+<div class="cruce-page">
+    <div class="cruce-header">
+        <h2><i class="fa-solid fa-shuffle" style="color:var(--accent)"></i> Cruce CSU Galán vs. FUNNEL</h2>
+        <p>Identifica instantáneamente los aspirantes que ya tienes en el radar del Funnel</p>
+    </div>
+
+    <!-- Dual Sync Cards Grid -->
+    <div class="sync-grid">
+        <!-- Card 1: GEN NACIONAL -->
+        <div class="sync-card">
+            <div class="sync-card-header">
+                <span class="sheet-title">
+                    <i class="fa-solid fa-file-excel" style="color:var(--accent);"></i> GEN NACIONAL (Galán)
+                </span>
+                {% if tiene_archivo %}
+                <span class="sheet-badge-ok"><i class="fa-solid fa-check"></i> Cargado</span>
+                {% else %}
+                <span class="sheet-badge-missing"><i class="fa-solid fa-exclamation"></i> Pendiente</span>
+                {% endif %}
+            </div>
+            <div class="sync-meta">
+                Última sync: <strong>{{ ultima_actualizacion or 'Sin sincronizar' }}</strong>
+            </div>
+            <div class="sync-btn-row">
+                <button type="button" class="btn-sync" id="btnSyncSheets" onclick="sincronizarGoogleSheets()">
+                    <i class="fa-solid fa-arrows-rotate" id="iconSync"></i> Sincronizar Sheet
+                </button>
+                <a href="{{ google_sheet_url }}" target="_blank" class="btn-sheet" title="Abrir GEN NACIONAL">
+                    <i class="fa-solid fa-arrow-up-right-from-square"></i> Abrir
+                </a>
+                <form method="POST" enctype="multipart/form-data" style="margin:0; display:inline;">
+                    <input type="hidden" name="action" value="upload">
+                    <input type="file" name="archivo" id="fileInputNacional" accept=".xlsx,.xls" style="display:none;" onchange="this.form.submit()">
+                    <label for="fileInputNacional" class="btn-upload-subtle" title="Subir archivo local">
+                        <i class="fa-solid fa-upload"></i> Subir local
+                    </label>
+                </form>
+            </div>
+        </div>
+
+        <!-- Card 2: FUNNEL -->
+        <div class="sync-card">
+            <div class="sync-card-header">
+                <span class="sheet-title">
+                    <i class="fa-solid fa-filter-circle-dollar" style="color:#3b82f6;"></i> FUNNEL (Columna Q)
+                </span>
+                {% if tiene_funnel %}
+                <span class="sheet-badge-ok" style="background:#dbeafe; color:#1e40af; border-color:#bfdbfe;">
+                    <i class="fa-solid fa-crosshairs"></i> {{ cedulas_funnel_total }} cédulas
+                </span>
+                {% else %}
+                <span class="sheet-badge-missing"><i class="fa-solid fa-exclamation"></i> Sin Funnel</span>
+                {% endif %}
+            </div>
+            <div class="sync-meta">
+                Última sync: <strong>{{ ultima_funnel or 'Sin sincronizar' }}</strong>
+            </div>
+            <div class="sync-btn-row">
+                <button type="button" class="btn-sync btn-sync-funnel" id="btnSyncFunnel" onclick="sincronizarFunnel()">
+                    <i class="fa-solid fa-arrows-rotate" id="iconSyncFunnel"></i> Sincronizar FUNNEL
+                </button>
+                <a href="{{ funnel_sheet_url }}" target="_blank" class="btn-sheet" title="Abrir FUNNEL">
+                    <i class="fa-solid fa-arrow-up-right-from-square"></i> Abrir
+                </a>
+                <form method="POST" enctype="multipart/form-data" style="margin:0; display:inline;">
+                    <input type="hidden" name="action" value="upload_funnel">
+                    <input type="file" name="archivo_funnel" id="fileInputFunnel" accept=".xlsx,.xls" style="display:none;" onchange="this.form.submit()">
+                    <label for="fileInputFunnel" class="btn-upload-subtle" title="Subir FUNNEL local">
+                        <i class="fa-solid fa-upload"></i> Subir local
+                    </label>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- Permission Warning Alert if Google Sheets are private -->
+    <div class="sheet-permission-alert" id="sheetAlert">
+        <div style="display:flex; justify-content:space-between; align-items:flex-start; gap:10px;">
+            <div id="alertMessageContent">
+                <i class="fa-solid fa-triangle-exclamation" style="margin-right:6px;"></i>
+                <strong>Para sincronizar en automático con 1 solo clic:</strong> En tu Google Sheet haz clic en <strong>Compartir</strong> > Acceso general > cámbialo a <strong>"Cualquier persona con el enlace (Lector)"</strong>.
+            </div>
+            <button type="button" onclick="document.getElementById('sheetAlert').classList.remove('visible')" style="border:none; background:transparent; cursor:pointer; color:#92400e; font-size:16px;">&times;</button>
+        </div>
+    </div>
+
+    {% if tiene_archivo %}
+    <!-- Filter Card -->
+    <div class="date-filters-card">
+        <!-- Row 1: Radar Filter Pills -->
+        <div class="radar-filter-row">
+            <span class="filter-section-title">
+                <i class="fa-solid fa-crosshairs" style="color:#059669;"></i> En el Radar:
+            </span>
+            <button type="button" class="radar-pill active" data-radar="todos" onclick="seleccionarRadar('todos', this)">
+                <i class="fa-solid fa-users"></i> Todos los registros
+            </button>
+            <button type="button" class="radar-pill" data-radar="en_radar" onclick="seleccionarRadar('en_radar', this)">
+                <i class="fa-solid fa-bullseye"></i> Solo en el radar (FUNNEL)
+            </button>
+            <button type="button" class="radar-pill" data-radar="sin_radar" onclick="seleccionarRadar('sin_radar', this)">
+                <i class="fa-regular fa-circle"></i> No están en Funnel
+            </button>
+        </div>
+
+        <!-- Row 2: Date Pills -->
+        <div style="display:flex; align-items:center; gap:10px; flex-wrap:wrap; margin-bottom:10px;">
+            <span class="filter-section-title">
+                <i class="fa-regular fa-calendar-days" style="color:var(--accent);"></i> Fecha Cargue:
+            </span>
+            <div class="date-pills" style="margin-bottom:0;">
+                <button type="button" class="date-pill active" data-rango="todas" onclick="seleccionarRango('todas', this)">
+                    <i class="fa-solid fa-asterisk"></i> Todas
+                </button>
+                <button type="button" class="date-pill" data-rango="hoy" onclick="seleccionarRango('hoy', this)">
+                    <i class="fa-solid fa-calendar-day"></i> Hoy
+                </button>
+                <button type="button" class="date-pill" data-rango="ayer" onclick="seleccionarRango('ayer', this)">
+                    <i class="fa-solid fa-clock-rotate-left"></i> Ayer
+                </button>
+                <button type="button" class="date-pill" data-rango="esta_semana" onclick="seleccionarRango('esta_semana', this)">
+                    <i class="fa-solid fa-calendar-week"></i> Esta semana
+                </button>
+                <button type="button" class="date-pill" data-rango="ultimos_7" onclick="seleccionarRango('ultimos_7', this)">
+                    <i class="fa-solid fa-calendar-minus"></i> Últimos 7 días
+                </button>
+                <button type="button" class="date-pill" data-rango="este_mes" onclick="seleccionarRango('este_mes', this)">
+                    <i class="fa-solid fa-calendar"></i> Este mes
+                </button>
+            </div>
+        </div>
+
+        <!-- Row 3: Date Inputs -->
+        <div class="date-inputs-row">
+            <div class="date-input-group">
+                <label><i class="fa-solid fa-calendar-check"></i> Elegir día exacto:</label>
+                <input type="date" id="filterFechaExacta" onchange="seleccionarFechaExacta(this.value)">
+            </div>
+            <div class="date-input-group">
+                <label><i class="fa-solid fa-list-check"></i> O días detectados en el archivo:</label>
+                <select id="selectFechaDetectada" onchange="seleccionarFechaDetectada(this.value)">
+                    <option value="">-- Seleccionar fecha del archivo --</option>
+                </select>
+            </div>
+            <div>
+                <button type="button" class="btn-reset" onclick="resetFiltros()"><i class="fa-solid fa-rotate-left"></i> Restablecer</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Search bar -->
+    <div class="search-bar">
+        <i class="fa-solid fa-magnifying-glass"></i>
+        <input type="text" id="searchGlobal" placeholder="Buscar por nombre, cédula, documento, ID, programa, ticket...">
+    </div>
+
+    <!-- Results Header with stats and scroll buttons -->
+    <div class="results-header">
+        <div class="stats-chips">
+            <span class="stat-chip stat-chip-total">
+                Total Galán: <strong id="countTotal" style="margin-left:4px;">0</strong>
+            </span>
+            <span class="stat-chip stat-chip-funnel" title="Cédulas encontradas en la hoja FUNNEL">
+                <i class="fa-solid fa-crosshairs"></i> En el radar: <strong id="countFunnel" style="margin-left:4px;">0</strong>
+            </span>
+            <span class="stat-chip stat-chip-sin">
+                Sin radar: <strong id="countSinFunnel" style="margin-left:4px;">0</strong>
+            </span>
+        </div>
+        <div class="table-nav-controls">
+            <button type="button" class="btn-scroll" onclick="desplazarTabla(-450)" title="Desplazar tabla a la izquierda">
+                <i class="fa-solid fa-arrow-left"></i> Izquierda
+            </button>
+            <button type="button" class="btn-scroll" onclick="desplazarTabla(450)" title="Desplazar tabla a la derecha">
+                Derecha <i class="fa-solid fa-arrow-right"></i>
+            </button>
+            <button class="btn-export" onclick="exportarCSV()"><i class="fa-solid fa-file-csv"></i> Exportar CSV</button>
+        </div>
+    </div>
+
+    <!-- Loading Overlay -->
+    <div class="loading-overlay" id="loadingOverlay">
+        <div class="spinner"></div>
+        <span class="loading-text">Cargando y cruzando registros...</span>
+    </div>
+
+    <!-- Data Table Container -->
+    <div class="table-container" id="tableContainer" style="display:none;">
+        <table id="cruceTable">
+            <thead id="tableHead"></thead>
+            <tbody id="tableBody"></tbody>
+        </table>
+    </div>
+
+    <!-- Empty State -->
+    <div class="empty-state" id="emptyState" style="display:none;">
+        <i class="fa-solid fa-inbox"></i>
+        <p>No se encontraron registros para los filtros seleccionados</p>
+    </div>
+    {% endif %}
+</div>
+
+<script>
+    let currentData = [];
+    let currentColumns = [];
+    let activeRango = "todas";
+    let activeRadar = "todos";
+    let activeFechaExacta = "";
+
+    function escapeHtml(str) {
+        const div = document.createElement('div');
+        div.textContent = str;
+        return div.innerHTML;
+    }
+
+    function desplazarTabla(offset) {
+        const el = document.getElementById('tableContainer');
+        if (el) el.scrollBy({ left: offset, behavior: 'smooth' });
+    }
+
+    async function sincronizarGoogleSheets() {
+        const btn = document.getElementById('btnSyncSheets');
+        const icon = document.getElementById('iconSync');
+        const alertBox = document.getElementById('sheetAlert');
+
+        btn.disabled = true;
+        icon.classList.add('fa-spin');
+
+        try {
+            const res = await fetch('/api/cruce/sync-sheets', { method: 'POST' });
+            const data = await res.json();
+
+            if (data.ok) {
+                if (typeof showToast === 'function') showToast(data.message, 'success');
+                alertBox.classList.remove('visible');
+                setTimeout(() => window.location.reload(), 1000);
+            } else {
+                if (typeof showToast === 'function') showToast(data.message, 'error');
+                document.getElementById('alertMessageContent').innerHTML = `<strong>Error GEN NACIONAL:</strong> ${escapeHtml(data.message)}`;
+                alertBox.classList.add('visible');
+            }
+        } catch (e) {
+            console.error('Error:', e);
+            if (typeof showToast === 'function') showToast('Error de conexión', 'error');
+        } finally {
+            btn.disabled = false;
+            icon.classList.remove('fa-spin');
+        }
+    }
+
+    async function sincronizarFunnel() {
+        const btn = document.getElementById('btnSyncFunnel');
+        const icon = document.getElementById('iconSyncFunnel');
+        const alertBox = document.getElementById('sheetAlert');
+
+        btn.disabled = true;
+        icon.classList.add('fa-spin');
+
+        try {
+            const res = await fetch('/api/cruce/sync-funnel', { method: 'POST' });
+            const data = await res.json();
+
+            if (data.ok) {
+                if (typeof showToast === 'function') showToast(data.message, 'success');
+                alertBox.classList.remove('visible');
+                setTimeout(() => window.location.reload(), 1000);
+            } else {
+                if (typeof showToast === 'function') showToast(data.message, 'error');
+                document.getElementById('alertMessageContent').innerHTML = `<strong>Error FUNNEL:</strong> ${escapeHtml(data.message)}`;
+                alertBox.classList.add('visible');
+            }
+        } catch (e) {
+            console.error('Error:', e);
+            if (typeof showToast === 'function') showToast('Error al conectar con FUNNEL', 'error');
+        } finally {
+            btn.disabled = false;
+            icon.classList.remove('fa-spin');
+        }
+    }
+
+    function seleccionarRadar(radar, btn) {
+        activeRadar = radar;
+        document.querySelectorAll('.radar-pill').forEach(p => p.classList.remove('active', 'active-sin'));
+        if (btn) {
+            if (radar === 'sin_radar') btn.classList.add('active-sin');
+            else btn.classList.add('active');
+        }
+        aplicarFiltros();
+    }
+
+    function seleccionarRango(rango, btn) {
+        activeRango = rango;
+        activeFechaExacta = "";
+        const fechaInput = document.getElementById('filterFechaExacta');
+        const fechaSelect = document.getElementById('selectFechaDetectada');
+        if (fechaInput) fechaInput.value = "";
+        if (fechaSelect) fechaSelect.value = "";
+
+        document.querySelectorAll('.date-pill').forEach(p => p.classList.remove('active'));
+        if (btn) btn.classList.add('active');
+
+        aplicarFiltros();
+    }
+
+    function seleccionarFechaExacta(val) {
+        if (!val) return;
+        activeFechaExacta = val;
+        activeRango = "";
+        document.querySelectorAll('.date-pill').forEach(p => p.classList.remove('active'));
+        const fechaSelect = document.getElementById('selectFechaDetectada');
+        if (fechaSelect) fechaSelect.value = val;
+        aplicarFiltros();
+    }
+
+    function seleccionarFechaDetectada(val) {
+        if (!val) {
+            seleccionarRango('todas', document.querySelector('.date-pill[data-rango="todas"]'));
+            return;
+        }
+        activeFechaExacta = val;
+        activeRango = "";
+        document.querySelectorAll('.date-pill').forEach(p => p.classList.remove('active'));
+        const fechaInput = document.getElementById('filterFechaExacta');
+        if (fechaInput) fechaInput.value = val;
+        aplicarFiltros();
+    }
+
+    function resetFiltros() {
+        const fechaInput = document.getElementById('filterFechaExacta');
+        const fechaSelect = document.getElementById('selectFechaDetectada');
+        const searchInput = document.getElementById('searchGlobal');
+        if (fechaInput) fechaInput.value = "";
+        if (fechaSelect) fechaSelect.value = "";
+        if (searchInput) searchInput.value = "";
+        seleccionarRadar('todos', document.querySelector('.radar-pill[data-radar="todos"]'));
+        seleccionarRango('todas', document.querySelector('.date-pill[data-rango="todas"]'));
+    }
+
+    async function aplicarFiltros() {
+        const tableContainer = document.getElementById('tableContainer');
+        if (!tableContainer) return;
+
+        const params = new URLSearchParams();
+
+        if (activeFechaExacta) {
+            params.set('fecha_cargue', activeFechaExacta);
+        } else if (activeRango) {
+            params.set('rango', activeRango);
+        }
+
+        if (activeRadar && activeRadar !== 'todos') {
+            params.set('radar', activeRadar);
+        }
+
+        const searchInput = document.getElementById('searchGlobal');
+        const q = searchInput ? searchInput.value.trim() : "";
+        if (q) params.set('q', q);
+
+        const loadingOverlay = document.getElementById('loadingOverlay');
+        const emptyState = document.getElementById('emptyState');
+        if (loadingOverlay) loadingOverlay.classList.add('active');
+        tableContainer.style.display = 'none';
+        if (emptyState) emptyState.style.display = 'none';
+
+        try {
+            const res = await fetch('/api/cruce?' + params.toString());
+            const data = await res.json();
+
+            currentData = data.rows || [];
+            currentColumns = data.columns || [];
+
+            // Update stats
+            const total = data.total || 0;
+            const enFunnel = data.total_en_funnel || 0;
+            const sinFunnel = total - enFunnel;
+
+            document.getElementById('countTotal').textContent = total;
+            document.getElementById('countFunnel').textContent = enFunnel;
+            document.getElementById('countSinFunnel').textContent = sinFunnel;
+
+            // Populate detected dates dropdown if needed
+            const selFecha = document.getElementById('selectFechaDetectada');
+            if (selFecha && selFecha.options.length <= 1 && data.fechas_disponibles && data.fechas_disponibles.length > 0) {
+                data.fechas_disponibles.forEach(f => {
+                    const opt = document.createElement('option');
+                    opt.value = f.iso;
+                    opt.textContent = `${f.label} (${f.iso})`;
+                    selFecha.appendChild(opt);
+                });
+            }
+
+            if (currentData.length > 0) {
+                renderTable(currentColumns, currentData);
+                tableContainer.style.display = 'block';
+                if (emptyState) emptyState.style.display = 'none';
+            } else {
+                tableContainer.style.display = 'none';
+                if (emptyState) emptyState.style.display = 'block';
+            }
+        } catch(e) {
+            console.error('Error cargando cruce:', e);
+            if (typeof showToast === 'function') showToast('Error al procesar el cruce', 'error');
+        } finally {
+            if (loadingOverlay) loadingOverlay.classList.remove('active');
+        }
+    }
+
+    function renderTable(columns, rows) {
+        const thead = document.getElementById('tableHead');
+        const tbody = document.getElementById('tableBody');
+
+        // Header: Add 'RADAR' as the first visual column
+        thead.innerHTML = '<tr>' +
+            '<th style="background:#f1f5f9; color:#0f172a; text-align:center; min-width:130px;"><i class="fa-solid fa-crosshairs" style="color:#059669;"></i> EN RADAR</th>' +
+            columns.map(c => `<th>${escapeHtml(c)}</th>`).join('') +
+        '</tr>';
+
+        // Body
+        tbody.innerHTML = rows.map(row => {
+            const isInFunnel = row._en_funnel === true;
+            const rowClass = isInFunnel ? 'class="row-in-funnel"' : '';
+
+            const radarCell = isInFunnel
+                ? '<td style="text-align:center;"><span class="badge-radar-yes"><i class="fa-solid fa-bullseye"></i> EN RADAR</span></td>'
+                : '<td style="text-align:center;"><span class="badge-radar-no"><i class="fa-regular fa-circle"></i> No está</span></td>';
+
+            const cells = columns.map(col => {
+                let val = row[col] ?? '';
+                let cellContent = escapeHtml(String(val));
+
+                // Observation badges
+                if (col.toUpperCase().includes('OBSERVACIONES')) {
+                    const upper = String(val).toUpperCase();
+                    if (upper.includes('COMPLETO') && !upper.includes('INCOMPLETO')) {
+                        cellContent = `<span class="obs-badge obs-completo">${cellContent}</span>`;
+                    } else if (upper.includes('INCOMPLETO')) {
+                        cellContent = `<span class="obs-badge obs-incompleto">${cellContent}</span>`;
+                    } else if (val) {
+                        cellContent = `<span class="obs-badge obs-otro">${cellContent}</span>`;
+                    }
+                } else if (col.toUpperCase().includes('CEDULA') && isInFunnel) {
+                    cellContent = `<strong style="color:#065f46;">${cellContent}</strong>`;
+                }
+
+                return `<td title="${escapeHtml(String(val))}">${cellContent}</td>`;
+            }).join('');
+
+            return `<tr ${rowClass}>${radarCell}${cells}</tr>`;
+        }).join('');
+    }
+
+    function exportarCSV() {
+        if (!currentData.length || !currentColumns.length) {
+            if (typeof showToast === 'function') showToast('No hay datos para exportar', 'info');
+            return;
+        }
+
+        const exportCols = ['EN_RADAR_FUNNEL', ...currentColumns];
+        let csv = exportCols.join(';') + '\n';
+
+        currentData.forEach(row => {
+            const radarVal = row._en_funnel ? 'SI' : 'NO';
+            const rowVals = [radarVal, ...currentColumns.map(col => String(row[col] ?? '').replace(/"/g, '""'))];
+            csv += rowVals.map(v => `"${v}"`).join(';') + '\n';
+        });
+
+        const blob = new Blob(['\ufeff' + csv], { type: 'text/csv;charset=utf-8;' });
+        const link = document.createElement('a');
+        link.href = URL.createObjectURL(blob);
+        link.download = 'cruce_galan_funnel_' + new Date().toISOString().slice(0,10) + '.csv';
+        link.click();
+
+        if (typeof showToast === 'function') showToast('Archivo exportado con cruce de Funnel', 'success');
+    }
+
+    let searchTimeout;
+    const searchInput = document.getElementById('searchGlobal');
+    if (searchInput) {
+        searchInput.addEventListener('input', () => {
+            clearTimeout(searchTimeout);
+            searchTimeout = setTimeout(aplicarFiltros, 350);
+        });
+    }
+
+    aplicarFiltros();
+</script>
+
+{% endblock %}

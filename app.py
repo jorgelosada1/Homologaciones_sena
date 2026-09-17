@@ -5,6 +5,7 @@ import csv
 import json
 import uuid
 import time
+import re
 from datetime import datetime, timedelta
 from flask import redirect, Response, jsonify
 from flask import Flask, render_template, request, send_from_directory, session, url_for
@@ -18,6 +19,84 @@ app.secret_key = "homologaciones-aguachica-2026"
 app.config['MAX_CONTENT_LENGTH'] = 16 * 1024 * 1024  # 16MB max
 
 app.register_blueprint(whatsapp_bp)
+
+# =====================================================
+# LIMPIEZA DE CARACTERES Y ENCODING ESPAÑOL (UTF-8)
+# =====================================================
+def fix_text_enc(s):
+    """Corrige caracteres rotos o caracteres de reemplazo (\ufffd) en texto en español."""
+    if not isinstance(s, str):
+        return s
+    U = '\ufffd'
+    if U not in s:
+        return s
+
+    s = s.replace(f'T{U}CNICO', 'TÉCNICO').replace(f'T{U}cnico', 'Técnico').replace(f't{U}cnico', 'técnico')
+    s = s.replace(f'TECNOLOG{U}A', 'TECNOLOGÍA').replace(f'Tecnolog{U}a', 'Tecnología').replace(f'tecnolog{U}a', 'tecnología')
+    s = s.replace(f'Gest{U}n', 'Gestión').replace(f'GESTI{U}N', 'GESTIÓN')
+    s = s.replace(f'Atenc{U}n', 'Atención').replace(f'ATENC{U}N', 'ATENCIÓN')
+    s = s.replace(f'L{U}nea', 'Línea').replace(f'L{U}NEA', 'LÍNEA')
+    s = s.replace(f'Asesor{U}a', 'Asesoría').replace(f'ASESOR{U}A', 'ASESORÍA')
+    s = s.replace(f'N{U}mina', 'Nómina').replace(f'N{U}MINA', 'NÓMINA')
+    s = s.replace(f'Organizac{U}n', 'Organización').replace(f'ORGANIZAC{U}N', 'ORGANIZACIÓN')
+    s = s.replace(f'Log{U}stica', 'Logística').replace(f'LOG{U}STICA', 'LOGÍSTICA')
+    s = s.replace(f'Operac{U}n', 'Operación').replace(f'Operac{U}nes', 'Operaciones').replace(f'OPERAC{U}N', 'OPERACIÓN').replace(f'OPERAC{U}NES', 'OPERACIONES')
+    s = s.replace(f'Contabilizac{U}n', 'Contabilización').replace(f'CONTABILIZAC{U}N', 'CONTABILIZACIÓN')
+    s = s.replace(f'Producc{U}n', 'Producción').replace(f'PRODUCC{U}N', 'PRODUCCIÓN')
+    s = s.replace(f'Informac{U}n', 'Información').replace(f'INFORMAC{U}N', 'INFORMACIÓN')
+    s = s.replace(f'Administrac{U}n', 'Administración').replace(f'ADMINISTRAC{U}N', 'ADMINISTRACIÓN')
+    s = s.replace(f'Construcc{U}n', 'Construcción').replace(f'CONSTRUCC{U}N', 'CONSTRUCCIÓN')
+    s = s.replace(f'Ejecuc{U}n', 'Ejecución').replace(f'EJECUC{U}N', 'EJECUCIÓN')
+    s = s.replace(f'Direcc{U}n', 'Dirección').replace(f'DIRECC{U}N', 'DIRECCIÓN')
+    s = s.replace(f'Instalac{U}n', 'Instalación').replace(f'INSTALAC{U}N', 'INSTALACIÓN')
+    s = s.replace(f'Comercializac{U}n', 'Comercialización').replace(f'COMERCIALIZAC{U}N', 'COMERCIALIZACIÓN')
+    s = s.replace(f'Orientac{U}n', 'Orientación').replace(f'ORIENTAC{U}N', 'ORIENTACIÓN')
+    s = s.replace(f'Promoc{U}n', 'Promoción').replace(f'PROMOC{U}N', 'PROMOCIÓN')
+    s = s.replace(f'Integrac{U}n', 'Integración').replace(f'INTEGRAC{U}N', 'INTEGRACIÓN')
+    s = s.replace(f'Formulac{U}n', 'Formulación').replace(f'FORMULAC{U}N', 'FORMULACIÓN')
+    s = s.replace(f'Evaluac{U}n', 'Evaluación').replace(f'EVALUAC{U}N', 'EVALUACIÓN')
+    s = s.replace(f'Comunicac{U}n', 'Comunicación').replace(f'COMUNICAC{U}N', 'COMUNICACIÓN')
+    s = s.replace(f'Bogot{U}', 'Bogotá').replace(f'BOGOT{U}', 'BOGOTÁ')
+    s = s.replace(f'Gal{U}n', 'Galán').replace(f'GAL{U}N', 'GALÁN')
+    s = s.replace(f'Fontib{U}n', 'Fontibón').replace(f'FONTIB{U}N', 'FONTIBÓN')
+    s = s.replace(f'Facatativ{U}', 'Facatativá').replace(f'FACATATIV{U}', 'FACATATIVÁ')
+    s = s.replace(f'Zipaquir{U}', 'Zipaquirá').replace(f'ZIPAQUIR{U}', 'ZIPAQUIRÁ')
+    s = s.replace(f'Generac{U}n', 'Generación').replace(f'GENERAC{U}N', 'GENERACIÓN')
+    s = s.replace(f'C{U}digo', 'Código').replace(f'C{U}DIGO', 'CÓDIGO')
+    s = s.replace(f'Andr{U}s', 'Andrés').replace(f'ANDR{U}S', 'ANDRÉS')
+    s = s.replace(f'Hern{U}ndez', 'Hernández').replace(f'HERN{U}NDEZ', 'HERNÁNDEZ')
+    s = s.replace(f'Mart{U}nez', 'Martínez').replace(f'MART{U}NEZ', 'MARTÍNEZ')
+    s = s.replace(f'Garc{U}a', 'García').replace(f'GARC{U}A', 'GARCÍA')
+    s = s.replace(f'R{U}os', 'Ríos').replace(f'R{U}OS', 'RÍOS')
+    s = s.replace(f'D{U}az', 'Díaz').replace(f'D{U}AZ', 'DÍAZ')
+    s = s.replace(f'Guti{U}rrez', 'Gutiérrez').replace(f'GUTI{U}RREZ', 'GUTIÉRREZ')
+    s = s.replace(f'Mu{U}oz', 'Muñoz').replace(f'MU{U}OZ', 'MUÑOZ')
+    s = s.replace(f'Pe{U}a', 'Peña').replace(f'PE{U}A', 'PEÑA')
+    s = s.replace(f'Ni{U}o', 'Niño').replace(f'NI{U}O', 'NIÑO')
+
+    s = re.sub(rf'c{U}n\b', 'ción', s)
+    s = re.sub(rf'C{U}N\b', 'CIÓN', s)
+    s = re.sub(rf's{U}n\b', 'sión', s)
+    s = re.sub(rf'S{U}N\b', 'SIÓN', s)
+    s = re.sub(rf'g{U}a\b', 'gía', s)
+    s = re.sub(rf'G{U}A\b', 'GÍA', s)
+    s = re.sub(rf'r{U}a\b', 'ría', s)
+    s = re.sub(rf'R{U}A\b', 'RÍA', s)
+    s = re.sub(rf'T{U}c', 'Téc', s)
+    s = re.sub(rf't{U}c', 'téc', s)
+    s = re.sub(rf'T{U}C', 'TÉC', s)
+    s = s.replace(U, '')
+    return s
+
+
+def clean_df(df):
+    """Limpia nombres de columnas y celdas de texto para arreglar la codificación en español."""
+    df.columns = [fix_text_enc(str(c)).strip() for c in df.columns]
+    for col in df.columns:
+        if df[col].dtype == object:
+            df[col] = df[col].apply(fix_text_enc)
+    return df
+
 
 # =====================================================
 # GLOBAL LOGIN GATE
@@ -96,14 +175,12 @@ def get_precios():
 # =====================================================
 # CARGAR HOMOLOGACIONES PRESENCIAL
 # =====================================================
-presencial = pd.read_excel("Presencial 2026.xlsx")
-presencial.columns = presencial.columns.str.strip()
+presencial = clean_df(pd.read_excel("Presencial 2026.xlsx"))
 
 # =====================================================
 # CARGAR ACTAS
 # =====================================================
-actas = pd.read_excel("Actas SENA.xlsx")
-actas.columns = actas.columns.str.strip()
+actas = clean_df(pd.read_excel("Actas SENA.xlsx"))
 
 
 # =====================================================
@@ -850,78 +927,311 @@ def admin_brochures():
 
 
 
+
 # =====================================================
-# TABLÓN DE MENSAJES COLABORATIVO
+# CRUCE - SUBIR EXCEL, GOOGLE SHEETS Y FILTRAR
 # =====================================================
-TABLON_FILE = "tablon.json"
+CRUCE_DIR = os.path.join(DATA_DIR, "cruce")
+CRUCE_FILE = os.path.join(CRUCE_DIR, "cruce_actual.xlsx")
+FUNNEL_FILE = os.path.join(CRUCE_DIR, "funnel_actual.xlsx")
 
-def get_tablon():
-    return load_json(TABLON_FILE)
+GOOGLE_SHEET_ID = "1550YdTkr9XXykOv78RL_V8xLVE6QuJXDemdxneLjO2M"
+GOOGLE_SHEET_URL = f"https://docs.google.com/spreadsheets/d/{GOOGLE_SHEET_ID}/export?format=xlsx"
 
-def save_tablon(data):
-    save_json(TABLON_FILE, data)
+FUNNEL_SHEET_ID = "1Dd1ByYaOO-s9Vv1kweORctolPc070g_yBY4M_57YWzQ"
+FUNNEL_SHEET_URL = f"https://docs.google.com/spreadsheets/d/{FUNNEL_SHEET_ID}/export?format=xlsx"
 
 
-@app.route("/tablon")
+def clean_cedula(val):
+    """Normaliza cédula a texto numérico sin decimales, puntos ni espacios."""
+    if pd.isna(val):
+        return ""
+    s = str(val).strip()
+    if s.endswith(".0"):
+        s = s[:-2]
+    s = s.replace(".", "").replace(",", "").replace(" ", "").replace("-", "")
+    return s
+
+
+def get_funnel_cedulas():
+    """Extrae las cédulas de la columna R (índice 17) de la hoja FUNNEL."""
+    if not os.path.exists(FUNNEL_FILE):
+        return set()
+    try:
+        xl = pd.ExcelFile(FUNNEL_FILE)
+        sheet_target = None
+        for s in xl.sheet_names:
+            if s.strip().upper() == "FUNNEL":
+                sheet_target = s
+                break
+        if not sheet_target:
+            sheet_target = xl.sheet_names[0]
+
+        df_f = pd.read_excel(FUNNEL_FILE, sheet_name=sheet_target)
+
+        # Columna R es el índice 17 (columna 18)
+        col_r = None
+        if len(df_f.columns) > 17:
+            col_r = df_f.columns[17]
+        else:
+            for col in df_f.columns:
+                c_upper = str(col).strip().upper()
+                if "CEDULA" in c_upper or "DOCUMENTO" in c_upper or "IDENTIFICACION" in c_upper:
+                    col_r = col
+                    break
+
+        if col_r is not None:
+            ceds = df_f[col_r].dropna().apply(clean_cedula)
+            return set(c for c in ceds if c and any(ch.isdigit() for ch in c))
+        return set()
+    except Exception as e:
+        print("Error leyendo FUNNEL:", e)
+        return set()
+
+
+def sync_cruce_from_sheets():
+    """Descarga el Excel de GEN NACIONAL directamente de Google Sheets."""
+    import requests
+    try:
+        headers = {
+            "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/122.0.0.0 Safari/537.36"
+        }
+        r = requests.get(GOOGLE_SHEET_URL, headers=headers, timeout=30, allow_redirects=True)
+        content_type = r.headers.get("Content-Type", "")
+
+        if r.status_code == 200 and ("spreadsheet" in content_type or len(r.content) > 15000) and not r.text.strip().startswith("<!DOCTYPE"):
+            os.makedirs(CRUCE_DIR, exist_ok=True)
+            with open(CRUCE_FILE, "wb") as f:
+                f.write(r.content)
+
+            df_test = pd.read_excel(CRUCE_FILE, sheet_name="GEN NACIONAL")
+            return True, f"¡Sincronización exitosa! Se cargaron {len(df_test):,} registros de GEN NACIONAL."
+        elif r.status_code == 401 or "accounts.google.com" in r.url or r.text.strip().startswith("<!DOCTYPE"):
+            return False, "El Google Sheet de GEN NACIONAL está en modo privado. Abre el Sheet > Compartir > Cambiar a 'Cualquier persona con el enlace' (Rol: Lector)."
+        else:
+            return False, f"Respuesta inesperada de Google (HTTP {r.status_code})."
+    except Exception as e:
+        return False, f"Error al descargar de Google Sheets: {str(e)}"
+
+
+def sync_funnel_from_sheets():
+    """Descarga el Excel de FUNNEL directamente de Google Sheets."""
+    import requests
+    try:
+        headers = {
+            "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/122.0.0.0 Safari/537.36"
+        }
+        r = requests.get(FUNNEL_SHEET_URL, headers=headers, timeout=30, allow_redirects=True)
+        content_type = r.headers.get("Content-Type", "")
+
+        if r.status_code == 200 and ("spreadsheet" in content_type or len(r.content) > 10000) and not r.text.strip().startswith("<!DOCTYPE"):
+            os.makedirs(CRUCE_DIR, exist_ok=True)
+            with open(FUNNEL_FILE, "wb") as f:
+                f.write(r.content)
+            ceds = get_funnel_cedulas()
+            return True, f"¡FUNNEL sincronizado! Se encontraron {len(ceds):,} cédulas en la columna R."
+        elif r.status_code == 401 or "accounts.google.com" in r.url or r.text.strip().startswith("<!DOCTYPE"):
+            return False, "El Google Sheet de FUNNEL está en modo privado. Abre el Sheet > Compartir > Cambiar a 'Cualquier persona con el enlace' (Rol: Lector)."
+        else:
+            return False, f"Respuesta inesperada de Google (HTTP {r.status_code})."
+    except Exception as e:
+        return False, f"Error al descargar FUNNEL: {str(e)}"
+
+
+@app.route("/cruce", methods=["GET", "POST"])
 @login_required
-def tablon():
-    return render_template("tablon.html")
+def cruce():
+    if request.method == "POST":
+        action = request.form.get("action")
+
+        if action == "upload":
+            file = request.files.get("archivo")
+            if file and file.filename and file.filename.lower().endswith(('.xlsx', '.xls')):
+                os.makedirs(CRUCE_DIR, exist_ok=True)
+                file.save(CRUCE_FILE)
+                return redirect("/cruce")
+
+        elif action == "upload_funnel":
+            file = request.files.get("archivo_funnel")
+            if file and file.filename and file.filename.lower().endswith(('.xlsx', '.xls')):
+                os.makedirs(CRUCE_DIR, exist_ok=True)
+                file.save(FUNNEL_FILE)
+                return redirect("/cruce")
+
+        elif action == "sync_sheets":
+            sync_cruce_from_sheets()
+            return redirect("/cruce")
+
+        elif action == "sync_funnel":
+            sync_funnel_from_sheets()
+            return redirect("/cruce")
+
+        elif action == "delete":
+            if os.path.exists(CRUCE_FILE):
+                os.remove(CRUCE_FILE)
+            return redirect("/cruce")
+
+        elif action == "delete_funnel":
+            if os.path.exists(FUNNEL_FILE):
+                os.remove(FUNNEL_FILE)
+            return redirect("/cruce")
+
+    tiene_archivo = os.path.exists(CRUCE_FILE)
+    tiene_funnel = os.path.exists(FUNNEL_FILE)
+    cedulas_funnel_total = len(get_funnel_cedulas()) if tiene_funnel else 0
+
+    ultima_actualizacion = ""
+    if tiene_archivo:
+        mtime = os.path.getmtime(CRUCE_FILE)
+        ultima_actualizacion = datetime.fromtimestamp(mtime).strftime("%d/%m/%Y %I:%M %p")
+
+    ultima_funnel = ""
+    if tiene_funnel:
+        mtime_f = os.path.getmtime(FUNNEL_FILE)
+        ultima_funnel = datetime.fromtimestamp(mtime_f).strftime("%d/%m/%Y %I:%M %p")
+
+    return render_template(
+        "cruce.html",
+        tiene_archivo=tiene_archivo,
+        tiene_funnel=tiene_funnel,
+        cedulas_funnel_total=cedulas_funnel_total,
+        ultima_actualizacion=ultima_actualizacion,
+        ultima_funnel=ultima_funnel,
+        google_sheet_url=f"https://docs.google.com/spreadsheets/d/{GOOGLE_SHEET_ID}/edit?gid=1957374122",
+        funnel_sheet_url=f"https://docs.google.com/spreadsheets/d/{FUNNEL_SHEET_ID}/edit?gid=0"
+    )
 
 
-@app.route("/api/tablon", methods=["GET"])
+@app.route("/api/cruce/sync-sheets", methods=["POST"])
 @login_required
-def api_tablon_get():
-    mensajes = get_tablon()
-    return jsonify({"mensajes": mensajes, "total": len(mensajes)})
+def api_cruce_sync_sheets():
+    ok, msg = sync_cruce_from_sheets()
+    return jsonify({"ok": ok, "message": msg})
 
 
-@app.route("/api/tablon", methods=["POST"])
+@app.route("/api/cruce/sync-funnel", methods=["POST"])
 @login_required
-def api_tablon_post():
-    data = request.get_json(silent=True) or {}
-    titulo = (data.get("titulo") or "").strip()
-    texto = (data.get("texto") or "").strip()
-    categoria = (data.get("categoria") or "general").strip()
-    autor = (data.get("autor") or "").strip()
-
-    if not titulo or not texto:
-        return jsonify({"error": "Título y texto son requeridos"}), 400
-
-    # Sanitize inputs
-    titulo = titulo[:100]
-    texto = texto[:1000]
-    autor = autor[:50]
-
-    CATEGORIAS_VALIDAS = {"general", "comercial", "recordatorio", "urgente", "reunion", "anuncio"}
-    if categoria not in CATEGORIAS_VALIDAS:
-        categoria = "general"
-
-    nuevo = {
-        "id": str(uuid.uuid4()),
-        "titulo": titulo,
-        "categoria": categoria,
-        "autor": autor if autor else "Anónimo",
-        "texto": texto,
-        "timestamp": time.time(),
-    }
-
-    mensajes = get_tablon()
-    mensajes.append(nuevo)
-    save_tablon(mensajes)
-
-    return jsonify({"ok": True, "id": nuevo["id"]}), 201
+def api_cruce_sync_funnel():
+    ok, msg = sync_funnel_from_sheets()
+    return jsonify({"ok": ok, "message": msg, "total_cedulas": len(get_funnel_cedulas())})
 
 
-@app.route("/api/tablon/<msg_id>", methods=["DELETE"])
+@app.route("/api/cruce", methods=["GET"])
 @login_required
-def api_tablon_delete(msg_id):
-    mensajes = get_tablon()
-    original_len = len(mensajes)
-    mensajes = [m for m in mensajes if m.get("id") != msg_id]
-    if len(mensajes) == original_len:
-        return jsonify({"error": "Mensaje no encontrado"}), 404
-    save_tablon(mensajes)
+def api_cruce():
+    if not os.path.exists(CRUCE_FILE):
+        return jsonify({"error": "No hay archivo cargado", "rows": [], "total": 0, "total_en_funnel": 0, "fechas_disponibles": []})
+
+    try:
+        df = clean_df(pd.read_excel(CRUCE_FILE, sheet_name="GEN NACIONAL"))
+    except Exception as e:
+        return jsonify({"error": f"Error leyendo archivo: {str(e)}", "rows": [], "total": 0, "total_en_funnel": 0, "fechas_disponibles": []})
+
+    # Filtro interno estricto: Solo CSU Bogotá Galán, Cundinamarca
+    if "CSU" in df.columns:
+        df = df[df["CSU"].astype(str).str.lower().str.contains(r"gal[aá\ufffd]n", regex=True, na=False)]
+    elif "SEDE" in df.columns:
+        df = df[df["SEDE"].astype(str).str.lower().str.contains(r"gal[aá\ufffd]n", regex=True, na=False)]
+
+    # Cruce con Funnel (Cédulas en columna Q)
+    cedulas_funnel = get_funnel_cedulas()
+    col_cedula = None
+    for c in ["CEDULA", "DOCUMENTO", "No. DOCUMENTO", "DOCUMENTO DE IDENTIDAD", "ID"]:
+        if c in df.columns:
+            col_cedula = c
+            break
+
+    if col_cedula and len(cedulas_funnel) > 0:
+        df["_en_funnel"] = df[col_cedula].apply(lambda x: clean_cedula(x) in cedulas_funnel)
+    else:
+        df["_en_funnel"] = False
+
+    # Normalizar columnas de fecha
+    for col in ["FECHA DE CARGUE", "FECHA DE GESTION"]:
+        if col in df.columns:
+            df[col] = pd.to_datetime(df[col], errors="coerce")
+
+    # Extraer lista de fechas únicas reales en FECHA DE CARGUE (orden descendente)
+    fechas_disponibles = []
+    if "FECHA DE CARGUE" in df.columns:
+        fechas_unicas = df["FECHA DE CARGUE"].dropna().dt.date.unique()
+        fechas_sorted = sorted(fechas_unicas, reverse=True)
+        fechas_disponibles = [
+            {"iso": d.strftime("%Y-%m-%d"), "label": d.strftime("%d/%m/%Y")}
+            for d in fechas_sorted
+        ]
+
+    # Parámetros de filtro
+    fecha_cargue = request.args.get("fecha_cargue", "").strip()
+    rango = request.args.get("rango", "todas").strip().lower()
+    filtro_radar = request.args.get("radar", "todos").strip().lower()  # todos, en_radar, sin_radar
+    busqueda = request.args.get("q", "").strip().upper()
+
+    # Filtrar por FECHA DE CARGUE
+    if "FECHA DE CARGUE" in df.columns:
+        today = datetime.now().date()
+        if fecha_cargue:
+            try:
+                f_dt = pd.to_datetime(fecha_cargue).date()
+                df = df[df["FECHA DE CARGUE"].dt.date == f_dt]
+            except Exception:
+                pass
+        elif rango == "hoy":
+            df = df[df["FECHA DE CARGUE"].dt.date == today]
+        elif rango == "ayer":
+            ayer = today - timedelta(days=1)
+            df = df[df["FECHA DE CARGUE"].dt.date == ayer]
+        elif rango == "esta_semana":
+            inicio_semana = today - timedelta(days=today.weekday())
+            fin_semana = inicio_semana + timedelta(days=6)
+            df = df[(df["FECHA DE CARGUE"].dt.date >= inicio_semana) & (df["FECHA DE CARGUE"].dt.date <= fin_semana)]
+        elif rango == "ultimos_7":
+            hace_7 = today - timedelta(days=7)
+            df = df[(df["FECHA DE CARGUE"].dt.date >= hace_7) & (df["FECHA DE CARGUE"].dt.date <= today)]
+        elif rango == "este_mes":
+            df = df[(df["FECHA DE CARGUE"].dt.year == today.year) & (df["FECHA DE CARGUE"].dt.month == today.month)]
+        elif rango == "todas":
+            pass
+
+    # Filtrar por Estado en Funnel (Radar)
+    if filtro_radar == "en_radar":
+        df = df[df["_en_funnel"] == True]
+    elif filtro_radar == "sin_radar":
+        df = df[df["_en_funnel"] == False]
+
+    # Búsqueda global en todas las columnas
+    if busqueda:
+        mask = df.apply(lambda row: row.astype(str).str.upper().str.contains(busqueda, na=False).any(), axis=1)
+        df = df[mask]
+
+    total_en_funnel = int(df["_en_funnel"].sum()) if "_en_funnel" in df.columns else 0
+
+    # Formatear columnas de fecha para visualización legible
+    for col in df.columns:
+        if pd.api.types.is_datetime64_any_dtype(df[col]):
+            df[col] = df[col].dt.strftime("%d/%m/%Y").fillna("")
+
+    df = df.fillna("")
+    rows = df.to_dict(orient="records")
+
+    # Lista de columnas a mostrar (sin las columnas técnicas internas que empiezan con _)
+    visible_columns = [c for c in df.columns if not c.startswith("_")]
+
+    return jsonify({
+        "rows": rows,
+        "total": len(rows),
+        "total_en_funnel": total_en_funnel,
+        "total_cedulas_funnel": len(cedulas_funnel),
+        "columns": visible_columns,
+        "fechas_disponibles": fechas_disponibles
+    })
+
+
+@app.route("/api/cruce/opciones", methods=["GET"])
+@login_required
+def api_cruce_opciones():
     return jsonify({"ok": True})
+
 
 
 # =====================================================

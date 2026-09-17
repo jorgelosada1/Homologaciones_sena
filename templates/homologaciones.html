@@ -2,29 +2,29 @@
 {% block content %}
 
 <style>
-    /* ===== HOMOLOGACIONES REDESIGN ===== */
-    .homo-page { max-width: 720px; margin: 0 auto; animation: slideUp 0.5s ease both; }
+    /* ===== HOMOLOGACIONES PREMIUM DESIGN ===== */
+    .homo-page { max-width: 760px; margin: 0 auto; animation: slideUp 0.4s cubic-bezier(0.16, 1, 0.3, 1) both; }
     
-    .homo-header { text-align: center; margin-bottom: 32px; }
-    .homo-header h2 { justify-content: center; font-size: 28px; margin-bottom: 8px; font-family: 'Outfit', sans-serif; }
+    .homo-header { text-align: center; margin-bottom: 28px; }
+    .homo-header h2 { justify-content: center; font-size: 28px; margin-bottom: 8px; font-family: 'Outfit', sans-serif; font-weight: 800; color: var(--text-primary); }
     .homo-header p { color: var(--text-secondary); font-size: 14.5px; }
     
     .status-live { 
         display: inline-flex; align-items: center; gap: 8px; 
-        font-size: 11px; color: var(--accent); margin-top: 12px; 
-        font-weight: 700; text-transform: uppercase; letter-spacing: 1px;
-        background: var(--accent-glow); padding: 4px 12px; border-radius: 20px;
-        border: 1px solid rgba(127,181,54,0.2);
+        font-size: 11.5px; color: var(--accent-dark); margin-top: 10px; 
+        font-weight: 700; text-transform: uppercase; letter-spacing: 0.8px;
+        background: var(--accent-glow); padding: 5px 14px; border-radius: 20px;
+        border: 1px solid rgba(127,181,54,0.25);
     }
     .pulse-dot { 
-        width: 6px; height: 6px; border-radius: 50%; 
+        width: 7px; height: 7px; border-radius: 50%; 
         background: var(--accent); 
         box-shadow: 0 0 8px var(--accent);
         animation: pulse 1.8s infinite; 
     }
     @keyframes pulse { 
         0%, 100% { opacity: 1; transform: scale(1); } 
-        50% { opacity: 0.5; transform: scale(1.25); } 
+        50% { opacity: 0.4; transform: scale(1.3); } 
     }
 
     .homo-card { 
@@ -34,9 +34,6 @@
         padding: 36px; 
         box-shadow: var(--shadow-md); 
         transition: var(--transition);
-    }
-    .homo-card:hover {
-        box-shadow: var(--shadow-lg);
     }
 
     .search-wrapper { position: relative; margin-bottom: 20px; }
@@ -73,12 +70,12 @@
     
     .autocomplete-item { 
         display: flex; align-items: center; gap: 12px; padding: 10px 14px; 
-        border-radius: 8px; cursor: pointer; transition: all 0.25s ease; 
+        border-radius: 8px; cursor: pointer; transition: all 0.2s ease; 
         border: 1px solid transparent; 
     }
     .autocomplete-item:hover, .autocomplete-item.selected { 
         background: var(--accent-glow); 
-        border-color: rgba(127,181,54,0.15); 
+        border-color: rgba(127,181,54,0.2); 
     }
     .autocomplete-item .ac-icon { 
         width: 30px; height: 30px; border-radius: 8px; 
@@ -87,14 +84,14 @@
         color: var(--text-muted); transition: var(--transition);
     }
     .autocomplete-item:hover .ac-icon, .autocomplete-item.selected .ac-icon { 
-        color: var(--accent); background: rgba(127,181,54,0.1); 
+        color: var(--accent-dark); background: rgba(127,181,54,0.15); 
     }
     .autocomplete-item .ac-title { 
         font-size: 13.5px; font-weight: 500; color: var(--text-secondary); 
         white-space: nowrap; overflow: hidden; text-overflow: ellipsis; 
     }
-    .autocomplete-item:hover .ac-title, .autocomplete-item.selected .ac-title { color: var(--text-primary); }
-    .autocomplete-item .ac-title .highlight { color: var(--accent-dark); font-weight: 700; background: rgba(127,181,54,0.08); padding: 0 2px; border-radius: 2px; }
+    .autocomplete-item:hover .ac-title, .autocomplete-item.selected .ac-title { color: var(--text-primary); font-weight: 600; }
+    .autocomplete-item .ac-title .highlight { color: var(--accent-dark); font-weight: 700; background: rgba(127,181,54,0.12); padding: 0 3px; border-radius: 3px; }
     
     .autocomplete-count { 
         padding: 8px 14px; font-size: 11px; font-weight: 700;
@@ -105,7 +102,7 @@
     .autocomplete-empty i { font-size: 24px; display: block; margin-bottom: 8px; opacity: 0.5; }
 
     .btn-generar { 
-        width: 100%; height: 50px; border: none; border-radius: 12px; 
+        width: 100%; height: 52px; border: none; border-radius: 12px; 
         background: linear-gradient(135deg, var(--accent), var(--accent-dark)); 
         color: white; font-size: 15px; font-weight: 700; cursor: pointer; 
         transition: var(--transition); display: flex; align-items: center; 
@@ -117,39 +114,39 @@
     }
     .btn-generar:active { transform: translateY(0); }
 
-    /* Results Bubble (Chatbot premium style) */
+    /* Results Bubble */
     .resultado { margin-top: 32px; animation: slideUp 0.4s ease; }
-    .resultado-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 16px; }
-    .resultado-header h3 { display: flex; align-items: center; gap: 8px; font-size: 16px; margin: 0; }
+    .resultado-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 14px; }
+    .resultado-header h3 { display: flex; align-items: center; gap: 8px; font-size: 16px; font-weight: 700; margin: 0; color: var(--text-primary); }
     .resultado-header h3 i { color: var(--accent); }
     
     .counter-badge { 
         display: inline-flex; align-items: center; gap: 6px; 
         padding: 5px 12px; border-radius: 20px; 
         background: var(--accent-glow); 
-        border: 1px solid rgba(127,181,54,0.2); 
+        border: 1px solid rgba(127,181,54,0.25); 
         font-size: 12px; font-weight: 700; color: var(--accent-dark); 
     }
     .counter-badge .count-num { font-size: 14px; font-weight: 800; }
     
     .discount-badge { 
         display: inline-flex; align-items: center; gap: 6px; 
-        padding: 4px 12px; border-radius: 8px; 
-        background: rgba(245,156,47,0.08); 
-        border: 1px solid rgba(245,156,47,0.15); 
-        font-size: 11.5px; font-weight: 700; color: var(--accent-orange); 
+        padding: 5px 12px; border-radius: 8px; 
+        background: rgba(245,156,47,0.1); 
+        border: 1px solid rgba(245,156,47,0.22); 
+        font-size: 11.5px; font-weight: 700; color: #d97706; 
         margin-top: 4px; text-transform: uppercase; letter-spacing: 0.5px;
     }
 
     /* Message Response Bubble */
     .bubble { 
         background: var(--bg-secondary); 
-        padding: 22px; border-radius: 14px; 
+        padding: 22px 24px; border-radius: 14px; 
         white-space: pre-wrap; font-size: 14.5px; line-height: 1.75; 
         border-left: 4px solid var(--accent); 
         color: var(--text-secondary); 
         margin-bottom: 18px;
-        box-shadow: inset 0 2px 4px rgba(0,0,0,0.02);
+        box-shadow: inset 0 1px 3px rgba(0,0,0,0.02);
     }
     .bubble.typing .cursor-blink { 
         display: inline-block; width: 2px; height: 15px; 
@@ -160,9 +157,9 @@
 
     .btn-group { display: flex; gap: 12px; margin-bottom: 12px; }
     .btn-copiar { 
-        flex: 1; height: 44px; border: none; border-radius: 10px; 
+        flex: 1; height: 46px; border: none; border-radius: 10px; 
         background: linear-gradient(135deg, var(--accent-pink), #c2026b); 
-        color: white; font-size: 13.5px; font-weight: 650; cursor: pointer; 
+        color: white; font-size: 13.5px; font-weight: 700; cursor: pointer; 
         transition: var(--transition); display: flex; align-items: center; 
         justify-content: center; gap: 8px;
         box-shadow: 0 4px 12px var(--accent-pink-glow);
@@ -170,9 +167,9 @@
     .btn-copiar:hover { transform: translateY(-1.5px); box-shadow: 0 6px 16px var(--accent-pink-glow); }
     
     .btn-precios { 
-        flex: 1; height: 44px; border: none; border-radius: 10px; 
+        flex: 1; height: 46px; border: none; border-radius: 10px; 
         background: linear-gradient(135deg, var(--accent-orange), #d97706); 
-        color: white; font-size: 13.5px; font-weight: 650; cursor: pointer; 
+        color: white; font-size: 13.5px; font-weight: 700; cursor: pointer; 
         transition: var(--transition); display: flex; align-items: center; 
         justify-content: center; gap: 8px;
         box-shadow: 0 4px 12px var(--accent-orange-glow);
@@ -181,22 +178,22 @@
 
     /* Modal Precios */
     .modal-overlay-precios { 
-        position: fixed; inset: 0; background: rgba(15,23,42,0.4); 
+        position: fixed; inset: 0; background: rgba(15,23,42,0.5); 
         backdrop-filter: blur(6px); -webkit-backdrop-filter: blur(6px);
         display: none; align-items: center; justify-content: center; z-index: 9000; 
     }
     .modal-box-precios { 
         background: var(--bg-card); border: 1px solid var(--border-color); 
-        max-width: 540px; width: 92%; padding: 32px; border-radius: 20px; 
+        max-width: 560px; width: 92%; padding: 30px; border-radius: 20px; 
         animation: scaleIn 0.3s cubic-bezier(0.34, 1.56, 0.64, 1); 
-        box-shadow: var(--shadow-lg); max-height: 80vh; overflow-y: auto; 
+        box-shadow: var(--shadow-lg); max-height: 82vh; overflow-y: auto; 
     }
-    .modal-box-precios h3 { font-size: 18px; margin-bottom: 16px; display: flex; align-items: center; gap: 10px; }
+    .modal-box-precios h3 { font-size: 18px; font-weight: 700; margin-bottom: 16px; display: flex; align-items: center; gap: 10px; color: var(--text-primary); }
     .modal-box-precios h3 i { color: var(--accent-orange); }
     
     .precio-item { 
         background: var(--bg-secondary); padding: 16px 20px; 
-        border-radius: 12px; margin-bottom: 10px; 
+        border-radius: 12px; margin-bottom: 12px; 
         border-left: 4px solid var(--accent-orange); 
         transition: var(--transition);
     }
@@ -214,7 +211,7 @@
     .modal-btns-precios { display: flex; gap: 12px; margin-top: 20px; }
     .modal-btns-precios button { 
         flex: 1; height: 44px; border: none; border-radius: 10px; 
-        font-size: 13.5px; font-weight: 650; cursor: pointer; 
+        font-size: 13.5px; font-weight: 700; cursor: pointer; 
         transition: var(--transition); display: flex; align-items: center; 
         justify-content: center; gap: 8px; 
     }
@@ -270,10 +267,10 @@
 <div class="homo-page">
     <div class="homo-header">
         <h2><i class="fa-solid fa-building-columns" style="color:var(--accent)"></i> Homologaciones SENA</h2>
-        <p>Consulta las materias que puedes homologar con tu tÃ­tulo SENA</p>
+        <p>Consulta las materias que puedes homologar con tu título SENA</p>
         <div class="status-live">
             <div class="pulse-dot"></div>
-            Sistema actualizado Â· 2026
+            Sistema actualizado · 2026
         </div>
     </div>
 
@@ -281,7 +278,7 @@
         <form method="POST" id="homoForm">
             <div class="search-wrapper">
                 <i class="fa-solid fa-search"></i>
-                <input type="text" name="titulo" id="tituloInput" placeholder="Escribe tu tÃ­tulo SENA..." required autocomplete="off">
+                <input type="text" name="titulo" id="tituloInput" placeholder="Escribe tu título SENA..." required autocomplete="off">
                 <div class="autocomplete-dropdown" id="acDropdown"></div>
             </div>
             <button type="submit" class="btn-generar">
@@ -289,7 +286,7 @@
                 Generar mensaje
             </button>
             <div class="shortcut-hint">
-                <kbd>Ctrl</kbd> + <kbd>K</kbd> para buscar Â· <kbd>â†‘</kbd><kbd>â†“</kbd> para navegar Â· <kbd>Enter</kbd> para seleccionar
+                <kbd>Ctrl</kbd> + <kbd>K</kbd> para buscar · <kbd>↑</kbd><kbd>↓</kbd> para navegar · <kbd>Enter</kbd> para seleccionar
             </div>
         </form>
 
@@ -324,12 +321,12 @@
             <a class="quick-action" href="/precios"><i class="fa-solid fa-tags"></i><span>Ver Precios</span></a>
             <a class="quick-action" href="/mensajes"><i class="fa-solid fa-comments"></i><span>Mensajes</span></a>
             <a class="quick-action" href="/presencial"><i class="fa-solid fa-school"></i><span>Presencial</span></a>
-            <a class="quick-action" href="/sena"><i class="fa-solid fa-graduation-cap"></i><span>Info SENA</span></a>
+            <a class="quick-action" href="/cruce"><i class="fa-solid fa-shuffle"></i><span>Cruce Datos</span></a>
         </div>
 
         <div class="historial" id="historial" style="display:none">
             <div class="historial-header">
-                <span><i class="fa-solid fa-clock-rotate-left"></i> BÃºsquedas recientes</span>
+                <span><i class="fa-solid fa-clock-rotate-left"></i> Búsquedas recientes</span>
                 <button class="historial-clear" onclick="limpiarHistorial()">Limpiar</button>
             </div>
             <div class="historial-chips" id="historialChips"></div>
@@ -372,14 +369,14 @@
         if (!q) { acDropdown.classList.remove('open'); return; }
         const matches = titulosSena.filter(t => t.toLowerCase().includes(q));
         if (matches.length === 0) {
-            acDropdown.innerHTML = `<div class="autocomplete-empty"><i class="fa-solid fa-search"></i>No se encontrÃ³ "${query}"</div>`;
+            acDropdown.innerHTML = `<div class="autocomplete-empty"><i class="fa-solid fa-search"></i>No se encontró "${escapeHtml(query)}"</div>`;
             acDropdown.classList.add('open'); selectedIndex = -1; return;
         }
-        let html = `<div class="autocomplete-count"><i class="fa-solid fa-list" style="margin-right:6px;"></i>${matches.length} tÃ­tulo${matches.length > 1 ? 's' : ''} encontrado${matches.length > 1 ? 's' : ''}</div>`;
+        let html = `<div class="autocomplete-count"><i class="fa-solid fa-list" style="margin-right:6px;"></i>${matches.length} título${matches.length > 1 ? 's' : ''} encontrado${matches.length > 1 ? 's' : ''}</div>`;
         matches.slice(0, 15).forEach((title, i) => {
-            html += `<div class="autocomplete-item${i === selectedIndex ? ' selected' : ''}" data-index="${i}" data-value="${title}"><div class="ac-icon"><i class="fa-solid fa-graduation-cap"></i></div><div class="ac-text"><div class="ac-title">${highlightMatch(title, query)}</div></div></div>`;
+            html += `<div class="autocomplete-item${i === selectedIndex ? ' selected' : ''}" data-index="${i}" data-value="${escapeHtml(title)}"><div class="ac-icon"><i class="fa-solid fa-graduation-cap"></i></div><div class="ac-text"><div class="ac-title">${highlightMatch(escapeHtml(title), escapeHtml(query))}</div></div></div>`;
         });
-        if (matches.length > 15) html += `<div class="autocomplete-count" style="border-top:1px solid var(--border-color);border-bottom:none;margin-top:4px">+${matches.length - 15} mÃ¡s...</div>`;
+        if (matches.length > 15) html += `<div class="autocomplete-count" style="border-top:1px solid var(--border-color);border-bottom:none;margin-top:4px">+${matches.length - 15} más...</div>`;
         acDropdown.innerHTML = html;
         acDropdown.classList.add('open');
         selectedIndex = -1;
@@ -387,6 +384,12 @@
             item.addEventListener('click', () => { acInput.value = item.dataset.value; acDropdown.classList.remove('open'); });
             item.addEventListener('mouseenter', () => { acDropdown.querySelectorAll('.autocomplete-item').forEach(el => el.classList.remove('selected')); item.classList.add('selected'); selectedIndex = parseInt(item.dataset.index); });
         });
+    }
+
+    function escapeHtml(str) {
+        const div = document.createElement('div');
+        div.textContent = str;
+        return div.innerHTML;
     }
 
     acInput.addEventListener('input', () => renderDropdown(acInput.value));
@@ -408,7 +411,7 @@
         const fullText = msgEl.dataset.fulltext;
         const typedEl = document.getElementById('typedText');
         const cursorEl = msgEl.querySelector('.cursor-blink');
-        const matches = fullText.match(/ðŸ”¹/g);
+        const matches = fullText.match(/🔹/g);
         const count = matches ? matches.length : 0;
         const counter = document.getElementById('matchCount');
         let charIndex = 0;
@@ -420,7 +423,7 @@
                 charIndex = end;
                 setTimeout(typeChar, speed);
             } else {
-                cursorEl.style.display = 'none';
+                if (cursorEl) cursorEl.style.display = 'none';
                 msgEl.classList.remove('typing');
                 document.getElementById('btnGroup').style.opacity = '1';
                 if (counter) { let current = 0; const target = count; const step = Math.max(1, Math.floor(target / 10)); const interval = setInterval(() => { current += step; if (current >= target) { current = target; clearInterval(interval); } counter.textContent = current; }, 80); }
@@ -431,7 +434,8 @@
 
     function copiarMensajeCompleto() {
         const msgEl = document.getElementById('msg');
-        navigator.clipboard.writeText(msgEl.dataset.fulltext).then(() => showToast('Â¡Mensaje copiado al portapapeles!'));
+        if (!msgEl) return;
+        navigator.clipboard.writeText(msgEl.dataset.fulltext).then(() => showToast('¡Mensaje copiado al portapapeles!'));
     }
 
     document.addEventListener('keydown', function (e) { if ((e.ctrlKey || e.metaKey) && e.key === 'k') { e.preventDefault(); acInput.focus(); acInput.select(); } });
@@ -440,20 +444,20 @@
         const msgEl = document.getElementById('msg');
         if (!msgEl) return;
         const text = msgEl.dataset.fulltext;
-        const regex = /ðŸ”¹\s*\*?([^*\n]+)\*?/g;
+        const regex = /🔹\s*\*?([^*\n]+)\*?/g;
         let match; const programas = [];
         while ((match = regex.exec(text)) !== null) programas.push(match[1].trim());
         const cardsContainer = document.getElementById('preciosCards');
         const mensajeEl = document.getElementById('preciosMensaje');
         cardsContainer.innerHTML = '';
-        let mensaje = 'ðŸŽ“ *Precios Universidad Areandina*\n\n';
+        let mensaje = '🎓 *Precios Universidad Areandina*\n\n';
         let found = false;
         programas.forEach(prog => {
-            const progNorm = prog.toUpperCase().replace(/[^A-ZÃÃ‰ÃÃ“ÃšÃ‘\s]/g, '').trim();
+            const progNorm = prog.toUpperCase().replace(/[^A-ZÁÉÍÓÚÑ\s]/g, '').trim();
             const progWords = progNorm.split(/\s+/).filter(w => w.length > 2);
             let bestMatch = null, bestScore = 0;
             preciosData.forEach(p => {
-                const pNorm = p.programa.toUpperCase().replace(/[^A-ZÃÃ‰ÃÃ“ÃšÃ‘\s]/g, '').trim();
+                const pNorm = p.programa.toUpperCase().replace(/[^A-ZÁÉÍÓÚÑ\s]/g, '').trim();
                 const pWords = pNorm.split(/\s+/).filter(w => w.length > 2);
                 let matchingWords = 0;
                 const totalWords = Math.max(pWords.length, progWords.length);
@@ -467,24 +471,24 @@
                 const valorFmt = precio.valor.toLocaleString('es-CO');
                 const descuento = 20;
                 const final_ = precio.valor - Math.round(precio.valor * descuento / 100);
-                cardsContainer.innerHTML += `<div class="precio-item"><div class="prog-name">${precio.programa}</div><div class="prog-details">ðŸ’° Valor: $${valorFmt}<br>ðŸ·ï¸ Descuento SENA: ${descuento}%<br>âœ… <strong>Valor final: $${final_.toLocaleString('es-CO')}</strong><br>ðŸ“š DuraciÃ³n: ${precio.semestres} semestres</div></div>`;
-                mensaje += `ðŸ“Œ *${precio.programa}*\nðŸ’° Valor: $${valorFmt}\nðŸ·ï¸ Descuento SENA: ${descuento}%\nâœ… *Valor con descuento: $${final_.toLocaleString('es-CO')}*\nðŸ“š DuraciÃ³n: ${precio.semestres} semestres\n\n`;
+                cardsContainer.innerHTML += `<div class="precio-item"><div class="prog-name">${escapeHtml(precio.programa)}</div><div class="prog-details">💰 Valor: $${valorFmt}<br>🏷️ Descuento SENA: ${descuento}%<br>✅ <strong>Valor final: $${final_.toLocaleString('es-CO')}</strong><br>📚 Duración: ${precio.semestres} semestres</div></div>`;
+                mensaje += `📌 *${precio.programa}*\n💰 Valor: $${valorFmt}\n🏷️ Descuento SENA: ${descuento}%\n✅ *Valor con descuento: $${final_.toLocaleString('es-CO')}*\n📚 Duración: ${precio.semestres} semestres\n\n`;
             }
         });
         if (!found) { cardsContainer.innerHTML = '<p style="color:var(--text-muted);text-align:center;padding:20px;">No se encontraron precios.</p>'; mensaje = 'No se encontraron precios.'; }
-        else { mensaje += 'ðŸ“… *Inicio de clases:* Agosto de 2026\nâœ” InscripciÃ³n y estudio de homologaciÃ³n sin costo\n\n_Contamos con diferentes formas de financiaciÃ³n_ ðŸ‘Œ'; }
+        else { mensaje += '📅 *Inicio de clases:* Agosto de 2026\n✔ Inscripción y estudio de homologación sin costo\n\n_Contamos con diferentes formas de financiación_ 👌'; }
         mensajeEl.textContent = mensaje;
         document.getElementById('modalPrecios').style.display = 'flex';
     }
 
-    function copiarPrecios() { navigator.clipboard.writeText(document.getElementById('preciosMensaje').textContent).then(() => showToast('Â¡Precios copiados al portapapeles!')); }
+    function copiarPrecios() { navigator.clipboard.writeText(document.getElementById('preciosMensaje').textContent).then(() => showToast('¡Precios copiados al portapapeles!')); }
     function cerrarModalPrecios(e) { if (!e || e.target.id === 'modalPrecios') document.getElementById('modalPrecios').style.display = 'none'; }
 
     const HISTORY_KEY = 'homo_search_history';
     const MAX_HISTORY = 5;
     function getHistory() { try { return JSON.parse(localStorage.getItem(HISTORY_KEY) || '[]'); } catch { return []; } }
     function saveToHistory(term) { if (!term.trim()) return; let h = getHistory().filter(t => t !== term); h.unshift(term); if (h.length > MAX_HISTORY) h = h.slice(0, MAX_HISTORY); localStorage.setItem(HISTORY_KEY, JSON.stringify(h)); }
-    function renderHistory() { const h = getHistory(); const container = document.getElementById('historial'); const chips = document.getElementById('historialChips'); if (h.length === 0) { container.style.display = 'none'; return; } container.style.display = 'block'; chips.innerHTML = h.map(t => `<a class="historial-chip" href="/?autoSearch=${encodeURIComponent(t)}">${t}</a>`).join(''); }
+    function renderHistory() { const h = getHistory(); const container = document.getElementById('historial'); const chips = document.getElementById('historialChips'); if (h.length === 0) { container.style.display = 'none'; return; } container.style.display = 'block'; chips.innerHTML = h.map(t => `<a class="historial-chip" href="/?autoSearch=${encodeURIComponent(t)}">${escapeHtml(t)}</a>`).join(''); }
     function limpiarHistorial() { localStorage.removeItem(HISTORY_KEY); renderHistory(); showToast('Historial limpiado', 'info'); }
     document.querySelector('#homoForm').addEventListener('submit', () => { const input = document.getElementById('tituloInput'); if (input.value) saveToHistory(input.value); });
     const params = new URLSearchParams(window.location.search);
