@@ -1,347 +1,624 @@
-import pandas as pd
+"""Homologaciones SENA · Areandina — aplicación Flask.
+
+Herramienta interna para asesores comerciales: consulta de homologaciones SENA
+(virtual y presencial), mensajes listos para WhatsApp, precios, simulador de
+inversión, cruce GEN NACIONAL vs FUNNEL, piezas gráficas y panel administrativo.
+"""
 import os
-import io
-import csv
-import json
-import uuid
-import time
-import re
+import shutil
 from datetime import datetime, timedelta
-from flask import redirect, Response, jsonify
-from flask import Flask, render_template, request, send_from_directory, session, url_for
 from functools import wraps
-from whatsapp import whatsapp_bp
+
+import pandas as pd
+from flask import (Flask, Response, abort, jsonify, redirect, render_template, request,
+                   send_file, send_from_directory, session, url_for)
 from werkzeug.utils import secure_filename
 
+from core.activity import ActivityLog
+from core.assistant import answer as assistant_answer, claude_available
+from core.cruce import Cruce
+from core.data import (ACTAS_FILE, DATA_DIR, DEFAULT_CONFIG, PRESENCIAL_FILE, SEDES, DataStore,
+                       buscar_homologacion, buscar_presencial, explorar_programas, rank_titles,
+                       sanitize_workbook, validar_actas, validar_presencial)
+from core.messages import mensaje_homologacion, mensaje_oferta, mensaje_precios, mensaje_presencial
+from core.security import LoginLimiter, check_password, init_csrf
+from core.text import clean_df, fix_text_enc, money, norm, pretty_name  # noqa: F401 (re-export)
+from whatsapp import whatsapp_bp
+
+BASE_DIR = os.path.dirname(os.path.abspath(__file__))
+APP_VERSION = "3.0"
 
 app = Flask(__name__)
-app.secret_key = "homologaciones-aguachica-2026"
-app.config['MAX_CONTENT_LENGTH'] = 16 * 1024 * 1024  # 16MB max
+app.secret_key = os.environ.get("SECRET_KEY", "homologaciones-aguachica-2026")
+app.config.update(
+    MAX_CONTENT_LENGTH=32 * 1024 * 1024,
+    SESSION_COOKIE_HTTPONLY=True,
+    SESSION_COOKIE_SAMESITE="Lax",
+    SESSION_COOKIE_SECURE=os.environ.get("SESSION_COOKIE_SECURE", "0") == "1",
+    PERMANENT_SESSION_LIFETIME=timedelta(hours=int(os.environ.get("SESSION_HOURS", "12"))),
+    JSON_AS_ASCII=False,
+)
+app.json.ensure_ascii = False
 
+# Credenciales (se pueden sobreescribir con variables de entorno)
+GLOBAL_USER = os.environ.get("APP_USER", "Innovacion")
+GLOBAL_PASSWORD = os.environ.get("APP_PASSWORD", "0228")
+ADMIN_PASSWORD = os.environ.get("ADMIN_PASSWORD", "Jorsh123")
+AGUACHICA_USER = os.environ.get("AGUACHICA_USER", "csu-aguachica")
+AGUACHICA_PASSWORD = os.environ.get("AGUACHICA_PASSWORD", "1234")
+AGUACHICA_CLAVE_BORRADO = os.environ.get("AGUACHICA_CLAVE_BORRADO", "2907")
+
+STATIC_DIR = os.path.join(BASE_DIR, "static")
+BROCHURES_DIR = os.path.join(STATIC_DIR, "brochures")
+PIEZAS_DIR = os.path.join(STATIC_DIR, "piezas")
+AGUACHICA_FILE = os.path.join(BASE_DIR, "aguachica.xlsx")
+BACKUP_DIR = os.path.join(DATA_DIR, "backups")
+
+ALLOWED_IMAGE_EXTENSIONS = {"png", "jpg", "jpeg", "gif", "webp"}
+ALLOWED_PDF_EXTENSIONS = {"pdf"}
+
+store = DataStore()
+activity = ActivityLog(os.path.join(DATA_DIR, "actividad.json"))
+cruce_data = Cruce(DATA_DIR)
+limiter = LoginLimiter()
+
+app.extensions["homologaciones_store"] = store
+init_csrf(app)
 app.register_blueprint(whatsapp_bp)
 
-# =====================================================
-# LIMPIEZA DE CARACTERES Y ENCODING ESPAÑOL (UTF-8)
-# =====================================================
-def fix_text_enc(s):
-    """Corrige caracteres rotos o caracteres de reemplazo (\ufffd) en texto en español."""
-    if not isinstance(s, str):
-        return s
-    U = '\ufffd'
-    if U not in s:
-        return s
-
-    s = s.replace(f'T{U}CNICO', 'TÉCNICO').replace(f'T{U}cnico', 'Técnico').replace(f't{U}cnico', 'técnico')
-    s = s.replace(f'TECNOLOG{U}A', 'TECNOLOGÍA').replace(f'Tecnolog{U}a', 'Tecnología').replace(f'tecnolog{U}a', 'tecnología')
-    s = s.replace(f'Gest{U}n', 'Gestión').replace(f'GESTI{U}N', 'GESTIÓN')
-    s = s.replace(f'Atenc{U}n', 'Atención').replace(f'ATENC{U}N', 'ATENCIÓN')
-    s = s.replace(f'L{U}nea', 'Línea').replace(f'L{U}NEA', 'LÍNEA')
-    s = s.replace(f'Asesor{U}a', 'Asesoría').replace(f'ASESOR{U}A', 'ASESORÍA')
-    s = s.replace(f'N{U}mina', 'Nómina').replace(f'N{U}MINA', 'NÓMINA')
-    s = s.replace(f'Organizac{U}n', 'Organización').replace(f'ORGANIZAC{U}N', 'ORGANIZACIÓN')
-    s = s.replace(f'Log{U}stica', 'Logística').replace(f'LOG{U}STICA', 'LOGÍSTICA')
-    s = s.replace(f'Operac{U}n', 'Operación').replace(f'Operac{U}nes', 'Operaciones').replace(f'OPERAC{U}N', 'OPERACIÓN').replace(f'OPERAC{U}NES', 'OPERACIONES')
-    s = s.replace(f'Contabilizac{U}n', 'Contabilización').replace(f'CONTABILIZAC{U}N', 'CONTABILIZACIÓN')
-    s = s.replace(f'Producc{U}n', 'Producción').replace(f'PRODUCC{U}N', 'PRODUCCIÓN')
-    s = s.replace(f'Informac{U}n', 'Información').replace(f'INFORMAC{U}N', 'INFORMACIÓN')
-    s = s.replace(f'Administrac{U}n', 'Administración').replace(f'ADMINISTRAC{U}N', 'ADMINISTRACIÓN')
-    s = s.replace(f'Construcc{U}n', 'Construcción').replace(f'CONSTRUCC{U}N', 'CONSTRUCCIÓN')
-    s = s.replace(f'Ejecuc{U}n', 'Ejecución').replace(f'EJECUC{U}N', 'EJECUCIÓN')
-    s = s.replace(f'Direcc{U}n', 'Dirección').replace(f'DIRECC{U}N', 'DIRECCIÓN')
-    s = s.replace(f'Instalac{U}n', 'Instalación').replace(f'INSTALAC{U}N', 'INSTALACIÓN')
-    s = s.replace(f'Comercializac{U}n', 'Comercialización').replace(f'COMERCIALIZAC{U}N', 'COMERCIALIZACIÓN')
-    s = s.replace(f'Orientac{U}n', 'Orientación').replace(f'ORIENTAC{U}N', 'ORIENTACIÓN')
-    s = s.replace(f'Promoc{U}n', 'Promoción').replace(f'PROMOC{U}N', 'PROMOCIÓN')
-    s = s.replace(f'Integrac{U}n', 'Integración').replace(f'INTEGRAC{U}N', 'INTEGRACIÓN')
-    s = s.replace(f'Formulac{U}n', 'Formulación').replace(f'FORMULAC{U}N', 'FORMULACIÓN')
-    s = s.replace(f'Evaluac{U}n', 'Evaluación').replace(f'EVALUAC{U}N', 'EVALUACIÓN')
-    s = s.replace(f'Comunicac{U}n', 'Comunicación').replace(f'COMUNICAC{U}N', 'COMUNICACIÓN')
-    s = s.replace(f'Bogot{U}', 'Bogotá').replace(f'BOGOT{U}', 'BOGOTÁ')
-    s = s.replace(f'Gal{U}n', 'Galán').replace(f'GAL{U}N', 'GALÁN')
-    s = s.replace(f'Fontib{U}n', 'Fontibón').replace(f'FONTIB{U}N', 'FONTIBÓN')
-    s = s.replace(f'Facatativ{U}', 'Facatativá').replace(f'FACATATIV{U}', 'FACATATIVÁ')
-    s = s.replace(f'Zipaquir{U}', 'Zipaquirá').replace(f'ZIPAQUIR{U}', 'ZIPAQUIRÁ')
-    s = s.replace(f'Generac{U}n', 'Generación').replace(f'GENERAC{U}N', 'GENERACIÓN')
-    s = s.replace(f'C{U}digo', 'Código').replace(f'C{U}DIGO', 'CÓDIGO')
-    s = s.replace(f'Andr{U}s', 'Andrés').replace(f'ANDR{U}S', 'ANDRÉS')
-    s = s.replace(f'Hern{U}ndez', 'Hernández').replace(f'HERN{U}NDEZ', 'HERNÁNDEZ')
-    s = s.replace(f'Mart{U}nez', 'Martínez').replace(f'MART{U}NEZ', 'MARTÍNEZ')
-    s = s.replace(f'Garc{U}a', 'García').replace(f'GARC{U}A', 'GARCÍA')
-    s = s.replace(f'R{U}os', 'Ríos').replace(f'R{U}OS', 'RÍOS')
-    s = s.replace(f'D{U}az', 'Díaz').replace(f'D{U}AZ', 'DÍAZ')
-    s = s.replace(f'Guti{U}rrez', 'Gutiérrez').replace(f'GUTI{U}RREZ', 'GUTIÉRREZ')
-    s = s.replace(f'Mu{U}oz', 'Muñoz').replace(f'MU{U}OZ', 'MUÑOZ')
-    s = s.replace(f'Pe{U}a', 'Peña').replace(f'PE{U}A', 'PEÑA')
-    s = s.replace(f'Ni{U}o', 'Niño').replace(f'NI{U}O', 'NIÑO')
-
-    s = re.sub(rf'c{U}n\b', 'ción', s)
-    s = re.sub(rf'C{U}N\b', 'CIÓN', s)
-    s = re.sub(rf's{U}n\b', 'sión', s)
-    s = re.sub(rf'S{U}N\b', 'SIÓN', s)
-    s = re.sub(rf'g{U}a\b', 'gía', s)
-    s = re.sub(rf'G{U}A\b', 'GÍA', s)
-    s = re.sub(rf'r{U}a\b', 'ría', s)
-    s = re.sub(rf'R{U}A\b', 'RÍA', s)
-    s = re.sub(rf'T{U}c', 'Téc', s)
-    s = re.sub(rf't{U}c', 'téc', s)
-    s = re.sub(rf'T{U}C', 'TÉC', s)
-    s = s.replace(U, '')
-    return s
-
-
-def clean_df(df):
-    """Limpia nombres de columnas y celdas de texto para arreglar la codificación en español."""
-    df.columns = [fix_text_enc(str(c)).strip() for c in df.columns]
-    for col in df.columns:
-        if df[col].dtype == object:
-            df[col] = df[col].apply(fix_text_enc)
-    return df
-
 
 # =====================================================
-# GLOBAL LOGIN GATE
+# HELPERS
 # =====================================================
-GLOBAL_USER = "Innovacion"
-GLOBAL_PASSWORD = "0228"
+def allowed_file(filename, allowed):
+    return "." in filename and filename.rsplit(".", 1)[1].lower() in allowed
 
+
+def safe_join(base, *parts):
+    """Une rutas evitando salir de `base` (protección path traversal)."""
+    path = os.path.abspath(os.path.join(base, *parts))
+    base_abs = os.path.abspath(base)
+    if os.path.commonpath([path, base_abs]) != base_abs:
+        return None
+    return path
+
+
+def listed_name(directory, name):
+    """Devuelve `name` solo si existe literalmente en `directory` (soporta tildes/ñ)."""
+    if not name or "/" in name or "\\" in name or name in (".", ".."):
+        return None
+    try:
+        return name if name in os.listdir(directory) else None
+    except OSError:
+        return None
+
+
+def breadcrumb_for(subfolder):
+    crumbs = []
+    if subfolder:
+        parts = [p for p in subfolder.replace("\\", "/").split("/") if p]
+        for i, part in enumerate(parts):
+            crumbs.append({"name": part, "path": "/".join(parts[: i + 1])})
+    return crumbs
+
+
+def list_folder(folder):
+    items = sorted(os.listdir(folder)) if os.path.isdir(folder) else []
+    carpetas = [d for d in items if os.path.isdir(os.path.join(folder, d))]
+    imagenes = [f for f in items if os.path.isfile(os.path.join(folder, f)) and allowed_file(f, ALLOWED_IMAGE_EXTENSIONS)]
+    return carpetas, imagenes
+
+
+def count_images(folder):
+    total = 0
+    for _, _, files in os.walk(folder):
+        total += sum(1 for f in files if allowed_file(f, ALLOWED_IMAGE_EXTENSIONS))
+    return total
+
+
+def folder_cover(folder):
+    for root, _, files in os.walk(folder):
+        for f in sorted(files):
+            if allowed_file(f, ALLOWED_IMAGE_EXTENSIONS):
+                return os.path.relpath(os.path.join(root, f), STATIC_DIR).replace("\\", "/")
+    return None
+
+
+def file_info(path):
+    try:
+        st = os.stat(path)
+        return {"size": st.st_size, "mtime": datetime.fromtimestamp(st.st_mtime).strftime("%d/%m/%Y %H:%M")}
+    except OSError:
+        return {"size": 0, "mtime": ""}
+
+
+def human_size(n):
+    for unit in ("B", "KB", "MB", "GB"):
+        if n < 1024:
+            return f"{n:.0f} {unit}" if unit == "B" else f"{n:.1f} {unit}"
+        n /= 1024
+    return f"{n:.1f} TB"
+
+
+app.jinja_env.filters["money"] = money
+app.jinja_env.filters["pretty"] = pretty_name
+app.jinja_env.filters["human_size"] = human_size
+
+
+# =====================================================
+# AUTENTICACIÓN
+# =====================================================
 def login_required(f):
     @wraps(f)
-    def decorated_function(*args, **kwargs):
+    def wrapper(*args, **kwargs):
         if not session.get("logged_in"):
-            return redirect("/login")
+            if request.path.startswith("/api/"):
+                return jsonify({"ok": False, "error": "Sesión expirada"}), 401
+            return redirect(url_for("global_login", next=request.full_path if request.query_string else request.path))
         return f(*args, **kwargs)
-    return decorated_function
+    return wrapper
+
+
+def admin_only(f):
+    @wraps(f)
+    @login_required
+    def wrapper(*args, **kwargs):
+        if not session.get("admin"):
+            return redirect("/admin")
+        return f(*args, **kwargs)
+    return wrapper
+
+
+def admin_required():
+    """Compatibilidad: devuelve redirect si no es admin."""
+    if not session.get("admin"):
+        return redirect("/admin")
+    return None
+
 
 @app.route("/login", methods=["GET", "POST"])
 def global_login():
     error = None
+    wait = limiter.blocked("global")
     if request.method == "POST":
-        user = request.form.get("user", "")
-        password = request.form.get("password", "")
-        if user == GLOBAL_USER and password == GLOBAL_PASSWORD:
+        if wait:
+            error = f"Demasiados intentos. Espera {wait} segundos."
+        elif request.form.get("user", "").strip() == GLOBAL_USER and check_password(request.form.get("password", ""), GLOBAL_PASSWORD):
+            limiter.reset("global")
+            session.clear()
+            session.permanent = request.form.get("remember") == "on"
             session["logged_in"] = True
-            return redirect("/")
+            session["login_at"] = datetime.now().isoformat(timespec="seconds")
+            nxt = request.args.get("next", "/")
+            return redirect(nxt if nxt.startswith("/") and not nxt.startswith("//") else "/")
         else:
+            limiter.fail("global")
             error = "Usuario o contraseña incorrectos"
     return render_template("global_login.html", error=error)
 
+
 @app.route("/logout")
 def global_logout():
-    session.pop("logged_in", None)
+    session.clear()
     return redirect("/login")
 
-# =====================================================
-# DATA PATHS
-# =====================================================
-DATA_DIR = os.path.join(os.path.dirname(__file__), "data")
-BROCHURES_DIR = os.path.join("static", "brochures")
-PIEZAS_DIR = os.path.join("static", "piezas")
-
-ALLOWED_IMAGE_EXTENSIONS = {'png', 'jpg', 'jpeg', 'gif', 'webp'}
-ALLOWED_PDF_EXTENSIONS = {'pdf'}
 
 # =====================================================
-# JSON DATA HELPERS
+# CONTEXTO GLOBAL DE PLANTILLAS
 # =====================================================
-def load_json(filename):
-    filepath = os.path.join(DATA_DIR, filename)
-    if os.path.exists(filepath):
-        with open(filepath, "r", encoding="utf-8") as f:
-            return json.load(f)
-    return []
+NAV = [
+    ("Principal", [
+        ("/dashboard", "fa-gauge-high", "Panel"),
+        ("/", "fa-building-columns", "Homologaciones"),
+        ("/presencial", "fa-school", "Presencial"),
+        ("/programas", "fa-diagram-project", "Explorar programas"),
+    ]),
+    ("Comercial", [
+        ("/mensajes", "fa-comments", "Mensajes"),
+        ("/precios", "fa-tags", "Precios"),
+        ("/simulador", "fa-calculator", "Simulador"),
+        ("/whatsapp", "fa-brands fa-whatsapp", "Envío WhatsApp"),
+    ]),
+    ("Recursos", [
+        ("/piezas", "fa-images", "Piezas gráficas"),
+        ("/brochures", "fa-file-pdf", "Brochures"),
+        ("/parametrizacion", "fa-calendar-days", "Parametrización"),
+        ("/flujos", "fa-headset", "Flujo de llamada"),
+        ("/capacitacion", "fa-user-graduate", "Capacitación e IA"),
+    ]),
+    ("Gestión", [
+        ("/cruce", "fa-shuffle", "Cruce de datos"),
+        ("/aguachica", "fa-chart-line", "Aguachica"),
+    ]),
+]
 
-def save_json(filename, data):
-    filepath = os.path.join(DATA_DIR, filename)
-    os.makedirs(DATA_DIR, exist_ok=True)
-    with open(filepath, "w", encoding="utf-8") as f:
-        json.dump(data, f, ensure_ascii=False, indent=4)
-
-def allowed_file(filename, allowed):
-    return '.' in filename and filename.rsplit('.', 1)[1].lower() in allowed
-
-# =====================================================
-# LOAD DATA FROM JSON
-# =====================================================
-def get_mensajes_programas():
-    return load_json("mensajes_programas.json")
-
-def get_mensajes_sena():
-    return load_json("mensajes_sena.json")
-
-def get_precios():
-    return load_json("precios.json")
-
-
-# =====================================================
-# CARGAR HOMOLOGACIONES PRESENCIAL
-# =====================================================
-presencial = clean_df(pd.read_excel("Presencial 2026.xlsx"))
-
-# =====================================================
-# CARGAR ACTAS
-# =====================================================
-actas = clean_df(pd.read_excel("Actas SENA.xlsx"))
+TITLES = {item[0]: item[2] for _, items in NAV for item in items}
+TITLES.update({"/sena": "Mensajes SENA", "/admin": "Administración"})
 
 
-# =====================================================
-# LISTA DE TÍTULOS PARA AUTOCOMPLETADO (desde Excel)
-# =====================================================
-titulos_sena = sorted(actas["TÉCNICO O TECNOLOGÍA"].dropna().astype(str).str.strip().unique().tolist())
+def page_title():
+    p = request.path
+    if p in TITLES:
+        return TITLES[p]
+    for prefix in ("/piezas", "/admin", "/aguachica"):
+        if p.startswith(prefix):
+            return TITLES.get(prefix, "Areandina")
+    return "Areandina"
 
-# =====================================================
-# FUNCIÓN DE MENSAJE
-# =====================================================
-def generar_mensaje(titulo_input):
-    titulo_norm = titulo_input.strip().upper()
 
-    coincidencias = actas[
-        actas["TÉCNICO O TECNOLOGÍA"]
-        .astype(str)
-        .str.upper()
-        .str.contains(titulo_norm, na=False)
-    ]
+def nav_active(href):
+    p = request.path
+    if href == "/":
+        return p == "/"
+    return p == href or p.startswith(href + "/")
 
-    if coincidencias.empty:
-        return f"No encontré homologaciones para el título *{titulo_input}*."
 
-    texto = (
-        f"*{titulo_input}*\n"
-        "Con este título puedes homologar con las siguientes carreras:\n\n"
-    )
-
-    for _, fila in coincidencias.iterrows():
-        carrera = str(fila["PROGRAMA"]).upper()
-        homologados = int(fila["SEMTR HOMOLOGADOS"])
-        faltantes = int(fila["FALTANTES"])
-
-        texto += (
-            f"🔹 *{carrera}*\n"
-            f"➡ Semestres homologados: {homologados}\n"
-            f"➡ Semestres por cursar: {faltantes}\n\n"
-        )
-
-    if len(coincidencias) == 1:
-        texto += (
-            "¿Te gustaría recibir más información sobre este programa?\n\n"
-            "💡 *Los egresados SENA cuentan con un 20% de descuento* en esta homologación."
-        )
-    else:
-        texto += (
-            "¿De cuál de estas opciones te gustaría recibir más información?\n\n"
-            "💡 *Los egresados SENA cuentan con un 20% de descuento* en estas homologaciones."
-        )
-
-    return texto
+@app.context_processor
+def inject_globals():
+    return {
+        "NAV": NAV,
+        "nav_active": nav_active,
+        "page_title": page_title,
+        "cfg": store.config,
+        "is_admin": bool(session.get("admin")),
+        "app_version": APP_VERSION,
+        "now": datetime.now(),
+    }
 
 
 # =====================================================
-# RUTAS PÚBLICAS
+# ESTÁTICOS Y UTILIDADES
 # =====================================================
 @app.route("/logo.jpg")
 def logo():
-    return send_from_directory(".", "logo.jpg")
+    return send_from_directory(BASE_DIR, "logo.jpg")
+
+
+@app.route("/manifest.webmanifest")
+def manifest():
+    return send_from_directory(STATIC_DIR, "manifest.webmanifest", mimetype="application/manifest+json")
+
+
+@app.route("/healthz")
+def healthz():
+    return jsonify({"ok": True, "version": APP_VERSION, "titulos": len(store.titulos())})
+
+
+@app.errorhandler(404)
+def not_found(e):
+    if request.path.startswith("/api/"):
+        return jsonify({"ok": False, "error": "No encontrado"}), 404
+    return render_template("error.html", code=404, title="Página no encontrada",
+                           message="La página que buscas no existe o fue movida."), 404
+
+
+@app.errorhandler(400)
+def bad_request(e):
+    msg = getattr(e, "description", "Solicitud inválida")
+    if request.path.startswith("/api/") or request.is_json:
+        return jsonify({"ok": False, "error": msg}), 400
+    return render_template("error.html", code=400, title="Solicitud inválida", message=msg), 400
+
+
+@app.errorhandler(413)
+def too_large(e):
+    return render_template("error.html", code=413, title="Archivo demasiado grande",
+                           message="El archivo supera el límite de 32 MB."), 413
+
+
+@app.errorhandler(500)
+def server_error(e):
+    if request.path.startswith("/api/"):
+        return jsonify({"ok": False, "error": "Error interno del servidor"}), 500
+    return render_template("error.html", code=500, title="Algo salió mal",
+                           message="Ocurrió un error inesperado. Intenta de nuevo."), 500
+
+
+# =====================================================
+# HOMOLOGACIONES (VIRTUAL)
+# =====================================================
+def generar_mensaje(titulo_input):
+    """Compatibilidad con la versión anterior: devuelve solo el texto."""
+    return mensaje_homologacion(buscar_homologacion(store, titulo_input or ""), store.config)
 
 
 @app.route("/", methods=["GET", "POST"])
 @login_required
 def homologaciones():
-    mensaje = None
-
     if request.method == "POST":
-        titulo = request.form.get("titulo")
-        mensaje = generar_mensaje(titulo)
-        session["ultimo_mensaje"] = mensaje
-
-    return render_template(
-        "homologaciones.html",
-        titulos=titulos_sena,
-        mensaje=mensaje,
-        precios=get_precios()
-    )
+        return redirect(url_for("homologaciones", q=request.form.get("titulo", "")))
+    return render_template("homologaciones.html", titulos=store.titulos(), q=request.args.get("q", ""))
 
 
+@app.route("/api/homologar")
+@login_required
+def api_homologar():
+    q = request.args.get("q", "").strip()
+    nombre = request.args.get("nombre", "").strip()[:60]
+    incluir_precios = request.args.get("precios") == "1"
+    if not q:
+        return jsonify({"ok": False, "error": "Escribe un título SENA"}), 400
+    res = buscar_homologacion(store, q)
+    cfg = store.config
+    programas = [p for g in res["grupos"] for p in g["programas"]]
+    res["mensaje"] = mensaje_homologacion(res, cfg, nombre=nombre, incluir_precios=incluir_precios)
+    res["mensaje_precios"] = mensaje_precios(programas, cfg)
+    res["ok"] = True
+    if request.args.get("log", "1") == "1":
+        activity.log("busqueda", res["grupos"][0]["titulo"] if len(res["grupos"]) == 1 else q, res["total_programas"])
+    return jsonify(res)
+
+
+@app.route("/api/titulos")
+@login_required
+def api_titulos():
+    q = request.args.get("q", "").strip()
+    titulos = store.titulos()
+    if q:
+        return jsonify({"ok": True, "items": rank_titles(q, titulos, limit=int(request.args.get("limit", 12)), threshold=0.55)})
+    return jsonify({"ok": True, "items": titulos, "presencial": store.titulos_presencial()})
+
+
+@app.route("/api/track", methods=["POST"])
+@login_required
+def api_track():
+    data = request.get_json(silent=True) or {}
+    tipo = str(data.get("tipo", ""))[:30]
+    if tipo in ("copia", "whatsapp", "oferta", "simulacion"):
+        activity.log(tipo, str(data.get("query", ""))[:200], 1)
+    return jsonify({"ok": True})
+
+
+# =====================================================
+# PRESENCIAL
+# =====================================================
+def generar_mensaje_presencial(titulo_input, sede):
+    """Compatibilidad: devuelve solo el texto."""
+    sede = (sede or "").lower()
+    if sede not in SEDES and sede != "todas":
+        return "Sede no válida."
+    return mensaje_presencial(buscar_presencial(store, titulo_input or "", sede), store.config)
+
+
+@app.route("/presencial", methods=["GET", "POST"])
+@login_required
+def presencial_route():
+    if request.method == "POST":
+        return redirect(url_for("presencial_route", q=request.form.get("titulo", ""), sede=request.form.get("sede", "todas")))
+    return render_template("presencial.html", titulos=store.titulos_presencial(), sedes=SEDES,
+                           q=request.args.get("q", ""), sede=request.args.get("sede", "todas"))
+
+
+@app.route("/api/presencial")
+@login_required
+def api_presencial():
+    q = request.args.get("q", "").strip()
+    sede = request.args.get("sede", "todas").lower()
+    if not q:
+        return jsonify({"ok": False, "error": "Escribe un título"}), 400
+    if sede not in SEDES:
+        sede = "todas"
+    res = buscar_presencial(store, q, sede)
+    res["mensaje"] = mensaje_presencial(res, store.config, nombre=request.args.get("nombre", "").strip()[:60])
+    res["ok"] = True
+    activity.log("busqueda_presencial", res["titulos"][0] if len(res["titulos"]) == 1 else q, res["total"])
+    return jsonify(res)
+
+
+# =====================================================
+# EXPLORAR PROGRAMAS (BÚSQUEDA INVERSA)
+# =====================================================
+@app.route("/programas")
+@login_required
+def programas():
+    return render_template("programas.html", programas=explorar_programas(store))
+
+
+# =====================================================
+# MENSAJES
+# =====================================================
 @app.route("/mensajes")
 @login_required
 def mensajes():
-    filtro = request.args.get("nivel", "pre")
-    mensajes_programas = get_mensajes_programas()
+    nivel = request.args.get("nivel", "pre")
+    if nivel not in ("pre", "pos", "sena", "fav"):
+        nivel = "pre"
+    return render_template("mensajes.html", programas=store.render_list(store.mensajes_programas()),
+                           sena=store.render_list(store.mensajes_sena()),
+                           nivel=nivel, q=request.args.get("q", ""))
 
-    filtrados = [
-        m for m in mensajes_programas
-        if m["nivel"] == filtro
-    ]
-
-    return render_template(
-        "mensajes.html",
-        mensajes=filtrados,
-        filtro=filtro
-    )
 
 @app.route("/sena")
 @login_required
 def sena():
-    q = request.args.get("q", "").lower()
-    mensajes_sena = get_mensajes_sena()
+    return redirect(url_for("mensajes", nivel="sena", q=request.args.get("q", "")))
 
-    filtrados = [
-        m for m in mensajes_sena
-        if q in m["titulo"].lower() or q in m["texto"].lower()
-    ]
 
-    return render_template(
-        "sena.html",
-        mensajes=filtrados,
-        q=q
-    )
+# =====================================================
+# PRECIOS Y SIMULADOR
+# =====================================================
+@app.route("/precios")
+@login_required
+def precios():
+    return render_template("precios.html", programas=store.precios())
 
+
+@app.route("/simulador")
+@login_required
+def simulador():
+    progs = explorar_programas(store)
+    mapa = {}
+    for p in progs:
+        if p["precio"]:
+            mapa[p["precio"]["id"]] = [{"titulo": t["titulo"], "homologados": t["homologados"], "faltantes": t["faltantes"]}
+                                       for t in p["titulos"]]
+    return render_template("simulador.html", precios=store.precios(), homologaciones=mapa,
+                           programa_id=request.args.get("programa", type=int), titulo=request.args.get("titulo", ""))
+
+
+@app.route("/api/oferta", methods=["POST"])
+@login_required
+def api_oferta():
+    data = request.get_json(silent=True) or {}
+    try:
+        valor = int(data.get("valor", 0))
+        descuento = max(0, min(100, int(data.get("descuento", 0))))
+        semestres = int(data.get("semestres") or 0) or None
+        homologados = int(data.get("homologados") or 0)
+    except (TypeError, ValueError):
+        return jsonify({"ok": False, "error": "Datos inválidos"}), 400
+    texto = mensaje_oferta(str(data.get("programa", ""))[:120], valor, descuento, store.config, semestres, homologados)
+    return jsonify({"ok": True, "mensaje": texto})
+
+
+# =====================================================
+# PANEL / ESTADÍSTICAS
+# =====================================================
+@app.route("/dashboard")
+@login_required
+def dashboard():
+    precios_data = store.precios()
+    valores = [p["valor"] for p in precios_data] or [0]
+    progs = explorar_programas(store)
+    df = store.actas()
+    dist = df["SEMTR HOMOLOGADOS"].fillna(0).astype(int).value_counts().sort_index()
+    mensajes_programas = store.mensajes_programas()
+    stats = {
+        "total_titulos": len(store.titulos()),
+        "total_combinaciones": int(len(df)),
+        "total_programas_actas": len(progs),
+        "total_pregrado": len([m for m in mensajes_programas if m.get("nivel") == "pre"]),
+        "total_posgrado": len([m for m in mensajes_programas if m.get("nivel") == "pos"]),
+        "total_mensajes_sena": len(store.mensajes_sena()),
+        "total_precios": len(precios_data),
+        "precio_min": min(valores),
+        "precio_max": max(valores),
+        "precio_promedio": int(sum(valores) / len(valores)),
+        "presencial_titulos": len(store.titulos_presencial()),
+        "piezas": count_images(PIEZAS_DIR),
+        "max_homologados": int(df["SEMTR HOMOLOGADOS"].max()) if len(df) else 0,
+    }
+    chart = {
+        "programas": [p["display"] for p in progs],
+        "programas_total": [p["total"] for p in progs],
+        "dist_labels": [f"{int(k)} sem." for k in dist.index],
+        "dist_values": [int(v) for v in dist.values],
+        "precios_labels": [p["programa"] for p in sorted(precios_data, key=lambda x: x["valor"])],
+        "precios_values": [p["valor"] for p in sorted(precios_data, key=lambda x: x["valor"])],
+    }
+    return render_template("dashboard.html", stats=stats, chart=chart, actividad=activity.summary(14),
+                           cruce=cruce_data.status())
+
+
+@app.route("/stats")
+@login_required
+def stats():
+    return redirect(url_for("dashboard"))
+
+
+# =====================================================
+# PÁGINAS DE CONTENIDO
+# =====================================================
+@app.route("/flujos")
+@login_required
+def flujos():
+    return render_template("flujos.html")
+
+
+@app.route("/parametrizacion")
+@login_required
+def parametrizacion():
+    return render_template("parametrizacion.html")
+
+
+@app.route("/capacitacion")
+@login_required
+def capacitacion():
+    return render_template("capacitacion.html", ia_claude=claude_available())
+
+
+@app.route("/capacitacion/api/chat", methods=["POST"])
+@app.route("/api/asistente", methods=["POST"])
+@login_required
+def api_chat():
+    data = request.get_json(silent=True) or {}
+    msg = str(data.get("message", "")).strip()[:2000]
+    if not msg:
+        return jsonify({"ok": False, "error": "Mensaje vacío"}), 400
+    text, source = assistant_answer(msg, data.get("history") or [], store)
+    activity.log("asistente", msg, 1)
+    return jsonify({"ok": True, "reply": text, "response": text, "source": source})
+
+
+# =====================================================
+# PIEZAS GRÁFICAS Y BROCHURES
+# =====================================================
 @app.route("/piezas")
 @app.route("/piezas/<path:subfolder>")
 @login_required
 def piezas(subfolder=""):
-    carpeta = os.path.join("static", "piezas", subfolder)
-    # Security: prevent path traversal
-    abs_carpeta = os.path.abspath(carpeta)
-    abs_base = os.path.abspath(os.path.join("static", "piezas"))
-    if not abs_carpeta.startswith(abs_base):
+    carpeta = safe_join(PIEZAS_DIR, subfolder)
+    if not carpeta or not os.path.isdir(carpeta):
         return redirect("/piezas")
+    carpetas, imagenes = list_folder(carpeta)
+    folders = [{"name": d, "path": (subfolder + "/" + d) if subfolder else d,
+                "count": count_images(os.path.join(carpeta, d)), "cover": folder_cover(os.path.join(carpeta, d))}
+               for d in carpetas]
+    imgs = [{"name": f, "path": "piezas/" + ((subfolder + "/") if subfolder else "") + f,
+             **file_info(os.path.join(carpeta, f))} for f in imagenes]
+    return render_template("piezas.html", carpetas=folders, imagenes=imgs, subfolder=subfolder,
+                           breadcrumb=breadcrumb_for(subfolder))
 
-    if not os.path.exists(carpeta):
-        return redirect("/piezas")
 
-    items = os.listdir(carpeta) if os.path.exists(carpeta) else []
-    carpetas = sorted([d for d in items if os.path.isdir(os.path.join(carpeta, d))])
-    imagenes = sorted([f for f in items if os.path.isfile(os.path.join(carpeta, f)) and allowed_file(f, ALLOWED_IMAGE_EXTENSIONS)])
+@app.route("/brochures")
+@login_required
+def brochures():
+    os.makedirs(BROCHURES_DIR, exist_ok=True)
+    archivos = [{"name": f, **file_info(os.path.join(BROCHURES_DIR, f))}
+                for f in sorted(os.listdir(BROCHURES_DIR)) if f.lower().endswith(".pdf")]
+    return render_template("brochures.html", archivos=archivos)
 
-    # Build breadcrumb
-    breadcrumb = []
-    if subfolder:
-        parts = subfolder.replace("\\", "/").split("/")
-        for i, part in enumerate(parts):
-            breadcrumb.append({
-                "name": part,
-                "path": "/".join(parts[:i+1])
-            })
 
-    return render_template(
-        "piezas.html",
-        carpetas=carpetas,
-        imagenes=imagenes,
-        subfolder=subfolder,
-        breadcrumb=breadcrumb
-    )
+# =====================================================
+# AGUACHICA
+# =====================================================
+METAS_EJECUTIVOS = {
+    "Jorge": {"llamadas": 400, "inscritos": 0, "pagos": 11},
+    "Maria": {"llamadas": 350, "inscritos": 0, "pagos": 11},
+    "Ana": {"llamadas": 300, "inscritos": 0, "pagos": 11},
+}
+
+
+def _aguachica_df():
+    if os.path.exists(AGUACHICA_FILE):
+        df = pd.read_excel(AGUACHICA_FILE)
+    else:
+        df = pd.DataFrame(columns=["fecha", "ejecutivo", "llamadas", "inscritos", "pagos"])
+    df["fecha"] = pd.to_datetime(df["fecha"], errors="coerce")
+    for c in ("llamadas", "inscritos", "pagos"):
+        df[c] = pd.to_numeric(df[c], errors="coerce").fillna(0).astype(int)
+    return df
+
 
 @app.route("/aguachica", methods=["GET", "POST"])
 @login_required
 def aguachica_login():
+    if session.get("aguachica"):
+        return redirect("/aguachica/dashboard")
+    error = None
     if request.method == "POST":
-        user = request.form.get("user")
-        password = request.form.get("password")
-
-        if user == "csu-aguachica" and password == "1234":
+        if (request.form.get("user") == AGUACHICA_USER and check_password(request.form.get("password"), AGUACHICA_PASSWORD)):
             session["aguachica"] = True
             return redirect("/aguachica/dashboard")
+        error = "Usuario o contraseña incorrectos"
+    return render_template("aguachica_login.html", error=error)
 
-    return render_template("aguachica_login.html")
+
+@app.route("/aguachica/salir")
+@login_required
+def aguachica_logout():
+    session.pop("aguachica", None)
+    return redirect("/aguachica")
 
 
 @app.route("/aguachica/dashboard", methods=["GET", "POST"])
@@ -350,165 +627,46 @@ def aguachica_dashboard():
     if not session.get("aguachica"):
         return redirect("/aguachica")
 
-    ruta = "aguachica.xlsx"
-
     if request.method == "POST":
-        data = {
-            "fecha": datetime.now().date(),
-            "ejecutivo": request.form["ejecutivo"],
-            "llamadas": int(request.form["llamadas"]),
-            "inscritos": int(request.form["inscritos"]),
-            "pagos": int(request.form["pagos"]),
-        }
+        try:
+            nuevo = {
+                "fecha": pd.to_datetime(request.form.get("fecha") or datetime.now().date()),
+                "ejecutivo": request.form["ejecutivo"],
+                "llamadas": max(0, int(request.form["llamadas"])),
+                "inscritos": max(0, int(request.form["inscritos"])),
+                "pagos": max(0, int(request.form["pagos"])),
+            }
+        except (KeyError, ValueError):
+            abort(400, description="Datos del registro inválidos")
+        df = _aguachica_df()
+        df = pd.concat([df, pd.DataFrame([nuevo])], ignore_index=True)
+        df["fecha"] = df["fecha"].dt.date
+        df.to_excel(AGUACHICA_FILE, index=False)
+        return redirect("/aguachica/dashboard?ejecutivo=" + nuevo["ejecutivo"])
 
-        df_new = pd.DataFrame([data])
-
-        if os.path.exists(ruta):
-            df = pd.read_excel(ruta)
-            df = pd.concat([df, df_new], ignore_index=True)
-        else:
-            df = df_new
-
-        df.to_excel(ruta, index=False)
-        return redirect("/aguachica/dashboard")
-
-    if os.path.exists(ruta):
-        df = pd.read_excel(ruta)
-    else:
-        df = pd.DataFrame(columns=["fecha", "ejecutivo", "llamadas", "inscritos", "pagos"])
-
-    df["fecha"] = pd.to_datetime(df["fecha"])
+    df = _aguachica_df()
     semana = df[df["fecha"] >= datetime.now() - timedelta(days=7)]
-
-    totales = (
-        semana
-        .groupby("ejecutivo")[["llamadas", "inscritos", "pagos"]]
-        .sum()
-        .reset_index()
-    )
-
-    METAS_EJECUTIVOS = {
-        "Jorge": {"llamadas": 400, "inscritos": 0, "pagos": 11},
-        "Maria": {"llamadas": 350, "inscritos": 0, "pagos": 11},
-        "Ana":   {"llamadas": 300, "inscritos": 0, "pagos": 11},
-    }
-
+    totales = semana.groupby("ejecutivo")[["llamadas", "inscritos", "pagos"]].sum().reset_index()
     ejecutivo_sel = request.args.get("ejecutivo", "Jorge")
-
-    resumen_individual = (
-        semana[semana["ejecutivo"] == ejecutivo_sel][
-            ["llamadas", "inscritos", "pagos"]
-        ]
-        .sum()
-        .fillna(0)
-    )
-
-    meta_individual = METAS_EJECUTIVOS.get(ejecutivo_sel)
-
-    resumen = semana[["llamadas", "inscritos", "pagos"]].sum().fillna(0)
+    if ejecutivo_sel not in METAS_EJECUTIVOS:
+        ejecutivo_sel = "Jorge"
+    ind = semana[semana["ejecutivo"] == ejecutivo_sel][["llamadas", "inscritos", "pagos"]].sum()
+    resumen_individual = {k: int(ind.get(k, 0)) for k in ("llamadas", "inscritos", "pagos")}
+    meta_individual = METAS_EJECUTIVOS[ejecutivo_sel]
 
     def semaforo(valor, meta):
-        if valor >= meta:
+        if meta <= 0 or valor >= meta:
             return "verde"
-        elif valor >= meta * 0.7:
-            return "amarillo"
-        else:
-            return "rojo"
+        return "amarillo" if valor >= meta * 0.7 else "rojo"
 
-    estado = {
-        "llamadas": semaforo(resumen_individual["llamadas"], meta_individual["llamadas"]),
-        "inscritos": semaforo(resumen_individual["inscritos"], meta_individual["inscritos"]),
-        "pagos": semaforo(resumen_individual["pagos"], meta_individual["pagos"]),
-    }
-
+    estado = {k: semaforo(resumen_individual[k], meta_individual[k]) for k in resumen_individual}
+    registros = semana.sort_values("fecha", ascending=False).head(30).copy()
+    registros["fecha"] = registros["fecha"].dt.strftime("%d/%m/%Y")
     return render_template(
-        "aguachica.html",
-        datos=semana,
-        totales=totales,
-        ejecutivo_sel=ejecutivo_sel,
-        resumen_individual=resumen_individual,
-        meta_individual=meta_individual,
-        metas_ejecutivos=METAS_EJECUTIVOS,
-        estado=estado
-    )
-
-# =====================================================
-# FUNCIÓN MENSAJE PRESENCIAL
-# =====================================================
-def generar_mensaje_presencial(titulo_input, sede):
-    titulo_norm = titulo_input.strip().upper()
-    sede = sede.lower()
-
-    if sede == "bogota":
-        col_titulo = "Sede Bogota"
-        col_homo = "Semestres de Homologacion"
-        col_pend = "Semestres Pendientes"
-    elif sede == "pereira":
-        col_titulo = "Sede Pereira"
-        col_homo = "Semestres de Homologacion.1"
-        col_pend = "Semestres Pendientes.1"
-    elif sede == "valledupar":
-        col_titulo = "Sede Valledupar"
-        col_homo = "Semestres de Homologacion.2"
-        col_pend = "Semestres Pendientes.2"
-    else:
-        return "Sede no válida."
-
-    coincidencias = presencial[
-        presencial[col_titulo]
-        .astype(str)
-        .str.upper()
-        .str.contains(titulo_norm, na=False)
-    ]
-
-    if coincidencias.empty:
-        return f"No encontré homologaciones presenciales para el título *{titulo_input}* en esta sede."
-
-    texto = (
-        f"*{titulo_input}*\n"
-        f"📍 *Sede {sede.capitalize()}*\n\n"
-        "Con este título puedes homologar en:\n\n"
-    )
-
-    for _, fila in coincidencias.iterrows():
-        programa = str(fila["Unnamed: 0"]).upper()
-        homologados = int(fila[col_homo])
-        pendientes = int(fila[col_pend])
-
-        texto += (
-            f"🔹 *{programa}*\n"
-            f"➡ Semestres homologados: {homologados}\n"
-            f"➡ Semestres por cursar: {pendientes}\n\n"
-        )
-
-    if len(coincidencias) == 1:
-        texto += (
-            "¿Te gustaría recibir más información sobre este programa?\n\n"
-            "💡 *Beneficios especiales para egresados SENA en modalidad presencial.*"
-        )
-    else:
-        texto += (
-            "¿En cuál de estas opciones te gustaría recibir más información?\n\n"
-            "💡 *Beneficios especiales para egresados SENA en modalidad presencial.*"
-        )
-
-    return texto
-
-
-@app.route("/presencial", methods=["GET", "POST"])
-@login_required
-def presencial_route():
-    mensaje = None
-
-    if request.method == "POST":
-        titulo = request.form.get("titulo")
-        sede = request.form.get("sede")
-        mensaje = generar_mensaje_presencial(titulo, sede)
-
-    return render_template(
-        "presencial.html",
-        titulos=titulos_sena,
-        mensaje=mensaje
+        "aguachica.html", totales=totales.to_dict(orient="records"), ejecutivo_sel=ejecutivo_sel,
+        resumen_individual=resumen_individual, meta_individual=meta_individual,
+        metas_ejecutivos=METAS_EJECUTIVOS, estado=estado, registros=registros.to_dict(orient="records"),
+        hoy=datetime.now().strftime("%Y-%m-%d"),
     )
 
 
@@ -517,123 +675,120 @@ def presencial_route():
 def aguachica_borrar():
     if not session.get("aguachica"):
         return redirect("/aguachica")
-
-    clave = request.form.get("clave")
-
-    if clave == "2907":
-        ruta = "aguachica.xlsx"
-        if os.path.exists(ruta):
-            os.remove(ruta)
-
+    if check_password(request.form.get("clave"), AGUACHICA_CLAVE_BORRADO) and os.path.exists(AGUACHICA_FILE):
+        os.makedirs(BACKUP_DIR, exist_ok=True)
+        shutil.copy2(AGUACHICA_FILE, os.path.join(BACKUP_DIR, f"aguachica_{datetime.now():%Y%m%d_%H%M%S}.xlsx"))
+        os.remove(AGUACHICA_FILE)
     return redirect("/aguachica/dashboard")
 
 
-@app.route("/precios")
-@login_required
-def precios():
-    return render_template(
-        "precios.html",
-        programas=get_precios()
-    )
-
-
-# =====================================================
-# ESTADÍSTICAS RÁPIDAS
-# =====================================================
-@app.route("/stats")
-@login_required
-def stats():
-    PRECIOS_PREGRADO = get_precios()
-    mensajes_programas = get_mensajes_programas()
-    mensajes_sena = get_mensajes_sena()
-
-    valores = [p["valor"] for p in PRECIOS_PREGRADO]
-    total_programas_pre = len([m for m in mensajes_programas if m["nivel"] == "pre"])
-    total_programas_pos = len([m for m in mensajes_programas if m["nivel"] == "pos"])
-    total_titulos = len(set(titulos_sena))
-
-    stats_data = {
-        "total_pregrado": total_programas_pre,
-        "total_posgrado": total_programas_pos,
-        "total_titulos_sena": total_titulos,
-        "precio_min": min(valores),
-        "precio_max": max(valores),
-        "precio_promedio": int(sum(valores) / len(valores)),
-        "total_precios": len(PRECIOS_PREGRADO),
-        "total_mensajes_sena": len(mensajes_sena),
-    }
-
-    return render_template("stats.html", stats=stats_data)
-
-# =====================================================
-# FLUJOS DE LLAMADAS
-# =====================================================
-@app.route("/flujos")
-@login_required
-def flujos():
-    return render_template("flujos.html")
-
-
-# =====================================================
-# PARAMETRIZACIÓN
-# =====================================================
-@app.route("/parametrizacion")
-@login_required
-def parametrizacion():
-    return render_template("parametrizacion.html")
-
-
-# =====================================================
-# EXPORTAR CSV AGUACHICA
-# =====================================================
 @app.route("/aguachica/exportar")
 @login_required
 def aguachica_exportar():
     if not session.get("aguachica"):
         return redirect("/aguachica")
-
-    ruta = "aguachica.xlsx"
-    if not os.path.exists(ruta):
+    if not os.path.exists(AGUACHICA_FILE):
         return "No hay datos para exportar", 404
-
-    df = pd.read_excel(ruta)
-    output = io.StringIO()
-    df.to_csv(output, index=False)
-    output.seek(0)
-
-    return Response(
-        output.getvalue(),
-        mimetype="text/csv",
-        headers={"Content-Disposition": "attachment;filename=aguachica_datos.csv"}
-    )
+    df = pd.read_excel(AGUACHICA_FILE)
+    return Response("﻿" + df.to_csv(index=False), mimetype="text/csv",
+                    headers={"Content-Disposition": "attachment;filename=aguachica_datos.csv"})
 
 
 # =====================================================
-# BROCHURES (PÚBLICO)
+# CRUCE DE DATOS
 # =====================================================
-@app.route("/brochures")
+@app.route("/cruce", methods=["GET", "POST"])
 @login_required
-def brochures():
-    os.makedirs(BROCHURES_DIR, exist_ok=True)
-    archivos = [f for f in os.listdir(BROCHURES_DIR) if f.lower().endswith('.pdf')]
-    return render_template("brochures.html", archivos=archivos)
+def cruce():
+    if request.method == "POST":
+        action = request.form.get("action")
+        if action in ("upload", "upload_funnel"):
+            file = request.files.get("archivo" if action == "upload" else "archivo_funnel")
+            if file and file.filename and file.filename.lower().endswith((".xlsx", ".xls")):
+                cruce_data.save_upload(file, "gen" if action == "upload" else "funnel")
+        elif action == "sync_sheets":
+            cruce_data.sync_gen()
+        elif action == "sync_funnel":
+            cruce_data.sync_funnel()
+        elif action == "delete":
+            cruce_data.delete("gen")
+        elif action == "delete_funnel":
+            cruce_data.delete("funnel")
+        return redirect("/cruce")
+    return render_template("cruce.html", **cruce_data.status())
+
+
+@app.route("/api/cruce/sync-sheets", methods=["POST"])
+@login_required
+def api_cruce_sync_sheets():
+    ok, msg = cruce_data.sync_gen()
+    return jsonify({"ok": ok, "message": msg})
+
+
+@app.route("/api/cruce/sync-funnel", methods=["POST"])
+@login_required
+def api_cruce_sync_funnel():
+    ok, msg = cruce_data.sync_funnel()
+    return jsonify({"ok": ok, "message": msg, "total_cedulas": len(cruce_data.funnel_cedulas())})
+
+
+def _cruce_params():
+    a = request.args
+    return dict(fecha_cargue=a.get("fecha_cargue", "").strip(), rango=a.get("rango", "todas").strip().lower(),
+                radar=a.get("radar", "todos").strip().lower(), q=a.get("q", "").strip(),
+                desde=a.get("desde", "").strip(), hasta=a.get("hasta", "").strip())
+
+
+@app.route("/api/cruce")
+@login_required
+def api_cruce():
+    vacio = {"rows": [], "total": 0, "total_en_funnel": 0, "fechas_disponibles": [], "columns": [], "resumen": {}}
+    try:
+        res = cruce_data.query(**_cruce_params())
+    except Exception as e:
+        return jsonify({"error": f"Error leyendo archivo: {e}", **vacio})
+    if res is None:
+        return jsonify({"error": "No hay archivo cargado", **vacio})
+    res.pop("df")
+    return jsonify(res)
+
+
+@app.route("/api/cruce/export.xlsx")
+@login_required
+def api_cruce_export():
+    res = cruce_data.query(**_cruce_params())
+    if res is None:
+        return "No hay archivo cargado", 404
+    buf = cruce_data.to_excel(res)
+    return send_file(buf, as_attachment=True, download_name=f"cruce_galan_funnel_{datetime.now():%Y-%m-%d}.xlsx",
+                     mimetype="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet")
+
+
+@app.route("/api/cruce/opciones")
+@login_required
+def api_cruce_opciones():
+    return jsonify({"ok": True})
 
 
 # =====================================================
-# ADMIN - LOGIN
+# ADMINISTRACIÓN
 # =====================================================
-ADMIN_PASSWORD = "Jorsh123"
-
 @app.route("/admin", methods=["GET", "POST"])
 @login_required
 def admin_login():
+    if session.get("admin"):
+        return redirect("/admin/dashboard")
     error = None
     if request.method == "POST":
-        password = request.form.get("password", "")
-        if password == ADMIN_PASSWORD:
+        wait = limiter.blocked("admin")
+        if wait:
+            error = f"Demasiados intentos. Espera {wait} segundos."
+        elif check_password(request.form.get("password", ""), ADMIN_PASSWORD):
+            limiter.reset("admin")
             session["admin"] = True
             return redirect("/admin/dashboard")
         else:
+            limiter.fail("admin")
             error = "Contraseña incorrecta"
     return render_template("admin_login.html", error=error)
 
@@ -645,598 +800,244 @@ def admin_logout():
     return redirect("/admin")
 
 
-def admin_required():
-    """Check if admin is logged in, return redirect if not."""
-    if not session.get("admin"):
-        return redirect("/admin")
-    return None
-
-
-# =====================================================
-# ADMIN - DASHBOARD
-# =====================================================
 @app.route("/admin/dashboard")
-@login_required
+@admin_only
 def admin_dashboard():
-    check = admin_required()
-    if check:
-        return check
-
-    mensajes_programas = get_mensajes_programas()
-    mensajes_sena = get_mensajes_sena()
-    precios_data = get_precios()
-    os.makedirs(PIEZAS_DIR, exist_ok=True)
     os.makedirs(BROCHURES_DIR, exist_ok=True)
-    piezas_count = len(os.listdir(PIEZAS_DIR)) if os.path.exists(PIEZAS_DIR) else 0
-    brochures_count = len([f for f in os.listdir(BROCHURES_DIR) if f.lower().endswith('.pdf')])
-
     stats = {
-        "mensajes_comerciales": len(mensajes_programas),
-        "mensajes_sena": len(mensajes_sena),
-        "precios": len(precios_data),
-        "piezas": piezas_count,
-        "brochures": brochures_count,
+        "mensajes_comerciales": len(store.mensajes_programas()),
+        "mensajes_sena": len(store.mensajes_sena()),
+        "precios": len(store.precios()),
+        "piezas": count_images(PIEZAS_DIR),
+        "brochures": len([f for f in os.listdir(BROCHURES_DIR) if f.lower().endswith(".pdf")]),
+        "titulos": len(store.titulos()),
+        "combinaciones": int(len(store.actas())),
+        "presencial": len(store.presencial()),
     }
+    return render_template("admin_dashboard.html", stats=stats, actas_info=file_info(ACTAS_FILE),
+                           presencial_info=file_info(PRESENCIAL_FILE), actividad=activity.summary(7))
 
-    return render_template("admin_dashboard.html", stats=stats)
+
+def _crud_list(filename, fields, ints=()):
+    items = store.json(filename)
+    items = list(items)
+    action = request.form.get("action")
+    idx = request.form.get("index", type=int)
+
+    def read():
+        out = {}
+        for f in fields:
+            v = request.form.get(f, "")
+            out[f] = int(v or 0) if f in ints else v.replace("\r\n", "\n")
+        return out
+
+    if action == "update" and idx is not None and 0 <= idx < len(items):
+        items[idx].update(read())
+    elif action == "add":
+        nuevo = read()
+        if filename == "precios.json":
+            nuevo = {"id": max([p.get("id", 0) for p in items], default=0) + 1, **nuevo}
+        items.append(nuevo)
+    elif action == "delete" and idx is not None and 0 <= idx < len(items):
+        items.pop(idx)
+    elif action == "move" and idx is not None and 0 <= idx < len(items):
+        j = idx + (1 if request.form.get("dir") == "down" else -1)
+        if 0 <= j < len(items):
+            items[idx], items[j] = items[j], items[idx]
+    else:
+        return
+    store.save(filename, items)
 
 
-# =====================================================
-# ADMIN - MENSAJES COMERCIALES
-# =====================================================
 @app.route("/admin/mensajes-comerciales", methods=["GET", "POST"])
-@login_required
+@admin_only
 def admin_mensajes_comerciales():
-    check = admin_required()
-    if check:
-        return check
-
-    mensajes = get_mensajes_programas()
-
     if request.method == "POST":
-        action = request.form.get("action")
-
-        if action == "update":
-            idx = int(request.form.get("index"))
-            if 0 <= idx < len(mensajes):
-                mensajes[idx]["titulo"] = request.form.get("titulo", "")
-                mensajes[idx]["texto"] = request.form.get("texto", "")
-                mensajes[idx]["nivel"] = request.form.get("nivel", "pre")
-                save_json("mensajes_programas.json", mensajes)
-
-        elif action == "add":
-            nuevo = {
-                "nivel": request.form.get("nivel", "pre"),
-                "titulo": request.form.get("titulo", ""),
-                "texto": request.form.get("texto", ""),
-            }
-            mensajes.append(nuevo)
-            save_json("mensajes_programas.json", mensajes)
-
-        elif action == "delete":
-            idx = int(request.form.get("index"))
-            if 0 <= idx < len(mensajes):
-                mensajes.pop(idx)
-                save_json("mensajes_programas.json", mensajes)
-
+        _crud_list("mensajes_programas.json", ["nivel", "titulo", "texto"])
         return redirect("/admin/mensajes-comerciales")
+    return render_template("admin_mensajes.html", mensajes=store.mensajes_programas(), tipo="comerciales",
+                           titulo="Mensajes comerciales", accion="/admin/mensajes-comerciales")
 
-    return render_template("admin_mensajes_comerciales.html", mensajes=mensajes)
 
-
-# =====================================================
-# ADMIN - MENSAJES SENA
-# =====================================================
 @app.route("/admin/mensajes-sena", methods=["GET", "POST"])
-@login_required
+@admin_only
 def admin_mensajes_sena():
-    check = admin_required()
-    if check:
-        return check
-
-    mensajes = get_mensajes_sena()
-
     if request.method == "POST":
-        action = request.form.get("action")
-
-        if action == "update":
-            idx = int(request.form.get("index"))
-            if 0 <= idx < len(mensajes):
-                mensajes[idx]["titulo"] = request.form.get("titulo", "")
-                mensajes[idx]["texto"] = request.form.get("texto", "")
-                save_json("mensajes_sena.json", mensajes)
-
-        elif action == "add":
-            nuevo = {
-                "titulo": request.form.get("titulo", ""),
-                "texto": request.form.get("texto", ""),
-            }
-            mensajes.append(nuevo)
-            save_json("mensajes_sena.json", mensajes)
-
-        elif action == "delete":
-            idx = int(request.form.get("index"))
-            if 0 <= idx < len(mensajes):
-                mensajes.pop(idx)
-                save_json("mensajes_sena.json", mensajes)
-
+        _crud_list("mensajes_sena.json", ["titulo", "texto"])
         return redirect("/admin/mensajes-sena")
+    return render_template("admin_mensajes.html", mensajes=store.mensajes_sena(), tipo="sena",
+                           titulo="Mensajes SENA", accion="/admin/mensajes-sena")
 
-    return render_template("admin_mensajes_sena.html", mensajes=mensajes)
 
-
-# =====================================================
-# ADMIN - PRECIOS
-# =====================================================
 @app.route("/admin/precios", methods=["GET", "POST"])
-@login_required
+@admin_only
 def admin_precios():
-    check = admin_required()
-    if check:
-        return check
-
-    precios_data = get_precios()
-
     if request.method == "POST":
-        action = request.form.get("action")
-
-        if action == "update":
-            idx = int(request.form.get("index"))
-            if 0 <= idx < len(precios_data):
-                precios_data[idx]["programa"] = request.form.get("programa", "")
-                precios_data[idx]["valor"] = int(request.form.get("valor", 0))
-                precios_data[idx]["descuento"] = int(request.form.get("descuento", 0))
-                precios_data[idx]["semestres"] = int(request.form.get("semestres", 0))
-                save_json("precios.json", precios_data)
-
-        elif action == "add":
-            max_id = max([p["id"] for p in precios_data], default=0)
-            nuevo = {
-                "id": max_id + 1,
-                "programa": request.form.get("programa", ""),
-                "valor": int(request.form.get("valor", 0)),
-                "descuento": int(request.form.get("descuento", 0)),
-                "semestres": int(request.form.get("semestres", 0)),
-            }
-            precios_data.append(nuevo)
-            save_json("precios.json", precios_data)
-
-        elif action == "delete":
-            idx = int(request.form.get("index"))
-            if 0 <= idx < len(precios_data):
-                precios_data.pop(idx)
-                save_json("precios.json", precios_data)
-
+        _crud_list("precios.json", ["programa", "valor", "descuento", "semestres"], ints=("valor", "descuento", "semestres"))
         return redirect("/admin/precios")
+    return render_template("admin_precios.html", precios=store.precios())
 
-    return render_template("admin_precios.html", precios=precios_data)
+
+@app.route("/admin/config", methods=["GET", "POST"])
+@admin_only
+def admin_config():
+    saved = False
+    if request.method == "POST":
+        cfg = store.config
+        for k, default in DEFAULT_CONFIG.items():
+            if k in request.form:
+                v = request.form.get(k, "").strip()
+                if isinstance(default, int):
+                    try:
+                        cfg[k] = int(v)
+                    except ValueError:
+                        continue
+                else:
+                    cfg[k] = v
+        cfg["descuento_sena"] = max(0, min(100, cfg["descuento_sena"]))
+        store.save("config.json", cfg)
+        saved = True
+    return render_template("admin_config.html", config=store.config, saved=saved)
 
 
-# =====================================================
-# ADMIN - PIEZAS (SUBIR IMÁGENES CON CARPETAS)
-# =====================================================
+@app.route("/admin/reemplazar", methods=["POST"])
+@admin_only
+def admin_reemplazar():
+    buscar = request.form.get("buscar", "")
+    reemplazo = request.form.get("reemplazo", "")
+    destinos = request.form.getlist("destinos") or ["mensajes_programas.json", "mensajes_sena.json"]
+    total = 0
+    if buscar:
+        for fname in destinos:
+            if fname not in ("mensajes_programas.json", "mensajes_sena.json"):
+                continue
+            items = list(store.json(fname))
+            for m in items:
+                for campo in ("titulo", "texto"):
+                    if buscar in m.get(campo, ""):
+                        total += m[campo].count(buscar)
+                        m[campo] = m[campo].replace(buscar, reemplazo)
+            store.save(fname, items)
+    return redirect(url_for("admin_dashboard", reemplazos=total))
+
+
+@app.route("/admin/datos", methods=["POST"])
+@admin_only
+def admin_datos():
+    kind = request.form.get("tipo")
+    file = request.files.get("archivo")
+    target, validator = {"actas": (ACTAS_FILE, validar_actas), "presencial": (PRESENCIAL_FILE, validar_presencial)}.get(kind, (None, None))
+    if not target or not file or not file.filename.lower().endswith(".xlsx"):
+        return redirect(url_for("admin_dashboard", error="Selecciona un archivo .xlsx válido"))
+    os.makedirs(BACKUP_DIR, exist_ok=True)
+    tmp = os.path.join(BACKUP_DIR, f"_subida_{kind}.xlsx")
+    file.save(tmp)
+    removidas = []
+    try:
+        ok, msg, filas = validator(tmp)
+        if ok and kind == "actas":
+            removidas = sanitize_workbook(tmp)
+    except Exception as e:
+        ok, msg, filas = False, f"No se pudo leer el Excel: {e}", 0
+    if not ok:
+        os.remove(tmp)
+        return redirect(url_for("admin_dashboard", error=msg))
+    if os.path.exists(target):
+        shutil.copy2(target, os.path.join(BACKUP_DIR, f"{kind}_{datetime.now():%Y%m%d_%H%M%S}.xlsx"))
+    os.replace(tmp, target)
+    store.invalidate()
+    aviso = f"Archivo de {kind} actualizado: {msg if kind == 'actas' else str(filas) + ' filas'}."
+    if removidas:
+        aviso += f" Por seguridad se quitaron hojas con datos personales: {', '.join(removidas)}."
+    return redirect(url_for("admin_dashboard", ok=aviso))
+
+
+@app.route("/admin/datos/descargar/<kind>")
+@admin_only
+def admin_datos_descargar(kind):
+    target = {"actas": ACTAS_FILE, "presencial": PRESENCIAL_FILE}.get(kind)
+    if not target or not os.path.exists(target):
+        abort(404)
+    return send_file(target, as_attachment=True)
+
+
+@app.route("/admin/actividad/limpiar", methods=["POST"])
+@admin_only
+def admin_actividad_limpiar():
+    activity.clear()
+    return redirect(url_for("admin_dashboard", ok="Historial de actividad borrado"))
+
+
 @app.route("/admin/piezas", methods=["GET", "POST"])
 @app.route("/admin/piezas/<path:subfolder>", methods=["GET", "POST"])
-@login_required
+@admin_only
 def admin_piezas(subfolder=""):
-    check = admin_required()
-    if check:
-        return check
-
-    current_dir = os.path.join(PIEZAS_DIR, subfolder)
-    # Security: prevent path traversal
-    abs_current = os.path.abspath(current_dir)
-    abs_base = os.path.abspath(PIEZAS_DIR)
-    if not abs_current.startswith(abs_base):
+    current_dir = safe_join(PIEZAS_DIR, subfolder)
+    if not current_dir:
         return redirect("/admin/piezas")
-
     os.makedirs(current_dir, exist_ok=True)
 
     if request.method == "POST":
         action = request.form.get("action")
-
         if action == "upload":
-            files = request.files.getlist("imagenes")
-            for file in files:
+            for file in request.files.getlist("imagenes"):
                 if file and file.filename and allowed_file(file.filename, ALLOWED_IMAGE_EXTENSIONS):
-                    filename = secure_filename(file.filename)
-                    file.save(os.path.join(current_dir, filename))
-
+                    name = secure_filename(file.filename) or f"imagen_{datetime.now():%H%M%S}.jpg"
+                    file.save(os.path.join(current_dir, name))
         elif action == "delete":
-            filename = request.form.get("filename")
-            if filename:
-                filepath = os.path.join(current_dir, secure_filename(filename))
-                if os.path.exists(filepath):
-                    os.remove(filepath)
-
+            name = listed_name(current_dir, request.form.get("filename"))
+            if name and os.path.isfile(os.path.join(current_dir, name)):
+                os.remove(os.path.join(current_dir, name))
+        elif action == "rename":
+            old = listed_name(current_dir, request.form.get("filename"))
+            new = secure_filename(request.form.get("new_name", "").strip())
+            if old and new:
+                ext = old.rsplit(".", 1)[-1]
+                if not allowed_file(new, ALLOWED_IMAGE_EXTENSIONS) and not os.path.isdir(os.path.join(current_dir, old)):
+                    new = f"{new}.{ext}"
+                if not os.path.exists(os.path.join(current_dir, new)):
+                    os.rename(os.path.join(current_dir, old), os.path.join(current_dir, new))
         elif action == "create_folder":
-            folder_name = request.form.get("folder_name", "").strip()
-            if folder_name:
-                safe_name = secure_filename(folder_name)
-                if safe_name:
-                    new_folder = os.path.join(current_dir, safe_name)
-                    os.makedirs(new_folder, exist_ok=True)
-
+            name = request.form.get("folder_name", "").strip().replace("/", "").replace("\\", "")
+            name = name if name not in ("", ".", "..") else ""
+            if name:
+                os.makedirs(os.path.join(current_dir, name), exist_ok=True)
         elif action == "delete_folder":
-            folder_name = request.form.get("folder_name")
-            if folder_name:
-                folder_path = os.path.join(current_dir, secure_filename(folder_name))
-                if os.path.exists(folder_path) and os.path.isdir(folder_path):
-                    import shutil
-                    shutil.rmtree(folder_path)
+            name = listed_name(current_dir, request.form.get("folder_name"))
+            if name and os.path.isdir(os.path.join(current_dir, name)):
+                shutil.rmtree(os.path.join(current_dir, name))
+        return redirect("/admin/piezas" + ("/" + subfolder if subfolder else ""))
 
-        redirect_url = "/admin/piezas" + ("/" + subfolder if subfolder else "")
-        return redirect(redirect_url)
-
-    items = os.listdir(current_dir) if os.path.exists(current_dir) else []
-    carpetas = sorted([d for d in items if os.path.isdir(os.path.join(current_dir, d))])
-    imagenes = sorted([f for f in items if os.path.isfile(os.path.join(current_dir, f)) and allowed_file(f, ALLOWED_IMAGE_EXTENSIONS)])
-
-    # Build breadcrumb
-    breadcrumb = []
-    if subfolder:
-        parts = subfolder.replace("\\", "/").split("/")
-        for i, part in enumerate(parts):
-            breadcrumb.append({
-                "name": part,
-                "path": "/".join(parts[:i+1])
-            })
-
-    return render_template(
-        "admin_piezas.html",
-        carpetas=carpetas,
-        imagenes=imagenes,
-        subfolder=subfolder,
-        breadcrumb=breadcrumb
-    )
+    carpetas, imagenes = list_folder(current_dir)
+    folders = [{"name": d, "count": count_images(os.path.join(current_dir, d))} for d in carpetas]
+    imgs = [{"name": f, "path": "piezas/" + ((subfolder + "/") if subfolder else "") + f,
+             **file_info(os.path.join(current_dir, f))} for f in imagenes]
+    return render_template("admin_piezas.html", carpetas=folders, imagenes=imgs, subfolder=subfolder,
+                           breadcrumb=breadcrumb_for(subfolder))
 
 
-# =====================================================
-# ADMIN - BROCHURES (SUBIR PDF)
-# =====================================================
 @app.route("/admin/brochures", methods=["GET", "POST"])
-@login_required
+@admin_only
 def admin_brochures():
-    check = admin_required()
-    if check:
-        return check
-
     os.makedirs(BROCHURES_DIR, exist_ok=True)
-
     if request.method == "POST":
         action = request.form.get("action")
-
         if action == "upload":
-            files = request.files.getlist("pdfs")
-            for file in files:
+            for file in request.files.getlist("pdfs"):
                 if file and file.filename and allowed_file(file.filename, ALLOWED_PDF_EXTENSIONS):
-                    filename = secure_filename(file.filename)
-                    file.save(os.path.join(BROCHURES_DIR, filename))
-
+                    file.save(os.path.join(BROCHURES_DIR, secure_filename(file.filename)))
         elif action == "delete":
-            filename = request.form.get("filename")
-            if filename:
-                filepath = os.path.join(BROCHURES_DIR, secure_filename(filename))
-                if os.path.exists(filepath):
-                    os.remove(filepath)
-
+            name = listed_name(BROCHURES_DIR, request.form.get("filename"))
+            if name:
+                os.remove(os.path.join(BROCHURES_DIR, name))
         return redirect("/admin/brochures")
-
-    archivos = [f for f in os.listdir(BROCHURES_DIR) if f.lower().endswith('.pdf')]
+    archivos = [{"name": f, **file_info(os.path.join(BROCHURES_DIR, f))}
+                for f in sorted(os.listdir(BROCHURES_DIR)) if f.lower().endswith(".pdf")]
     return render_template("admin_brochures.html", archivos=archivos)
-
-
-
-
-# =====================================================
-# CRUCE - SUBIR EXCEL, GOOGLE SHEETS Y FILTRAR
-# =====================================================
-CRUCE_DIR = os.path.join(DATA_DIR, "cruce")
-CRUCE_FILE = os.path.join(CRUCE_DIR, "cruce_actual.xlsx")
-FUNNEL_FILE = os.path.join(CRUCE_DIR, "funnel_actual.xlsx")
-
-GOOGLE_SHEET_ID = "1550YdTkr9XXykOv78RL_V8xLVE6QuJXDemdxneLjO2M"
-GOOGLE_SHEET_URL = f"https://docs.google.com/spreadsheets/d/{GOOGLE_SHEET_ID}/export?format=xlsx"
-
-FUNNEL_SHEET_ID = "1Dd1ByYaOO-s9Vv1kweORctolPc070g_yBY4M_57YWzQ"
-FUNNEL_SHEET_URL = f"https://docs.google.com/spreadsheets/d/{FUNNEL_SHEET_ID}/export?format=xlsx"
-
-
-def clean_cedula(val):
-    """Normaliza cédula a texto numérico sin decimales, puntos ni espacios."""
-    if pd.isna(val):
-        return ""
-    s = str(val).strip()
-    if s.endswith(".0"):
-        s = s[:-2]
-    s = s.replace(".", "").replace(",", "").replace(" ", "").replace("-", "")
-    return s
-
-
-def get_funnel_cedulas():
-    """Extrae las cédulas de la columna R (índice 17) de la hoja FUNNEL."""
-    if not os.path.exists(FUNNEL_FILE):
-        return set()
-    try:
-        xl = pd.ExcelFile(FUNNEL_FILE)
-        sheet_target = None
-        for s in xl.sheet_names:
-            if s.strip().upper() == "FUNNEL":
-                sheet_target = s
-                break
-        if not sheet_target:
-            sheet_target = xl.sheet_names[0]
-
-        df_f = pd.read_excel(FUNNEL_FILE, sheet_name=sheet_target)
-
-        # Columna R es el índice 17 (columna 18)
-        col_r = None
-        if len(df_f.columns) > 17:
-            col_r = df_f.columns[17]
-        else:
-            for col in df_f.columns:
-                c_upper = str(col).strip().upper()
-                if "CEDULA" in c_upper or "DOCUMENTO" in c_upper or "IDENTIFICACION" in c_upper:
-                    col_r = col
-                    break
-
-        if col_r is not None:
-            ceds = df_f[col_r].dropna().apply(clean_cedula)
-            return set(c for c in ceds if c and any(ch.isdigit() for ch in c))
-        return set()
-    except Exception as e:
-        print("Error leyendo FUNNEL:", e)
-        return set()
-
-
-def sync_cruce_from_sheets():
-    """Descarga el Excel de GEN NACIONAL directamente de Google Sheets."""
-    import requests
-    try:
-        headers = {
-            "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/122.0.0.0 Safari/537.36"
-        }
-        r = requests.get(GOOGLE_SHEET_URL, headers=headers, timeout=30, allow_redirects=True)
-        content_type = r.headers.get("Content-Type", "")
-
-        if r.status_code == 200 and ("spreadsheet" in content_type or len(r.content) > 15000) and not r.text.strip().startswith("<!DOCTYPE"):
-            os.makedirs(CRUCE_DIR, exist_ok=True)
-            with open(CRUCE_FILE, "wb") as f:
-                f.write(r.content)
-
-            df_test = pd.read_excel(CRUCE_FILE, sheet_name="GEN NACIONAL")
-            return True, f"¡Sincronización exitosa! Se cargaron {len(df_test):,} registros de GEN NACIONAL."
-        elif r.status_code == 401 or "accounts.google.com" in r.url or r.text.strip().startswith("<!DOCTYPE"):
-            return False, "El Google Sheet de GEN NACIONAL está en modo privado. Abre el Sheet > Compartir > Cambiar a 'Cualquier persona con el enlace' (Rol: Lector)."
-        else:
-            return False, f"Respuesta inesperada de Google (HTTP {r.status_code})."
-    except Exception as e:
-        return False, f"Error al descargar de Google Sheets: {str(e)}"
-
-
-def sync_funnel_from_sheets():
-    """Descarga el Excel de FUNNEL directamente de Google Sheets."""
-    import requests
-    try:
-        headers = {
-            "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/122.0.0.0 Safari/537.36"
-        }
-        r = requests.get(FUNNEL_SHEET_URL, headers=headers, timeout=30, allow_redirects=True)
-        content_type = r.headers.get("Content-Type", "")
-
-        if r.status_code == 200 and ("spreadsheet" in content_type or len(r.content) > 10000) and not r.text.strip().startswith("<!DOCTYPE"):
-            os.makedirs(CRUCE_DIR, exist_ok=True)
-            with open(FUNNEL_FILE, "wb") as f:
-                f.write(r.content)
-            ceds = get_funnel_cedulas()
-            return True, f"¡FUNNEL sincronizado! Se encontraron {len(ceds):,} cédulas en la columna R."
-        elif r.status_code == 401 or "accounts.google.com" in r.url or r.text.strip().startswith("<!DOCTYPE"):
-            return False, "El Google Sheet de FUNNEL está en modo privado. Abre el Sheet > Compartir > Cambiar a 'Cualquier persona con el enlace' (Rol: Lector)."
-        else:
-            return False, f"Respuesta inesperada de Google (HTTP {r.status_code})."
-    except Exception as e:
-        return False, f"Error al descargar FUNNEL: {str(e)}"
-
-
-@app.route("/cruce", methods=["GET", "POST"])
-@login_required
-def cruce():
-    if request.method == "POST":
-        action = request.form.get("action")
-
-        if action == "upload":
-            file = request.files.get("archivo")
-            if file and file.filename and file.filename.lower().endswith(('.xlsx', '.xls')):
-                os.makedirs(CRUCE_DIR, exist_ok=True)
-                file.save(CRUCE_FILE)
-                return redirect("/cruce")
-
-        elif action == "upload_funnel":
-            file = request.files.get("archivo_funnel")
-            if file and file.filename and file.filename.lower().endswith(('.xlsx', '.xls')):
-                os.makedirs(CRUCE_DIR, exist_ok=True)
-                file.save(FUNNEL_FILE)
-                return redirect("/cruce")
-
-        elif action == "sync_sheets":
-            sync_cruce_from_sheets()
-            return redirect("/cruce")
-
-        elif action == "sync_funnel":
-            sync_funnel_from_sheets()
-            return redirect("/cruce")
-
-        elif action == "delete":
-            if os.path.exists(CRUCE_FILE):
-                os.remove(CRUCE_FILE)
-            return redirect("/cruce")
-
-        elif action == "delete_funnel":
-            if os.path.exists(FUNNEL_FILE):
-                os.remove(FUNNEL_FILE)
-            return redirect("/cruce")
-
-    tiene_archivo = os.path.exists(CRUCE_FILE)
-    tiene_funnel = os.path.exists(FUNNEL_FILE)
-    cedulas_funnel_total = len(get_funnel_cedulas()) if tiene_funnel else 0
-
-    ultima_actualizacion = ""
-    if tiene_archivo:
-        mtime = os.path.getmtime(CRUCE_FILE)
-        ultima_actualizacion = datetime.fromtimestamp(mtime).strftime("%d/%m/%Y %I:%M %p")
-
-    ultima_funnel = ""
-    if tiene_funnel:
-        mtime_f = os.path.getmtime(FUNNEL_FILE)
-        ultima_funnel = datetime.fromtimestamp(mtime_f).strftime("%d/%m/%Y %I:%M %p")
-
-    return render_template(
-        "cruce.html",
-        tiene_archivo=tiene_archivo,
-        tiene_funnel=tiene_funnel,
-        cedulas_funnel_total=cedulas_funnel_total,
-        ultima_actualizacion=ultima_actualizacion,
-        ultima_funnel=ultima_funnel,
-        google_sheet_url=f"https://docs.google.com/spreadsheets/d/{GOOGLE_SHEET_ID}/edit?gid=1957374122",
-        funnel_sheet_url=f"https://docs.google.com/spreadsheets/d/{FUNNEL_SHEET_ID}/edit?gid=0"
-    )
-
-
-@app.route("/api/cruce/sync-sheets", methods=["POST"])
-@login_required
-def api_cruce_sync_sheets():
-    ok, msg = sync_cruce_from_sheets()
-    return jsonify({"ok": ok, "message": msg})
-
-
-@app.route("/api/cruce/sync-funnel", methods=["POST"])
-@login_required
-def api_cruce_sync_funnel():
-    ok, msg = sync_funnel_from_sheets()
-    return jsonify({"ok": ok, "message": msg, "total_cedulas": len(get_funnel_cedulas())})
-
-
-@app.route("/api/cruce", methods=["GET"])
-@login_required
-def api_cruce():
-    if not os.path.exists(CRUCE_FILE):
-        return jsonify({"error": "No hay archivo cargado", "rows": [], "total": 0, "total_en_funnel": 0, "fechas_disponibles": []})
-
-    try:
-        df = clean_df(pd.read_excel(CRUCE_FILE, sheet_name="GEN NACIONAL"))
-    except Exception as e:
-        return jsonify({"error": f"Error leyendo archivo: {str(e)}", "rows": [], "total": 0, "total_en_funnel": 0, "fechas_disponibles": []})
-
-    # Filtro interno estricto: Solo CSU Bogotá Galán, Cundinamarca
-    if "CSU" in df.columns:
-        df = df[df["CSU"].astype(str).str.lower().str.contains(r"gal[aá\ufffd]n", regex=True, na=False)]
-    elif "SEDE" in df.columns:
-        df = df[df["SEDE"].astype(str).str.lower().str.contains(r"gal[aá\ufffd]n", regex=True, na=False)]
-
-    # Cruce con Funnel (Cédulas en columna Q)
-    cedulas_funnel = get_funnel_cedulas()
-    col_cedula = None
-    for c in ["CEDULA", "DOCUMENTO", "No. DOCUMENTO", "DOCUMENTO DE IDENTIDAD", "ID"]:
-        if c in df.columns:
-            col_cedula = c
-            break
-
-    if col_cedula and len(cedulas_funnel) > 0:
-        df["_en_funnel"] = df[col_cedula].apply(lambda x: clean_cedula(x) in cedulas_funnel)
-    else:
-        df["_en_funnel"] = False
-
-    # Normalizar columnas de fecha
-    for col in ["FECHA DE CARGUE", "FECHA DE GESTION"]:
-        if col in df.columns:
-            df[col] = pd.to_datetime(df[col], errors="coerce")
-
-    # Extraer lista de fechas únicas reales en FECHA DE CARGUE (orden descendente)
-    fechas_disponibles = []
-    if "FECHA DE CARGUE" in df.columns:
-        fechas_unicas = df["FECHA DE CARGUE"].dropna().dt.date.unique()
-        fechas_sorted = sorted(fechas_unicas, reverse=True)
-        fechas_disponibles = [
-            {"iso": d.strftime("%Y-%m-%d"), "label": d.strftime("%d/%m/%Y")}
-            for d in fechas_sorted
-        ]
-
-    # Parámetros de filtro
-    fecha_cargue = request.args.get("fecha_cargue", "").strip()
-    rango = request.args.get("rango", "todas").strip().lower()
-    filtro_radar = request.args.get("radar", "todos").strip().lower()  # todos, en_radar, sin_radar
-    busqueda = request.args.get("q", "").strip().upper()
-
-    # Filtrar por FECHA DE CARGUE
-    if "FECHA DE CARGUE" in df.columns:
-        today = datetime.now().date()
-        if fecha_cargue:
-            try:
-                f_dt = pd.to_datetime(fecha_cargue).date()
-                df = df[df["FECHA DE CARGUE"].dt.date == f_dt]
-            except Exception:
-                pass
-        elif rango == "hoy":
-            df = df[df["FECHA DE CARGUE"].dt.date == today]
-        elif rango == "ayer":
-            ayer = today - timedelta(days=1)
-            df = df[df["FECHA DE CARGUE"].dt.date == ayer]
-        elif rango == "esta_semana":
-            inicio_semana = today - timedelta(days=today.weekday())
-            fin_semana = inicio_semana + timedelta(days=6)
-            df = df[(df["FECHA DE CARGUE"].dt.date >= inicio_semana) & (df["FECHA DE CARGUE"].dt.date <= fin_semana)]
-        elif rango == "ultimos_7":
-            hace_7 = today - timedelta(days=7)
-            df = df[(df["FECHA DE CARGUE"].dt.date >= hace_7) & (df["FECHA DE CARGUE"].dt.date <= today)]
-        elif rango == "este_mes":
-            df = df[(df["FECHA DE CARGUE"].dt.year == today.year) & (df["FECHA DE CARGUE"].dt.month == today.month)]
-        elif rango == "todas":
-            pass
-
-    # Filtrar por Estado en Funnel (Radar)
-    if filtro_radar == "en_radar":
-        df = df[df["_en_funnel"] == True]
-    elif filtro_radar == "sin_radar":
-        df = df[df["_en_funnel"] == False]
-
-    # Búsqueda global en todas las columnas
-    if busqueda:
-        mask = df.apply(lambda row: row.astype(str).str.upper().str.contains(busqueda, na=False).any(), axis=1)
-        df = df[mask]
-
-    total_en_funnel = int(df["_en_funnel"].sum()) if "_en_funnel" in df.columns else 0
-
-    # Formatear columnas de fecha para visualización legible
-    for col in df.columns:
-        if pd.api.types.is_datetime64_any_dtype(df[col]):
-            df[col] = df[col].dt.strftime("%d/%m/%Y").fillna("")
-
-    df = df.fillna("")
-    rows = df.to_dict(orient="records")
-
-    # Lista de columnas a mostrar (sin las columnas técnicas internas que empiezan con _)
-    visible_columns = [c for c in df.columns if not c.startswith("_")]
-
-    return jsonify({
-        "rows": rows,
-        "total": len(rows),
-        "total_en_funnel": total_en_funnel,
-        "total_cedulas_funnel": len(cedulas_funnel),
-        "columns": visible_columns,
-        "fechas_disponibles": fechas_disponibles
-    })
-
-
-@app.route("/api/cruce/opciones", methods=["GET"])
-@login_required
-def api_cruce_opciones():
-    return jsonify({"ok": True})
-
 
 
 # =====================================================
 # MAIN
 # =====================================================
 if __name__ == "__main__":
-    app.run(debug=True, port=8000)
-
+    app.run(debug=os.environ.get("FLASK_DEBUG", "1") == "1", port=int(os.environ.get("PORT", 8000)))

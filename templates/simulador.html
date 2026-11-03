@@ -1,0 +1,195 @@
+{% extends "layout.html" %}
+{% block title %}Simulador de inversión{% endblock %}
+{% block head %}
+<style>
+    .sim { display: grid; grid-template-columns: minmax(0, 420px) minmax(0, 1fr); gap: 20px; align-items: start; }
+    @media (max-width: 1050px) { .sim { grid-template-columns: minmax(0, 1fr); } }
+    .sim-form .field + .field { margin-top: 14px; }
+    .two { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-top: 14px; }
+    .two .field + .field { margin-top: 0; }
+    .two + .field { margin-top: 14px; }
+    #cuotasSeg { display: flex; width: 100%; } #cuotasSeg button { flex: 1; justify-content: center; padding: 7px 6px; }
+    .range-row { display: flex; align-items: center; gap: 12px; }
+    .range-row input[type=range] { flex: 1; accent-color: var(--brand); height: auto; padding: 0; border: 0; box-shadow: none !important; }
+    .range-row output { min-width: 48px; text-align: right; font-weight: 700; font-variant-numeric: tabular-nums; }
+    .hero-num { padding: 24px; border-radius: var(--radius-lg); color: #0d1d0f; background: linear-gradient(135deg, #a6d65f, var(--brand)); position: relative; overflow: hidden; }
+    .hero-num::after { content: ""; position: absolute; right: -40px; top: -40px; width: 180px; height: 180px; border-radius: 50%; background: rgba(255,255,255,0.18); }
+    .hero-num small { font-weight: 700; font-size: 12px; letter-spacing: 0.08em; text-transform: uppercase; opacity: 0.75; }
+    .hero-num .big { font-family: var(--font-display); font-size: 44px; font-weight: 800; letter-spacing: -0.03em; line-height: 1.05; margin-top: 4px; font-variant-numeric: tabular-nums; }
+    .hero-num .sub { margin-top: 6px; font-weight: 500; opacity: 0.8; }
+    .res-grid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 12px; margin-top: 14px; }
+    @media (max-width: 720px) { .res-grid { grid-template-columns: minmax(0, 1fr); } .hero-num .big { font-size: 34px; } }
+    .res { padding: 16px; }
+    .res small { font-size: 12px; color: var(--text-3); font-weight: 600; }
+    .res strong { display: block; font-family: var(--font-display); font-size: 22px; margin-top: 4px; font-variant-numeric: tabular-nums; }
+    .res span { font-size: 12px; color: var(--text-3); }
+    .cmp-row { display: grid; grid-template-columns: 150px minmax(0, 1fr) 120px; gap: 12px; align-items: center; margin-top: 12px; font-size: 13px; }
+    .cmp-bar { height: 14px; border-radius: 8px; background: var(--surface-3); overflow: hidden; }
+    .cmp-bar span { display: block; height: 100%; border-radius: 8px; transition: width 0.6s var(--ease); }
+    @media (max-width: 560px) { .cmp-row { grid-template-columns: minmax(0, 1fr); gap: 4px; } }
+    .timeline { display: flex; gap: 4px; margin-top: 12px; }
+    .timeline div { flex: 1; text-align: center; font-size: 10.5px; color: var(--text-3); }
+    .timeline div span { display: block; height: 30px; border-radius: 6px; margin-bottom: 4px; background: var(--surface-3); border: 1px dashed var(--border-strong); }
+    .timeline div.h span { background: var(--brand-soft); border: 1px solid rgba(127,181,54,0.5); }
+    .timeline div.c span { background: var(--blue-soft); border: 1px solid rgba(47,125,246,0.4); }
+    .legend { display: flex; gap: 14px; flex-wrap: wrap; font-size: 12px; color: var(--text-2); margin-top: 10px; }
+    .legend i { display: inline-block; width: 10px; height: 10px; border-radius: 3px; margin-right: 6px; }
+</style>
+{% endblock %}
+{% block content %}
+<div class="page-head">
+    <div>
+        <h2><span class="head-icon orange"><i class="fa-solid fa-calculator"></i></span> Simulador de inversión</h2>
+        <p>Calcula cuánto invierte el estudiante, cuánto ahorra por homologar y el valor de las cuotas. Genera la oferta lista para enviar.</p>
+    </div>
+</div>
+
+<div class="sim">
+    <section class="card card-pad sim-form">
+        <div class="field">
+            <label class="label" for="prog">Programa</label>
+            <select id="prog">
+                {% for p in precios|sort(attribute='programa') %}<option value="{{ p.id }}" {% if programa_id == p.id %}selected{% endif %}>{{ p.programa }}</option>{% endfor %}
+            </select>
+        </div>
+        <div class="field">
+            <label class="label" for="tit">Título SENA <span class="muted">(autocompleta semestres homologados)</span></label>
+            <select id="tit"></select>
+        </div>
+        <div class="two">
+            <div class="field"><label class="label" for="valor">Valor semestre</label><input type="number" id="valor" min="0" step="10000"></div>
+            <div class="field"><label class="label" for="sems">Semestres totales</label><input type="number" id="sems" min="1" max="14"></div>
+        </div>
+        <div class="field">
+            <label class="label">Semestres homologados</label>
+            <div class="range-row"><input type="range" id="homo" min="0" max="10" value="0"><output id="homoOut">0</output></div>
+        </div>
+        <div class="field">
+            <label class="label">Descuento SENA</label>
+            <div class="range-row"><input type="range" id="desc" min="0" max="50" value="{{ cfg.descuento_sena }}"><output id="descOut"></output></div>
+        </div>
+        <div class="field">
+            <label class="label">Descuento adicional <span class="muted">(convenios, pronto pago…)</span></label>
+            <div class="range-row"><input type="range" id="extra" min="0" max="30" value="0"><output id="extraOut"></output></div>
+        </div>
+        <div class="field">
+            <label class="label">Cuotas por semestre (financiación)</label>
+            <div class="seg" id="cuotasSeg">{% for c in [1,3,4,5,6] %}<button type="button" data-c="{{ c }}" class="{% if c == cfg.cuotas_financiacion %}active{% endif %}">{{ 'Contado' if c == 1 else c ~ 'x' }}</button>{% endfor %}</div>
+        </div>
+        <label class="switch mt-2"><input type="checkbox" id="benef" checked><span class="track"></span> Sumar ahorro en inscripción ({{ cfg.ahorro_inscripcion|money }}) y estudio ({{ cfg.ahorro_estudio|money }})</label>
+    </section>
+
+    <section class="stack">
+        <div class="hero-num">
+            <small>Inversión total del estudiante</small>
+            <div class="big" id="rTotal">$0</div>
+            <div class="sub" id="rTotalSub"></div>
+        </div>
+        <div class="res-grid">
+            <div class="card res"><small>Semestre con descuento</small><strong id="rSem">$0</strong><span id="rSemSub"></span></div>
+            <div class="card res"><small>Cuota estimada</small><strong id="rCuota">$0</strong><span id="rCuotaSub"></span></div>
+            <div class="card res"><small>Ahorro total</small><strong id="rAhorro" style="color:var(--brand-ink)">$0</strong><span>vs. carrera completa sin beneficios</span></div>
+        </div>
+        <div class="card card-pad">
+            <h3 style="font-size:15px"><i class="fa-solid fa-chart-simple" style="color:var(--text-3)"></i> Comparativo</h3>
+            <div class="cmp-row"><span>Sin homologar</span><div class="cmp-bar"><span id="b1" style="background:var(--text-3)"></span></div><b class="num" id="v1"></b></div>
+            <div class="cmp-row"><span>Con homologación</span><div class="cmp-bar"><span id="b2" style="background:var(--orange)"></span></div><b id="v2"></b></div>
+            <div class="cmp-row"><span>Con homologación + descuento</span><div class="cmp-bar"><span id="b3" style="background:var(--brand)"></span></div><b id="v3"></b></div>
+            <h3 style="font-size:15px;margin-top:22px"><i class="fa-solid fa-timeline" style="color:var(--text-3)"></i> Ruta académica</h3>
+            <div class="timeline" id="timeline"></div>
+            <div class="legend"><span><i style="background:var(--brand)"></i>Homologado</span><span><i style="background:var(--blue)"></i>Por cursar</span><span id="years"></span></div>
+        </div>
+        <div class="card">
+            <div class="card-head"><h3><i class="fa-brands fa-whatsapp" style="color:var(--wa)"></i> Oferta para el prospecto</h3></div>
+            <div class="wa-preview" style="border-radius:0"><div class="wa-bubble" id="oferta" data-time="ahora ✓✓"></div></div>
+            <div class="row" style="padding:14px 16px">
+                <div class="input-icon" style="flex:1;min-width:180px"><i class="fa-solid fa-phone"></i><input type="tel" id="phone" placeholder="Celular (opcional)"></div>
+                <button class="btn btn-pink" id="cp"><i class="fa-regular fa-copy"></i> Copiar</button>
+                <button class="btn btn-wa" id="wa"><i class="fa-brands fa-whatsapp"></i> WhatsApp</button>
+            </div>
+        </div>
+    </section>
+</div>
+{% endblock %}
+{% block scripts %}
+<script>
+(() => {
+    const { money, escapeHtml, waFormat, copyText, openWhatsApp, track, debounce } = App;
+    const PRECIOS = {{ precios | tojson }};
+    const HOMO = {{ homologaciones | tojson }};
+    const CFG = { ins: {{ cfg.ahorro_inscripcion | int }}, est: {{ cfg.ahorro_estudio | int }}, inicio: {{ cfg.inicio_clases | tojson }} };
+    const TIT0 = {{ titulo | tojson }};
+    const $ = (id) => document.getElementById(id);
+    let cuotas = {{ cfg.cuotas_financiacion | int }};
+
+    function fillTitulos(keep) {
+        const id = +$('prog').value;
+        const list = HOMO[id] || [];
+        $('tit').innerHTML = `<option value="">— Sin título / manual —</option>` + list.map((t, i) => `<option value="${i}">${escapeHtml(t.titulo)} (${t.homologados} sem.)</option>`).join('');
+        $('tit').disabled = !list.length;
+        if (keep) { const i = list.findIndex((t) => t.titulo === keep); if (i >= 0) $('tit').value = i; }
+    }
+    function loadProg(keepTitle) {
+        const p = PRECIOS.find((x) => x.id === +$('prog').value);
+        if (!p) return;
+        $('valor').value = p.valor; $('sems').value = p.semestres;
+        $('homo').max = p.semestres; fillTitulos(keepTitle);
+        applyTitulo();
+    }
+    function applyTitulo() {
+        const list = HOMO[+$('prog').value] || [];
+        const t = list[+$('tit').value];
+        if ($('tit').value !== '' && t) { $('homo').value = t.homologados; $('sems').value = t.homologados + t.faltantes; $('homo').max = $('sems').value; }
+        calc();
+    }
+
+    function calc() {
+        const valor = Math.max(0, +$('valor').value || 0);
+        const sems = Math.max(1, +$('sems').value || 1);
+        $('homo').max = sems;
+        const homo = Math.min(+$('homo').value, sems);
+        const desc = +$('desc').value, extra = +$('extra').value;
+        const dTot = Math.min(desc + extra, 100);
+        document.querySelectorAll('input[type=range]').forEach((r) => r.style.setProperty('--fill', ((r.value - r.min) / ((r.max - r.min) || 1) * 100) + '%'));
+        $('homoOut').textContent = homo; $('descOut').textContent = desc + '%'; $('extraOut').textContent = extra + '%';
+        const falt = sems - homo;
+        const semFinal = Math.round(valor * (1 - dTot / 100));
+        const total = semFinal * falt;
+        const full = valor * sems;
+        const benef = $('benef').checked ? CFG.ins + CFG.est : 0;
+        const ahorro = full - total + benef;
+        $('rTotal').textContent = money(total);
+        $('rTotalSub').textContent = `${falt} semestre${falt !== 1 ? 's' : ''} por cursar × ${money(semFinal)}`;
+        $('rSem').textContent = money(semFinal); $('rSemSub').textContent = `Antes ${money(valor)} (−${dTot}%)`;
+        $('rCuota').textContent = money(semFinal / cuotas); $('rCuotaSub').textContent = cuotas === 1 ? 'Pago de contado' : `${cuotas} cuotas por semestre`;
+        $('rAhorro').textContent = money(ahorro);
+        const v2 = valor * falt;
+        const max = Math.max(full, 1);
+        $('b1').style.width = '100%'; $('v1').textContent = money(full);
+        $('b2').style.width = (v2 / max * 100) + '%'; $('v2').textContent = money(v2);
+        $('b3').style.width = (total / max * 100) + '%'; $('v3').textContent = money(total);
+        $('timeline').innerHTML = Array.from({ length: sems }, (_, i) => `<div class="${i < homo ? 'h' : 'c'}"><span></span>S${i + 1}</div>`).join('');
+        $('years').textContent = `· Terminas en ~${(falt / 2).toLocaleString('es-CO')} año${falt / 2 !== 1 ? 's' : ''}`;
+
+        const prog = PRECIOS.find((x) => x.id === +$('prog').value)?.programa || '';
+        const list = HOMO[+$('prog').value] || []; const t = list[+$('tit').value];
+        let msg = `🎓 *Oferta Universidad Areandina*\n*${prog}* – 100% virtual\n\n`;
+        if (t) msg += `Con tu título *${t.titulo}*:\n`;
+        if (homo) msg += `📚 Te homologamos *${homo} semestres* y te faltan *${falt}* para graduarte 🥳\n`;
+        msg += `💰 Valor regular del semestre: ${money(valor)}\n🏷️ Descuento: *${dTot}%*${extra ? ` (${desc}% SENA + ${extra}% adicional)` : ''}\n✅ *Valor por semestre: ${money(semFinal)}*\n`;
+        if (cuotas > 1) msg += `💳 Puedes pagarlo en *${cuotas} cuotas* de ${money(semFinal / cuotas)}\n`;
+        msg += `💵 Inversión total estimada: *${money(total)}*\n🎉 Ahorro total: *${money(ahorro)}*\n\n📅 *Inicio de clases:* ${CFG.inicio}\n✔ Inscripción y estudio de homologación sin costo\n📌 Cupos limitados.`;
+        $('oferta').innerHTML = waFormat(msg);
+        $('oferta').dataset.raw = msg;
+    }
+
+    $('prog').addEventListener('change', () => loadProg());
+    $('tit').addEventListener('change', applyTitulo);
+    ['valor', 'sems', 'homo', 'desc', 'extra', 'benef'].forEach((id) => $(id).addEventListener('input', calc));
+    $('cuotasSeg').addEventListener('click', (e) => { const b = e.target.closest('[data-c]'); if (!b) return; cuotas = +b.dataset.c; $('cuotasSeg').querySelectorAll('button').forEach((x) => x.classList.toggle('active', x === b)); calc(); });
+    $('cp').onclick = () => { copyText($('oferta').dataset.raw, '¡Oferta copiada!'); track('simulacion', $('prog').selectedOptions[0].text); };
+    $('wa').onclick = () => openWhatsApp($('phone').value, $('oferta').dataset.raw, $('prog').selectedOptions[0].text);
+    loadProg(TIT0);
+})();
+</script>
+{% endblock %}

@@ -1,238 +1,148 @@
 {% extends "layout.html" %}
-{% block content %}
-
+{% block title %}Envío por WhatsApp{% endblock %}
+{% block head %}
 <style>
-    .wa-page {
-        max-width: 700px;
-        margin: 0 auto;
-        animation: slideUp 0.5s ease;
-    }
-
-    .wa-header {
-        text-align: center;
-        margin-bottom: 32px;
-    }
-
-    .wa-header h2 {
-        justify-content: center;
-        margin-bottom: 8px;
-    }
-
-    .wa-header p {
-        color: var(--text-muted);
-        font-size: 14px;
-    }
-
-    .wa-card {
-        background: var(--bg-card);
-        backdrop-filter: blur(12px);
-        border: 1px solid var(--border-glass);
-        border-radius: 20px;
-        padding: 36px;
-        position: relative;
-        overflow: hidden;
-    }
-
-    .wa-card::before {
-        content: '';
-        position: absolute;
-        top: 0;
-        left: 0;
-        right: 0;
-        height: 4px;
-        background: linear-gradient(90deg, var(--accent), #059669, var(--accent));
-    }
-
-    .wa-form-group {
-        margin-bottom: 20px;
-    }
-
-    .wa-form-group label {
-        display: flex;
-        align-items: center;
-        gap: 8px;
-        font-weight: 600;
-        font-size: 14px;
-        color: var(--text-secondary);
-        margin-bottom: 10px;
-    }
-
-    .wa-form-group label i {
-        color: var(--accent);
-        font-size: 16px;
-    }
-
-    .wa-textarea {
-        width: 100%;
-        height: 240px;
-        padding: 18px;
-        border-radius: 16px;
-        border: 1px solid var(--border-glass);
-        background: rgba(15, 23, 42, 0.5);
-        color: var(--text-primary);
-        font-family: 'Inter', sans-serif;
-        font-size: 14px;
-        line-height: 1.6;
-        resize: none;
-        transition: var(--transition);
-    }
-
-    .wa-textarea:focus {
-        outline: none;
-        border-color: var(--accent);
-        box-shadow: 0 0 0 3px var(--accent-glow);
-    }
-
-    .wa-textarea::placeholder {
-        color: var(--text-muted);
-    }
-
-    .char-count {
-        text-align: right;
-        font-size: 12px;
-        color: var(--text-muted);
-        margin-top: 6px;
-    }
-
-    /* Checkbox */
-    .wa-checkbox {
-        display: flex;
-        align-items: center;
-        gap: 14px;
-        padding: 16px 20px;
-        border-radius: 14px;
-        border: 1px solid var(--border-glass);
-        background: rgba(34, 197, 94, 0.05);
-        cursor: pointer;
-        transition: var(--transition);
-        margin-bottom: 24px;
-    }
-
-    .wa-checkbox:hover {
-        border-color: rgba(34, 197, 94, 0.3);
-        background: rgba(34, 197, 94, 0.08);
-    }
-
-    .wa-checkbox input[type="checkbox"] {
-        width: 20px;
-        height: 20px;
-        accent-color: var(--accent);
-        cursor: pointer;
-        flex-shrink: 0;
-    }
-
-    .wa-checkbox label {
-        cursor: pointer;
-        font-weight: 600;
-        font-size: 14px;
-        color: var(--text-primary);
-        display: flex;
-        align-items: center;
-        gap: 8px;
-        margin: 0;
-    }
-
-    .wa-checkbox label i {
-        color: var(--accent);
-    }
-
-    /* Submit button */
-    .btn-enviar {
-        width: 100%;
-        height: 56px;
-        border: none;
-        border-radius: 16px;
-        background: linear-gradient(135deg, var(--accent), #059669);
-        color: white;
-        font-size: 16px;
-        font-weight: 700;
-        cursor: pointer;
-        transition: var(--transition);
-        box-shadow: 0 6px 25px var(--accent-glow);
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        gap: 10px;
-    }
-
-    .btn-enviar:hover {
-        transform: translateY(-3px);
-        box-shadow: 0 12px 40px rgba(34, 197, 94, 0.4);
-    }
-
-    .btn-enviar i {
-        font-size: 18px;
-    }
-
-    /* Info box */
-    .wa-info {
-        margin-top: 20px;
-        padding: 14px 18px;
-        border-radius: 12px;
-        background: rgba(59, 130, 246, 0.08);
-        border: 1px solid rgba(59, 130, 246, 0.15);
-        font-size: 13px;
-        color: var(--text-secondary);
-        line-height: 1.6;
-        display: flex;
-        gap: 10px;
-    }
-
-    .wa-info i {
-        color: var(--accent-blue);
-        font-size: 16px;
-        margin-top: 2px;
-        flex-shrink: 0;
-    }
-
-    @media (max-width: 480px) {
-        .wa-card {
-            padding: 24px;
-        }
-    }
+    .wa-layout { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 20px; align-items: start; }
+    @media (max-width: 1050px) { .wa-layout { grid-template-columns: minmax(0, 1fr); } }
+    .step { display: flex; align-items: center; gap: 10px; font-family: var(--font-display); font-weight: 650; font-size: 15px; margin-bottom: 12px; }
+    .step b { width: 26px; height: 26px; border-radius: 8px; display: grid; place-items: center; background: var(--brand); color: #0d1d0f; font-size: 13px; }
+    .vars { display: flex; gap: 6px; flex-wrap: wrap; margin-top: 8px; }
+    .q-row { display: flex; align-items: center; gap: 12px; padding: 10px 16px; border-bottom: 1px solid var(--border); }
+    .q-row:last-child { border-bottom: 0; }
+    .q-row .who { flex: 1; min-width: 0; }
+    .q-row .who strong { display: block; font-size: 13.5px; }
+    .q-row .who span { font-size: 12px; color: var(--text-3); font-variant-numeric: tabular-nums; }
+    .q-row.sent { opacity: 0.55; }
+    .q-row.sent .who strong { text-decoration: line-through; }
+    .q-row .st { width: 28px; height: 28px; border-radius: 50%; display: grid; place-items: center; background: var(--surface-3); color: var(--text-3); font-size: 12px; flex-shrink: 0; }
+    .q-row.sent .st { background: var(--brand); color: #0d1d0f; }
+    .q-row.next { background: var(--brand-soft); }
+    .q-list { max-height: 420px; overflow: auto; }
 </style>
-
-<div class="wa-page">
-    <div class="wa-header">
-        <h2><i class="fa-brands fa-whatsapp" style="color:var(--accent)"></i> WhatsApp Masivo</h2>
-        <p>Envía mensajes personalizados a múltiples contactos</p>
-    </div>
-
-    <div class="wa-card">
-        <form method="POST">
-            <div class="wa-form-group">
-                <label><i class="fa-solid fa-list"></i> Listado de contactos</label>
-                <textarea class="wa-textarea" name="numeros" id="waTexto"
-                    placeholder="Formato: nombre, número, programa&#10;&#10;Ejemplo:&#10;Juan Perez,3001234567,Psicología&#10;Maria Lopez,3019876543,Ingeniería"
-                    required oninput="contarChars()"></textarea>
-                <div class="char-count" id="charCount">0 caracteres · 0 líneas</div>
-            </div>
-
-            <div class="wa-checkbox">
-                <input type="checkbox" name="usar_imagen" value="si" id="usar_imagen">
-                <label for="usar_imagen"><i class="fa-solid fa-image"></i> Incluir imagen en el envío</label>
-            </div>
-
-            <button type="submit" class="btn-enviar">
-                <i class="fa-solid fa-paper-plane"></i> Iniciar envío masivo
-            </button>
-        </form>
-
-        <div class="wa-info">
-            <i class="fa-solid fa-circle-info"></i>
-            <span>Asegúrate de que los números incluyan el código de país. Cada línea debe tener el formato:
-                <strong>nombre, número, programa</strong>.</span>
-        </div>
+{% endblock %}
+{% block content %}
+<div class="page-head">
+    <div>
+        <h2><span class="head-icon wa"><i class="fa-brands fa-whatsapp"></i></span> Envío asistido por WhatsApp</h2>
+        <p>Arma una lista de contactos, elige un mensaje y envíalo uno por uno con un clic. Funciona desde el computador o el celular, sin bots ni riesgo de bloqueo.</p>
     </div>
 </div>
+{% if bot_iniciado %}<div class="alert success mb-2"><i class="fa-solid fa-robot"></i><span>Bot de escritorio iniciado en este equipo.</span></div>{% endif %}
 
+<div class="wa-layout">
+    <div class="stack">
+        <section class="card card-pad">
+            <div class="step"><b>1</b> Mensaje</div>
+            <select id="tpl"><option value="">— Escribir mensaje propio —</option>
+                {% for grupo in ['Pregrado', 'Posgrado', 'SENA'] %}<optgroup label="{{ grupo }}">{% for p in plantillas if p.grupo == grupo %}<option value="{{ p.idx }}">{{ p.titulo }}</option>{% endfor %}</optgroup>{% endfor %}
+            </select>
+            <textarea id="msg" class="mt-1" rows="9" placeholder="Hola {nombre} 👋 te escribe … de la Universidad Areandina"></textarea>
+            <div class="vars"><span class="small muted">Variables:</span><button class="chip" data-var="{nombre}">{nombre}</button><button class="chip" data-var="{saludo}">{saludo}</button><span class="small muted" id="chars"></span></div>
+        </section>
+        <section class="card card-pad">
+            <div class="step"><b>2</b> Contactos</div>
+            <textarea id="contacts" rows="7" placeholder="Un contacto por línea. Ejemplos:&#10;3001234567&#10;María Pérez, 3109876543&#10;Juan; +57 315 555 1234"></textarea>
+            <div class="row mt-1">
+                <button class="btn btn-primary" id="build"><i class="fa-solid fa-list-check"></i> Crear cola de envío</button>
+                <label class="btn btn-secondary" for="csvIn"><i class="fa-solid fa-file-import"></i> Importar CSV</label><input type="file" id="csvIn" accept=".csv,.txt" hidden>
+                <span class="small muted" id="parsed"></span>
+            </div>
+        </section>
+        {% if desktop_bot %}
+        <section class="card card-pad">
+            <div class="step"><i class="fa-solid fa-robot" style="color:var(--text-3)"></i> Bot de escritorio (Windows)</div>
+            <form method="POST" class="stack" style="gap:10px">
+                <textarea name="numeros" rows="3" placeholder="Números, uno por línea" required></textarea>
+                <label class="switch"><input type="checkbox" name="usar_imagen" value="si"><span class="track"></span> Enviar imagen</label>
+                <button class="btn btn-secondary" type="submit"><i class="fa-solid fa-play"></i> Iniciar bot</button>
+            </form>
+        </section>
+        {% endif %}
+    </div>
+
+    <div class="stack" style="position:sticky;top:calc(var(--topbar-h) + 16px)">
+        <section class="card">
+            <div class="card-head"><h3><i class="fa-solid fa-paper-plane"></i> Cola de envío</h3><span class="badge green" id="prog">0 / 0</span></div>
+            <div style="padding:14px 16px 0"><div class="progress"><span id="bar" style="width:0"></span></div></div>
+            <div class="row" style="padding:14px 16px">
+                <button class="btn btn-wa btn-lg" id="next" style="flex:1"><i class="fa-brands fa-whatsapp"></i> Enviar al siguiente</button>
+                <button class="icon-btn" id="clear" title="Vaciar cola"><i class="fa-regular fa-trash-can"></i></button>
+            </div>
+            <div class="q-list" id="queue"><div class="empty" style="padding:28px"><div class="empty-icon"><i class="fa-regular fa-address-book"></i></div><p>Agrega contactos y crea la cola.</p></div></div>
+        </section>
+        <section class="card">
+            <div class="card-head"><h3><i class="fa-regular fa-eye"></i> Vista previa</h3><span class="small muted" id="pvFor"></span></div>
+            <div class="wa-preview" style="border-radius:0 0 var(--radius-lg) var(--radius-lg)"><div class="wa-bubble" id="preview" data-time="ahora ✓✓"></div></div>
+        </section>
+    </div>
+</div>
+{% endblock %}
+{% block scripts %}
 <script>
-    function contarChars() {
-        const ta = document.getElementById('waTexto');
-        const chars = ta.value.length;
-        const lines = ta.value.split('\n').filter(l => l.trim()).length;
-        document.getElementById('charCount').textContent = `${chars} caracteres · ${lines} línea${lines !== 1 ? 's' : ''}`;
-    }
-</script>
+(() => {
+    const { escapeHtml, waFormat, normalizePhone, waLink, toast, store, track, debounce } = App;
+    const TPL = {{ plantillas | tojson }};
+    const $ = (id) => document.getElementById(id);
+    let queue = store.get('wa-queue', []);
+    $('msg').value = store.get('wa-msg', '');
 
+    const saludo = () => { const h = new Date().getHours(); return h < 12 ? 'Buenos días' : h < 19 ? 'Buenas tardes' : 'Buenas noches'; };
+    const fill = (t, nombre) => t.replace(/\{nombre\}/gi, nombre || '').replace(/\{saludo\}/gi, saludo()).replace(/ +([,!])/g, '$1');
+    function preview() {
+        const nxt = queue.find((c) => !c.sent);
+        $('preview').innerHTML = waFormat(fill($('msg').value || 'Escribe o elige un mensaje…', nxt?.nombre)) ;
+        $('pvFor').textContent = nxt ? `para ${nxt.nombre || nxt.tel}` : '';
+        $('chars').textContent = `· ${$('msg').value.length} caracteres`;
+    }
+    $('tpl').addEventListener('change', () => { const t = TPL[+$('tpl').value]; if (t) { $('msg').value = '{saludo} {nombre} 👋\n\n' + t.texto.replace(/\r\n/g, '\n'); store.set('wa-msg', $('msg').value); preview(); } });
+    $('msg').addEventListener('input', debounce(() => { store.set('wa-msg', $('msg').value); preview(); }, 150));
+    document.querySelectorAll('[data-var]').forEach((b) => b.addEventListener('click', () => { const ta = $('msg'); const p = ta.selectionStart; ta.value = ta.value.slice(0, p) + b.dataset.var + ta.value.slice(ta.selectionEnd); ta.focus(); store.set('wa-msg', ta.value); preview(); }));
+
+    function parse(text) {
+        const out = []; const seen = new Set();
+        text.split(/\r?\n/).forEach((line) => {
+            line = line.trim(); if (!line) return;
+            const m = line.match(/(\+?\d[\d\s().-]{6,}\d)/);
+            if (!m) return;
+            const tel = normalizePhone(m[1]); if (tel.length < 10 || seen.has(tel)) return;
+            seen.add(tel);
+            const nombre = line.replace(m[1], '').replace(/[,;\t|]+/g, ' ').trim().split(/\s+/).slice(0, 3).join(' ');
+            out.push({ tel, nombre: nombre && !/^\d+$/.test(nombre) ? nombre.replace(/\b\w/g, (c) => c.toUpperCase()) : '', sent: false });
+        });
+        return out;
+    }
+    $('contacts').addEventListener('input', debounce(() => { const n = parse($('contacts').value).length; $('parsed').textContent = n ? `${n} contacto${n > 1 ? 's' : ''} válidos` : ''; }, 200));
+    $('csvIn').addEventListener('change', async (e) => { const f = e.target.files[0]; if (!f) return; $('contacts').value = (await f.text()); $('contacts').dispatchEvent(new Event('input')); toast('Archivo importado'); });
+    $('build').addEventListener('click', () => {
+        const list = parse($('contacts').value);
+        if (!list.length) { toast('No encontré números válidos', 'error'); return; }
+        if (!$('msg').value.trim()) { toast('Escribe o elige un mensaje primero', 'error'); return; }
+        queue = list; save(); toast(`Cola creada con ${list.length} contactos`);
+    });
+    function save() { store.set('wa-queue', queue); render(); }
+    function render() {
+        const sent = queue.filter((c) => c.sent).length;
+        $('prog').textContent = `${sent} / ${queue.length}`;
+        $('bar').style.width = queue.length ? (sent / queue.length * 100) + '%' : 0;
+        const nextIdx = queue.findIndex((c) => !c.sent);
+        $('next').disabled = nextIdx < 0;
+        $('next').innerHTML = nextIdx < 0 && queue.length ? '<i class="fa-solid fa-check"></i> ¡Cola completada!' : '<i class="fa-brands fa-whatsapp"></i> Enviar al siguiente';
+        $('queue').innerHTML = queue.length ? queue.map((c, i) => `<div class="q-row ${c.sent ? 'sent' : ''} ${i === nextIdx ? 'next' : ''}"><span class="st">${c.sent ? '<i class="fa-solid fa-check"></i>' : i + 1}</span><div class="who"><strong>${escapeHtml(c.nombre || 'Sin nombre')}</strong><span>+${c.tel}</span></div><button class="btn btn-ghost btn-sm" data-open="${i}"><i class="fa-brands fa-whatsapp"></i></button><button class="icon-btn sm" data-toggle="${i}" title="${c.sent ? 'Marcar pendiente' : 'Marcar enviado'}"><i class="fa-solid ${c.sent ? 'fa-rotate-left' : 'fa-check'}"></i></button></div>`).join('')
+            : '<div class="empty" style="padding:28px"><div class="empty-icon"><i class="fa-regular fa-address-book"></i></div><p>Agrega contactos y crea la cola.</p></div>';
+        preview();
+    }
+    function send(i) {
+        const c = queue[i]; if (!c) return;
+        window.open(waLink(c.tel, fill($('msg').value, c.nombre)), '_blank', 'noopener');
+        c.sent = true; track('whatsapp', 'envio-asistido'); save();
+    }
+    $('next').addEventListener('click', () => send(queue.findIndex((c) => !c.sent)));
+    $('queue').addEventListener('click', (e) => {
+        const o = e.target.closest('[data-open]'); if (o) send(+o.dataset.open);
+        const t = e.target.closest('[data-toggle]'); if (t) { queue[+t.dataset.toggle].sent = !queue[+t.dataset.toggle].sent; save(); }
+    });
+    $('clear').addEventListener('click', () => { if (queue.length && confirm('¿Vaciar la cola de envío?')) { queue = []; save(); } });
+    render();
+})();
+</script>
 {% endblock %}

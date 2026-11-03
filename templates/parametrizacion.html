@@ -22,7 +22,7 @@
         display: flex;
         gap: 12px;
         margin-bottom: 24px;
-        border-bottom: 1px solid var(--border-glass);
+        border-bottom: 1px solid var(--border);
         padding-bottom: 12px;
     }
 
@@ -61,19 +61,18 @@
     }
 
     .tilt-card {
-        background: rgba(15, 23, 42, 0.6);
-        backdrop-filter: blur(12px);
-        border: 1px solid var(--border-glass);
+        background: var(--surface);
+        border: 1px solid var(--border);
         border-radius: 20px;
         padding: 24px;
         transition: box-shadow 0.3s ease;
         transform-style: preserve-3d;
-        box-shadow: 0 4px 20px rgba(0, 0, 0, 0.2);
+        box-shadow: var(--shadow-xs);
     }
 
     .tilt-card:hover {
-        box-shadow: 0 16px 40px rgba(59, 130, 246, 0.2);
-        border-color: rgba(255, 255, 255, 0.15);
+        box-shadow: var(--shadow-md);
+        border-color: var(--border-strong);
     }
 
     .card-header {
@@ -81,7 +80,7 @@
         justify-content: space-between;
         align-items: center;
         margin-bottom: 20px;
-        border-bottom: 1px dashed rgba(255, 255, 255, 0.1);
+        border-bottom: 1px dashed var(--border-strong);
         padding-bottom: 12px;
         transform: translateZ(30px);
     }
@@ -117,7 +116,7 @@
         width: 32px;
         height: 32px;
         border-radius: 10px;
-        background: rgba(255, 255, 255, 0.05);
+        background: var(--brand-soft);
         display: flex;
         align-items: center;
         justify-content: center;
@@ -160,7 +159,7 @@
     .careers-list {
         margin-top: 16px;
         padding-top: 16px;
-        border-top: 1px dashed rgba(255, 255, 255, 0.1);
+        border-top: 1px dashed var(--border-strong);
         transform: translateZ(10px);
     }
 
@@ -184,8 +183,8 @@
     }
 
     .careers-list li {
-        font-size: 11px;
-        color: var(--text-secondary);
+        font-size: 12.5px;
+        color: var(--text-2);
         display: flex;
         align-items: flex-start;
         gap: 6px;
@@ -199,14 +198,31 @@
 </style>
 
 <div class="param-page">
-    <div class="param-header">
-        <h2><i class="fa-solid fa-calendar-days" style="color:var(--accent-blue)"></i> Parametrización 2026</h2>
-        <p>Fechas clave de inscripción y clases. Pase el mouse sobre las tarjetas para ver el efecto 3D.</p>
+    <div class="page-head">
+        <div>
+            <h2><span class="head-icon blue"><i class="fa-solid fa-calendar-days"></i></span> Parametrización {{ cfg.anio }}</h2>
+            <p>Fechas clave de ingreso. Las fechas de inicio se administran desde <b>Administración → Configuración</b> y se reflejan en todos los mensajes.</p>
+        </div>
     </div>
 
+    <div class="grid grid-2 mb-2">
+        <div class="card card-pad" style="background:linear-gradient(135deg,var(--brand-soft),transparent 70%),var(--surface)">
+            <div class="row"><span class="head-icon"><i class="fa-solid fa-user-graduate"></i></span><div><p class="eyebrow">Ingreso {{ cfg.anio }}</p><h3 style="font-size:18px">Pregrado y SENA</h3></div></div>
+            <div class="kpi-value" style="margin-top:14px;font-size:32px">{{ cfg.inicio_clases }}</div>
+            <p class="small muted mt-1"><i class="fa-solid fa-circle-check" style="color:var(--brand)"></i> Fecha confirmada de inicio de clases</p>
+        </div>
+        <div class="card card-pad" style="background:linear-gradient(135deg,var(--orange-soft),transparent 70%),var(--surface)">
+            <div class="row"><span class="head-icon orange"><i class="fa-solid fa-award"></i></span><div><p class="eyebrow" style="color:var(--orange)">Ingreso {{ cfg.anio }}</p><h3 style="font-size:18px">Posgrados</h3></div></div>
+            <div class="kpi-value" style="margin-top:14px;font-size:32px">{{ cfg.inicio_posgrado }}</div>
+            <p class="small muted mt-1"><i class="fa-solid fa-hourglass-half" style="color:var(--orange)"></i> Fecha exacta por confirmar</p>
+        </div>
+    </div>
+
+    <p class="eyebrow" style="color:var(--text-3);margin:22px 0 10px"><i class="fa-solid fa-clock-rotate-left"></i> Calendario de cohortes 2026 (referencia)</p>
+
     <div class="param-tabs">
-        <button class="param-tab active" onclick="switchTab('pregrado', this)">PREGRADO</button>
-        <button class="param-tab" onclick="switchTab('posgrado', this)">POSGRADOS</button>
+        <button class="param-tab active" onclick="switchTab('pregrado', this)">PREGRADO 2026</button>
+        <button class="param-tab" onclick="switchTab('posgrado', this)">POSGRADOS 2026</button>
     </div>
 
     <!-- PREGRADO -->

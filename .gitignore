@@ -4,3 +4,13 @@ __pycache__/
 *.pyd
 .DS_Store
 *.log
+.pytest_cache/
+.venv/
+venv/
+.env
+
+# Datos generados en tiempo de ejecución
+data/actividad.json
+data/backups/
+whatsapp/numeros.txt
+whatsapp/config.txt

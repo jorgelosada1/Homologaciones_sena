@@ -1,42 +1,47 @@
 {% extends "layout.html" %}
+{% block title %}Brochures{% endblock %}
 {% block content %}
-
-<style>
-    .brochures-page { animation: fadeIn 0.5s ease; padding-bottom: 40px; }
-    .brochures-header { margin-bottom: 28px; }
-    .brochures-header p { color: var(--text-muted); font-size: 14px; margin-top: -18px; }
-    .brochures-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)); gap: 16px; }
-    .brochure-card { background: var(--bg-card); border: 1px solid var(--border-color); border-radius: 14px; padding: 24px; text-align: center; transition: var(--transition); text-decoration: none; display: block; box-shadow: var(--shadow-sm); }
-    .brochure-card:hover { box-shadow: var(--shadow-md); transform: translateY(-3px); }
-    .brochure-icon { width: 64px; height: 64px; border-radius: 14px; background: #fef2f2; border: 1px solid #fecaca; display: flex; align-items: center; justify-content: center; margin: 0 auto 14px; font-size: 26px; color: #ef4444; }
-    .brochure-name { font-size: 14px; font-weight: 600; color: var(--text-primary); margin-bottom: 6px; word-break: break-word; }
-    .brochure-tag { display: inline-flex; align-items: center; gap: 4px; padding: 3px 10px; border-radius: 6px; font-size: 11px; font-weight: 600; background: #fef2f2; color: #ef4444; }
-    .brochure-action { margin-top: 14px; }
-    .brochure-action a { display: inline-flex; align-items: center; gap: 6px; padding: 8px 18px; border-radius: 8px; background: var(--accent); color: white; text-decoration: none; font-size: 13px; font-weight: 600; transition: var(--transition); }
-    .brochure-action a:hover { background: var(--accent-dark); transform: translateY(-1px); }
-    .empty-state { text-align: center; padding: 48px 20px; color: var(--text-muted); }
-    .empty-state i { font-size: 40px; margin-bottom: 14px; opacity: 0.3; }
-</style>
-
-<div class="brochures-page">
-    <div class="brochures-header">
-        <h2><i class="fa-solid fa-file-pdf" style="color: #ef4444"></i> Brochures</h2>
-        <p>Descarga nuestros brochures informativos de programas</p>
+<div class="page-head">
+    <div>
+        <h2><span class="head-icon pink"><i class="fa-solid fa-file-pdf"></i></span> Brochures y catálogos</h2>
+        <p>Documentos PDF de los programas para compartir con prospectos. Previsualízalos sin descargarlos.</p>
     </div>
-    {% if archivos %}
-    <div class="brochures-grid">
-        {% for pdf in archivos %}
-        <div class="brochure-card">
-            <div class="brochure-icon"><i class="fa-solid fa-file-pdf"></i></div>
-            <div class="brochure-name">{{ pdf.replace('.pdf', '').replace('_', ' ').replace('-', ' ') }}</div>
-            <div class="brochure-tag"><i class="fa-solid fa-file"></i> PDF</div>
-            <div class="brochure-action"><a href="/static/brochures/{{ pdf }}" target="_blank"><i class="fa-solid fa-eye"></i> Ver brochure</a></div>
-        </div>
-        {% endfor %}
+    <div class="actions">
+        {% if archivos %}<div class="input-icon" style="width:240px"><i class="fa-solid fa-magnifying-glass"></i><input type="text" id="q" placeholder="Filtrar…" data-page-search></div>{% endif %}
+        {% if is_admin %}<a class="btn btn-secondary" href="/admin/brochures"><i class="fa-solid fa-upload"></i> Gestionar</a>{% endif %}
     </div>
-    {% else %}
-    <div class="empty-state"><i class="fa-solid fa-file-circle-xmark"></i><p>Aún no hay brochures disponibles</p></div>
-    {% endif %}
 </div>
-
+{% if archivos %}
+<div class="grid grid-auto stagger" id="list">
+    {% for a in archivos %}
+    <div class="card hoverable card-pad" data-name="{{ a.name|lower }}" style="display:flex;flex-direction:column;gap:14px">
+        <div class="row" style="flex-wrap:nowrap"><span class="head-icon pink"><i class="fa-solid fa-file-pdf"></i></span><div style="min-width:0"><strong style="display:block;overflow:hidden;text-overflow:ellipsis;white-space:nowrap" title="{{ a.name }}">{{ a.name|replace('_',' ')|replace('.pdf','') }}</strong><span class="small muted">{{ a.size|human_size }} · {{ a.mtime }}</span></div></div>
+        <div class="row" style="margin-top:auto">
+            <button class="btn btn-secondary btn-sm" style="flex:1" data-preview="{{ url_for('static', filename='brochures/' + a.name) }}" data-title="{{ a.name }}"><i class="fa-regular fa-eye"></i> Ver</button>
+            <a class="btn btn-primary btn-sm" style="flex:1" href="{{ url_for('static', filename='brochures/' + a.name) }}" download><i class="fa-solid fa-download"></i> Descargar</a>
+            <button class="icon-btn sm" data-link="{{ url_for('static', filename='brochures/' + a.name) }}" title="Copiar enlace"><i class="fa-solid fa-link"></i></button>
+        </div>
+    </div>
+    {% endfor %}
+</div>
+{% else %}
+<div class="card"><div class="empty"><div class="empty-icon"><i class="fa-regular fa-file-pdf"></i></div><h4>Aún no hay brochures</h4><p>Un administrador puede subir los PDF desde el panel de administración.</p>{% if is_admin %}<a class="btn btn-primary mt-2" href="/admin/brochures"><i class="fa-solid fa-upload"></i> Subir PDF</a>{% endif %}</div></div>
+{% endif %}
+<div class="modal" id="pdfModal" aria-hidden="true">
+    <div class="modal-box xl" style="height:calc(100vh - 40px);display:flex;flex-direction:column">
+        <div class="modal-head"><h3 id="pdfTitle"></h3><a class="btn btn-secondary btn-sm" id="pdfDl" download><i class="fa-solid fa-download"></i></a><button class="icon-btn sm" data-close-modal><i class="fa-solid fa-xmark"></i></button></div>
+        <iframe id="pdfFrame" title="Vista previa" style="flex:1;border:0;width:100%;background:var(--surface-2)"></iframe>
+    </div>
+</div>
+{% endblock %}
+{% block scripts %}
+<script>
+document.addEventListener('click', (e) => {
+    const p = e.target.closest('[data-preview]');
+    if (p) { document.getElementById('pdfFrame').src = p.dataset.preview; document.getElementById('pdfTitle').textContent = p.dataset.title; document.getElementById('pdfDl').href = p.dataset.preview; App.openModal('pdfModal'); }
+    const l = e.target.closest('[data-link]');
+    if (l) App.copyText(location.origin + l.dataset.link, 'Enlace copiado');
+});
+document.getElementById('q')?.addEventListener('input', (e) => { const q = App.normalize(e.target.value); document.querySelectorAll('#list [data-name]').forEach((el) => el.hidden = q && !App.normalize(el.dataset.name).includes(q)); });
+</script>
 {% endblock %}
