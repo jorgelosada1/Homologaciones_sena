@@ -1,7 +1,8 @@
 import pytest
 
 PAGES = ["/", "/dashboard", "/presencial", "/programas", "/mensajes", "/mensajes?nivel=sena", "/precios",
-         "/simulador", "/piezas", "/brochures", "/cruce", "/flujos", "/parametrizacion", "/capacitacion", "/whatsapp"]
+         "/piezas", "/brochures", "/flujos", "/parametrizacion", "/capacitacion", "/pensum/pregrado", "/pensum/posgrado"]
+OCULTOS = ["/simulador", "/whatsapp", "/cruce", "/aguachica"]
 
 
 def test_login_requerido(app):
@@ -49,15 +50,48 @@ def test_api_asistente_local(client, monkeypatch):
     assert d["ok"] and d["source"] == "local" and "Ingeniería Industrial" in d["reply"]
 
 
-def test_api_cruce(client):
+@pytest.mark.parametrize("path", OCULTOS)
+def test_modulos_ocultos_para_asesor(client, path):
+    r = client.get(path)
+    assert r.status_code == 302 and r.headers["Location"].endswith("/")
+
+
+def test_modulos_ocultos_no_salen_en_menu(client):
+    html = client.get("/").get_data(as_text=True)
+    for path in OCULTOS:
+        assert f'href="{path}"' not in html
+    assert 'href="/pensum/pregrado"' in html and 'href="/pensum/posgrado"' in html
+
+
+@pytest.mark.parametrize("path", ["/simulador", "/whatsapp", "/cruce"])
+def test_modulos_ocultos_disponibles_para_admin(admin, path):
+    assert admin.get(path).status_code == 200
+
+
+def test_pensum_pdf(client):
+    from core.pensum import listar
+    it = listar("posgrado")[0]
+    r = client.get(f"/pensum/posgrado/archivo/{it['archivo']}")
+    assert r.status_code == 200 and r.mimetype == "application/pdf"
+    assert client.get("/pensum/posgrado/archivo/../app.py").status_code == 404
+    assert client.get("/pensum/otro").status_code == 404
+
+
+def test_pensum_enlazado_en_homologacion(client):
+    d = client.get("/api/homologar?q=Tecnolog%C3%ADa%20en%20Gesti%C3%B3n%20Log%C3%ADstica").get_json()
+    assert all(p["pensum"] for p in d["grupos"][0]["programas"])
+
+
+def test_api_cruce(admin):
+    client = admin
     d = client.get("/api/cruce?radar=en_radar").get_json()
     assert "rows" in d
     if d["total"]:
         assert all(r["_en_funnel"] for r in d["rows"])
 
 
-def test_cruce_export_excel(client):
-    r = client.get("/api/cruce/export.xlsx")
+def test_cruce_export_excel(admin):
+    r = admin.get("/api/cruce/export.xlsx")
     assert r.status_code in (200, 404)
 
 

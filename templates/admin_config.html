@@ -16,6 +16,14 @@
         <div class="field"><label class="label">Nombre del asesor en mensajes <span class="muted">(opcional)</span></label><input type="text" name="nombre_asesor" value="{{ config.nombre_asesor }}" placeholder="Si se llena, los mensajes incluyen un saludo"></div>
         <div class="field"><label class="label">Indicativo telefónico</label><input type="text" name="telefono_prefijo" value="{{ config.telefono_prefijo }}" placeholder="57"></div>
     </div>
+    <h3 style="font-size:15px;margin-top:26px"><i class="fa-solid fa-eye-slash" style="color:var(--text-3)"></i> Módulos visibles para los asesores</h3>
+    <p class="small muted" style="margin:4px 0 12px">Los módulos apagados desaparecen del menú y de los enlaces. Como administrador puedes seguir entrando a ellos.</p>
+    <input type="hidden" name="modulos_form" value="1">
+    <div class="grid grid-2" style="gap:10px">
+        {% for key, m in modulos.items() %}
+        <label class="switch card" style="padding:12px 14px"><input type="checkbox" name="modulos_visibles" value="{{ key }}" {% if key not in ocultos %}checked{% endif %}><span class="track"></span> {{ m.label }}</label>
+        {% endfor %}
+    </div>
     <div class="row mt-3"><button class="btn btn-primary" type="submit"><i class="fa-solid fa-floppy-disk"></i> Guardar configuración</button><span class="small muted">Los mensajes que usan <code>{inicio_pregrado}</code> y <code>{inicio_posgrado}</code> se actualizan solos al guardar.</span></div>
 </form>
 {% endblock %}

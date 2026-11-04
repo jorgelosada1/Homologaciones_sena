@@ -51,6 +51,7 @@
 (() => {
     const { escapeHtml, money, normalize, highlight, copyText, debounce } = App;
     const PROGS = {{ programas | tojson }};
+    const SIM_ON = {{ mod_on('simulador') | tojson }};
     const DESC = {{ cfg.descuento_sena | int }};
     let cur = 0, filtro = '', minSem = 0;
 
@@ -66,7 +67,8 @@
                 <div style="flex:1;min-width:200px"><p class="eyebrow">Programa virtual</p><h3>${escapeHtml(p.display)}</h3></div>
                 <div class="row">
                     <button class="btn btn-secondary btn-sm" id="cpList"><i class="fa-regular fa-copy"></i> Copiar lista</button>
-                    ${pr ? `<a class="btn btn-primary btn-sm" href="/simulador?programa=${pr.id}"><i class="fa-solid fa-calculator"></i> Simular</a>` : ''}
+                    ${p.pensum ? `<a class="btn btn-secondary btn-sm" href="/pensum/pregrado?ver=${encodeURIComponent(p.pensum)}"><i class="fa-solid fa-book-open"></i> Ver pensum</a>` : ''}
+                    ${pr && SIM_ON ? `<a class="btn btn-primary btn-sm" href="/simulador?programa=${pr.id}"><i class="fa-solid fa-calculator"></i> Simular</a>` : ''}
                 </div>
             </div>
             <div class="mini-kpis">

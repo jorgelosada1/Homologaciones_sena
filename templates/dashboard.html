@@ -87,11 +87,12 @@
         <div class="card">
             <div class="card-head"><h3><i class="fa-solid fa-database"></i> Estado de datos</h3></div>
             <div class="card-body" style="padding-top:4px">
-                <div class="status-line"><i style="background:{{ 'var(--brand-soft);color:var(--brand-700)' if cruce.tiene_archivo else 'var(--warning-soft);color:var(--warning)' }}" class="fa-solid fa-file-excel"></i><div style="flex:1">GEN NACIONAL<div class="small muted">{{ cruce.ultima_actualizacion or 'Sin cargar' }}</div></div></div>
-                <div class="status-line"><i style="background:{{ 'var(--blue-soft);color:var(--blue)' if cruce.tiene_funnel else 'var(--warning-soft);color:var(--warning)' }}" class="fa-solid fa-filter"></i><div style="flex:1">FUNNEL<div class="small muted">{{ cruce.cedulas_funnel_total }} cédulas · {{ cruce.ultima_funnel or 'Sin cargar' }}</div></div></div>
+                {% if mod_on('cruce') %}<div class="status-line"><i style="background:{{ 'var(--brand-soft);color:var(--brand-700)' if cruce.tiene_archivo else 'var(--warning-soft);color:var(--warning)' }}" class="fa-solid fa-file-excel"></i><div style="flex:1">GEN NACIONAL<div class="small muted">{{ cruce.ultima_actualizacion or 'Sin cargar' }}</div></div></div>
+                <div class="status-line"><i style="background:{{ 'var(--blue-soft);color:var(--blue)' if cruce.tiene_funnel else 'var(--warning-soft);color:var(--warning)' }}" class="fa-solid fa-filter"></i><div style="flex:1">FUNNEL<div class="small muted">{{ cruce.cedulas_funnel_total }} cédulas · {{ cruce.ultima_funnel or 'Sin cargar' }}</div></div></div>{% endif %}
+                <div class="status-line"><i style="background:var(--orange-soft);color:var(--orange)" class="fa-solid fa-book-open"></i><div style="flex:1">Pensum<div class="small muted">{{ stats.pensum_pre }} pregrado · {{ stats.pensum_pos }} posgrado</div></div></div>
                 <div class="status-line"><i style="background:var(--purple-soft);color:var(--purple)" class="fa-solid fa-images"></i><div style="flex:1">Piezas gráficas<div class="small muted">{{ stats.piezas }} imágenes</div></div></div>
                 <div class="status-line"><i style="background:var(--pink-soft);color:var(--pink)" class="fa-solid fa-comments"></i><div style="flex:1">Mensajes<div class="small muted">{{ stats.total_pregrado }} pregrado · {{ stats.total_posgrado }} posgrado · {{ stats.total_mensajes_sena }} SENA</div></div></div>
-                <a class="btn btn-secondary btn-sm btn-block mt-1" href="/cruce"><i class="fa-solid fa-shuffle"></i> Ir a cruce de datos</a>
+                {% if mod_on('cruce') %}<a class="btn btn-secondary btn-sm btn-block mt-1" href="/cruce"><i class="fa-solid fa-shuffle"></i> Ir a cruce de datos</a>{% else %}<a class="btn btn-secondary btn-sm btn-block mt-1" href="/pensum/pregrado"><i class="fa-solid fa-book-open"></i> Ver pensum</a>{% endif %}
             </div>
         </div>
     </div>

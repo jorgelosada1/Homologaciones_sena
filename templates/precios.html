@@ -25,7 +25,7 @@
     <div class="actions">
         <button class="btn btn-secondary" id="exportCsv"><i class="fa-solid fa-file-csv"></i> Exportar</button>
         <button class="btn btn-secondary" id="copyAll"><i class="fa-regular fa-copy"></i> Copiar lista</button>
-        <a class="btn btn-primary" href="/simulador"><i class="fa-solid fa-calculator"></i> Simulador</a>
+        {% if mod_on('simulador') %}<a class="btn btn-primary" href="/simulador"><i class="fa-solid fa-calculator"></i> Simulador</a>{% else %}<a class="btn btn-primary" href="/pensum/pregrado"><i class="fa-solid fa-book-open"></i> Pensum</a>{% endif %}
     </div>
 </div>
 
@@ -63,6 +63,7 @@
 (() => {
     const { escapeHtml, money, normalize, highlight, waFormat, copyText, openWhatsApp, openModal, store, debounce } = App;
     const DATA = {{ programas | tojson }};
+    const SIM_ON = {{ mod_on('simulador') | tojson }};
     const SENA = {{ cfg.descuento_sena | int }};
     const INICIO = {{ cfg.inicio_clases | tojson }};
     const $ = (id) => document.getElementById(id);
@@ -91,7 +92,7 @@
                     <div><div class="p-old">${disc(p) ? money(p.valor) : '&nbsp;'}</div><div class="p-price">${money(fin(p))}</div><div class="small muted">por semestre</div></div>
                     <div class="p-disc">Descuento <input type="number" min="0" max="100" value="${disc(p)}" data-disc> %</div>
                     <div class="p-meta"><span>Carrera completa</span><b>${money(fin(p) * p.semestres)}</b></div>
-                    <div class="p-actions"><button class="btn btn-primary btn-sm" data-oferta><i class="fa-solid fa-paper-plane"></i> Oferta</button><a class="btn btn-secondary btn-sm" href="/simulador?programa=${p.id}"><i class="fa-solid fa-calculator"></i> Simular</a></div>
+                    <div class="p-actions"><button class="btn btn-primary btn-sm" data-oferta><i class="fa-solid fa-paper-plane"></i> Oferta</button>${SIM_ON ? `<a class="btn btn-secondary btn-sm" href="/simulador?programa=${p.id}"><i class="fa-solid fa-calculator"></i> Simular</a>` : ''}</div>
                 </article>`).join('')}</div>`;
         } else {
             $('out').innerHTML = `<div class="table-wrap"><table class="table"><thead><tr><th>Programa</th><th class="num">Semestres</th><th class="num">Valor</th><th class="num">Desc. %</th><th class="num">Valor final</th><th class="num">Carrera completa</th><th></th></tr></thead><tbody>${l.map((p) => `

@@ -105,7 +105,8 @@
 
 <section id="welcome" class="welcome-grid stagger">
     <a class="card hoverable quick" href="/programas"><i class="fa-solid fa-diagram-project" style="background:var(--blue-soft);color:var(--blue)"></i><strong>Explorar por programa</strong><span>Qué títulos homologan cada carrera</span></a>
-    <a class="card hoverable quick" href="/simulador"><i class="fa-solid fa-calculator" style="background:var(--orange-soft);color:var(--orange)"></i><strong>Simulador de inversión</strong><span>Calcula costo total y ahorro</span></a>
+    {% if mod_on('simulador') %}<a class="card hoverable quick" href="/simulador"><i class="fa-solid fa-calculator" style="background:var(--orange-soft);color:var(--orange)"></i><strong>Simulador de inversión</strong><span>Calcula costo total y ahorro</span></a>
+    {% else %}<a class="card hoverable quick" href="/pensum/pregrado"><i class="fa-solid fa-book-open" style="background:var(--orange-soft);color:var(--orange)"></i><strong>Pensum de programas</strong><span>Plan de estudios en PDF</span></a>{% endif %}
     <a class="card hoverable quick" href="/mensajes"><i class="fa-solid fa-comments" style="background:var(--purple-soft);color:var(--purple)"></i><strong>Biblioteca de mensajes</strong><span>Pregrado, posgrado y SENA</span></a>
     <a class="card hoverable quick" href="/presencial"><i class="fa-solid fa-school" style="background:var(--pink-soft);color:var(--pink)"></i><strong>Homologación presencial</strong><span>Bogotá, Pereira y Valledupar</span></a>
 </section>
@@ -116,6 +117,7 @@
 (() => {
     const { escapeHtml, money, normalize, highlight, waFormat, copyText, openWhatsApp, toast, api, store, debounce } = App;
     const TITULOS = {{ titulos | tojson }};
+    const SIM_ON = {{ mod_on('simulador') | tojson }};
     const NORM = TITULOS.map((t) => normalize(t));
     const $ = (id) => document.getElementById(id);
     const input = $('q'), acList = $('acList');
@@ -234,7 +236,8 @@
             <div class="sem-track">${sem}</div>
             ${money3}
             <div class="prog-actions">
-                <a class="btn btn-secondary btn-sm" href="${sim}"><i class="fa-solid fa-calculator"></i> Simular</a>
+                ${SIM_ON ? `<a class="btn btn-secondary btn-sm" href="${sim}"><i class="fa-solid fa-calculator"></i> Simular</a>` : ''}
+                ${p.pensum ? `<a class="btn btn-secondary btn-sm" href="/pensum/pregrado?ver=${encodeURIComponent(p.pensum)}"><i class="fa-solid fa-book-open"></i> Ver pensum</a>` : ''}
                 <button class="btn btn-ghost btn-sm" data-copy-prog="${escapeHtml(p.programa_display)}"><i class="fa-regular fa-copy"></i> Copiar resumen</button>
             </div>
         </article>`;

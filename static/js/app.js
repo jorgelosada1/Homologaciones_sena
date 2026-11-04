@@ -258,7 +258,10 @@
         if (e.key === '/') { const s = document.querySelector('[data-page-search]'); if (s) { e.preventDefault(); s.focus(); s.select?.(); } }
         if (e.key === 'g') { gPressed = Date.now(); return; }
         if (Date.now() - gPressed < 900) {
-            const map = { h: '/', p: '/presencial', m: '/mensajes', d: '/dashboard', c: '/cruce', s: '/simulador', r: '/precios' };
+            const map = { h: '/', p: '/presencial', m: '/mensajes', d: '/dashboard', r: '/precios', e: '/pensum/pregrado', o: '/pensum/posgrado' };
+            const enabled = new Set(pages.map((x) => x.href));
+            if (enabled.has('/cruce')) map.c = '/cruce';
+            if (enabled.has('/simulador')) map.s = '/simulador';
             if (map[e.key]) { location.href = map[e.key]; }
             gPressed = 0;
         }

@@ -23,8 +23,12 @@ Herramienta interna para los asesores de la Universidad Areandina. Sirve para co
 | **Panel** | Indicadores, búsquedas por día, títulos más consultados, búsquedas sin resultado (posibles títulos faltantes en el acta), gráficos de programas y precios. |
 | **Cruce de datos** | Caché (la primera carga tarda unos 3 s y las siguientes unos 10 ms), filtros por radar, fechas y rango, distribución por estado y observación, tabla con orden, paginación y selector de columnas, y exportación a **Excel** y CSV. |
 | **Capacitación e IA** | Guía del proceso más un asistente que responde con los datos reales (actas, precios y procesos). Con `ANTHROPIC_API_KEY` usa Claude; sin ella responde con reglas locales. |
+| **Pensum pregrado / posgrado** | Dos secciones separadas con el plan de estudios en PDF (carpetas `Pensum Pregrados` y `Pensum Posgrados`): buscador, visor integrado, descarga y botón para compartir. Los resultados de homologación y Explorar programas enlazan directo al pensum del programa. |
 | **Piezas y Brochures** | Galería con visor, navegación con flechas, botón **Compartir** (en el celular envía la imagen a WhatsApp) y vista previa de los PDF. |
 | **Administración** | CRUD de mensajes con vista previa en vivo y reordenamiento. Precios en tabla editable. **Carga del Excel de actas desde la web** (con validación, respaldo y limpieza automática de datos personales). **Configuración global** (descuento SENA, fechas de inicio, ahorros, cuotas). Buscar y reemplazar en todos los mensajes. Piezas con arrastrar y soltar, carpetas y renombrado. |
+
+### Módulos ocultos
+Simulador, Envío WhatsApp, Cruce de datos y Aguachica están **ocultos** para los asesores: no aparecen en el menú ni en los enlaces. El administrador puede seguir entrando a ellos y los puede volver a mostrar en **Administración → Configuración → Módulos visibles**.
 
 ### Datos 2027
 - Inicio de **pregrado y SENA: 2 de febrero de 2027**. Posgrado: **2027** (fecha por confirmar).

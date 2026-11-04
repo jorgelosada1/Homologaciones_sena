@@ -25,6 +25,7 @@ DEFAULT_CONFIG = {
     "nombre_asesor": "",
     "telefono_prefijo": "57",
     "anio": 2027,
+    "modulos_ocultos": ["simulador", "whatsapp", "cruce", "aguachica"],
 }
 
 # Columnas por sede en el Excel presencial (programa, título, homologados, pendientes)
@@ -357,6 +358,9 @@ def build_programa(store, programa, homologados, faltantes, cfg, total=None):
             item["precio"]["ahorro_homologacion"] + item["precio"]["ahorro_descuento"]
             + int(cfg.get("ahorro_inscripcion", 0)) + int(cfg.get("ahorro_estudio", 0))
         )
+    from .pensum import buscar_pensum
+    pen = buscar_pensum(programa)
+    item["pensum"] = pen["archivo"] if pen else None
     pct = (homologados / item["total"] * 100) if item["total"] else 0
     item["porcentaje"] = round(pct)
     return item
@@ -425,8 +429,11 @@ def explorar_programas(store):
         titulos.sort(key=lambda x: (-x["homologados"], norm(x["titulo"])))
         hs = [t["homologados"] for t in titulos] or [0]
         precio = store.match_precio(prog)
+        from .pensum import buscar_pensum
+        pen = buscar_pensum(prog)
         out.append({
             "programa": prog, "display": pretty_name(prog), "titulos": titulos, "total": len(titulos),
+            "pensum": pen["archivo"] if pen else None,
             "max_homologados": max(hs), "min_homologados": min(hs),
             "promedio": round(sum(hs) / len(hs), 1), "precio": precio,
         })

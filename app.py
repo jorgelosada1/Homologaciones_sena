@@ -20,6 +20,7 @@ from core.cruce import Cruce
 from core.data import (ACTAS_FILE, DATA_DIR, DEFAULT_CONFIG, PRESENCIAL_FILE, SEDES, DataStore,
                        buscar_homologacion, buscar_presencial, explorar_programas, rank_titles,
                        sanitize_workbook, validar_actas, validar_presencial)
+from core.pensum import PENSUM_DIRS, buscar_pensum, listar as listar_pensum
 from core.messages import mensaje_homologacion, mensaje_oferta, mensaje_precios, mensaje_presencial
 from core.security import LoginLimiter, check_password, init_csrf
 from core.text import clean_df, fix_text_enc, money, norm, pretty_name  # noqa: F401 (re-export)
@@ -219,6 +220,10 @@ NAV = [
         ("/simulador", "fa-calculator", "Simulador"),
         ("/whatsapp", "fa-brands fa-whatsapp", "Envío WhatsApp"),
     ]),
+    ("Pensum", [
+        ("/pensum/pregrado", "fa-book-open", "Pensum pregrado"),
+        ("/pensum/posgrado", "fa-book-bookmark", "Pensum posgrado"),
+    ]),
     ("Recursos", [
         ("/piezas", "fa-images", "Piezas gráficas"),
         ("/brochures", "fa-file-pdf", "Brochures"),
@@ -232,15 +237,55 @@ NAV = [
     ]),
 ]
 
+# Módulos que se pueden ocultar desde Administración → Configuración
+MODULOS = {
+    "simulador": {"label": "Simulador", "prefixes": ("/simulador", "/api/oferta")},
+    "whatsapp": {"label": "Envío WhatsApp", "prefixes": ("/whatsapp",)},
+    "cruce": {"label": "Cruce de datos", "prefixes": ("/cruce", "/api/cruce")},
+    "aguachica": {"label": "Aguachica", "prefixes": ("/aguachica",)},
+}
+NAV_MODULO = {"/simulador": "simulador", "/whatsapp": "whatsapp", "/cruce": "cruce", "/aguachica": "aguachica"}
+
 TITLES = {item[0]: item[2] for _, items in NAV for item in items}
 TITLES.update({"/sena": "Mensajes SENA", "/admin": "Administración"})
+
+
+def modulos_ocultos():
+    return set(store.config.get("modulos_ocultos") or [])
+
+
+def mod_on(key):
+    return key not in modulos_ocultos()
+
+
+def nav_visible():
+    ocultos = modulos_ocultos()
+    out = []
+    for section, items in NAV:
+        vis = [it for it in items if NAV_MODULO.get(it[0]) not in ocultos]
+        if vis:
+            out.append((section, vis))
+    return out
+
+
+@app.before_request
+def bloquear_modulos_ocultos():
+    """Los módulos ocultos no están disponibles para asesores (el admin sí puede entrar)."""
+    if session.get("admin"):
+        return
+    for key in modulos_ocultos():
+        mod = MODULOS.get(key)
+        if mod and any(request.path == p or request.path.startswith(p + "/") or request.path.startswith(p + "?") for p in mod["prefixes"]):
+            if request.path.startswith("/api/"):
+                return jsonify({"ok": False, "error": "Módulo no disponible"}), 404
+            return redirect("/")
 
 
 def page_title():
     p = request.path
     if p in TITLES:
         return TITLES[p]
-    for prefix in ("/piezas", "/admin", "/aguachica"):
+    for prefix in ("/piezas", "/admin", "/aguachica", "/pensum/pregrado", "/pensum/posgrado"):
         if p.startswith(prefix):
             return TITLES.get(prefix, "Areandina")
     return "Areandina"
@@ -256,7 +301,8 @@ def nav_active(href):
 @app.context_processor
 def inject_globals():
     return {
-        "NAV": NAV,
+        "NAV": nav_visible(),
+        "mod_on": mod_on,
         "nav_active": nav_active,
         "page_title": page_title,
         "cfg": store.config,
@@ -497,6 +543,8 @@ def dashboard():
         "presencial_titulos": len(store.titulos_presencial()),
         "piezas": count_images(PIEZAS_DIR),
         "max_homologados": int(df["SEMTR HOMOLOGADOS"].max()) if len(df) else 0,
+        "pensum_pre": len(listar_pensum("pregrado")),
+        "pensum_pos": len(listar_pensum("posgrado")),
     }
     chart = {
         "programas": [p["display"] for p in progs],
@@ -568,6 +616,33 @@ def piezas(subfolder=""):
              **file_info(os.path.join(carpeta, f))} for f in imagenes]
     return render_template("piezas.html", carpetas=folders, imagenes=imgs, subfolder=subfolder,
                            breadcrumb=breadcrumb_for(subfolder))
+
+
+# =====================================================
+# PENSUM (PDF)
+# =====================================================
+@app.route("/pensum")
+@login_required
+def pensum_index():
+    return redirect(url_for("pensum", nivel="pregrado"))
+
+
+@app.route("/pensum/<nivel>")
+@login_required
+def pensum(nivel):
+    if nivel not in PENSUM_DIRS:
+        abort(404)
+    return render_template("pensum.html", nivel=nivel, items=listar_pensum(nivel), ver=request.args.get("ver", ""))
+
+
+@app.route("/pensum/<nivel>/archivo/<path:filename>")
+@login_required
+def pensum_archivo(nivel, filename):
+    folder = PENSUM_DIRS.get(nivel)
+    if not folder or not listed_name(folder, filename):
+        abort(404)
+    return send_from_directory(folder, filename, mimetype="application/pdf", conditional=True,
+                               as_attachment=request.args.get("descargar") == "1")
 
 
 @app.route("/brochures")
@@ -885,6 +960,8 @@ def admin_config():
     if request.method == "POST":
         cfg = store.config
         for k, default in DEFAULT_CONFIG.items():
+            if isinstance(default, list):
+                continue
             if k in request.form:
                 v = request.form.get(k, "").strip()
                 if isinstance(default, int):
@@ -895,9 +972,13 @@ def admin_config():
                 else:
                     cfg[k] = v
         cfg["descuento_sena"] = max(0, min(100, cfg["descuento_sena"]))
+        if request.form.get("modulos_form") == "1":
+            visibles = set(request.form.getlist("modulos_visibles"))
+            cfg["modulos_ocultos"] = [k for k in MODULOS if k not in visibles]
         store.save("config.json", cfg)
         saved = True
-    return render_template("admin_config.html", config=store.config, saved=saved)
+    return render_template("admin_config.html", config=store.config, saved=saved, modulos=MODULOS,
+                           ocultos=modulos_ocultos())
 
 
 @app.route("/admin/reemplazar", methods=["POST"])
