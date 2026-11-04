@@ -10,7 +10,7 @@
     <script>(function(){var t=null;try{t=JSON.parse(localStorage.getItem('theme'))}catch(e){}if(!t)t=matchMedia('(prefers-color-scheme: dark)').matches?'dark':'light';document.documentElement.setAttribute('data-theme',t)})();</script>
     <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@500;600;700;800&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
-    <link rel="stylesheet" href="{{ url_for('static', filename='css/app.css') }}?v={{ app_version }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/app.css') }}?v={{ asset_v }}">
     <style>
         body { display: grid; grid-template-columns: 1.1fr 1fr; min-height: 100vh; }
         .hero {
@@ -87,7 +87,7 @@
     </form>
 </section>
 <div class="toast-stack" id="toastStack"></div>
-<script src="{{ url_for('static', filename='js/app.js') }}?v={{ app_version }}"></script>
+<script src="{{ url_for('static', filename='js/app.js') }}?v={{ asset_v }}"></script>
 <script>
     document.getElementById('password').addEventListener('keyup', (e) => { document.getElementById('caps').style.display = e.getModifierState && e.getModifierState('CapsLock') ? 'block' : 'none'; });
     document.querySelector('form.login').addEventListener('submit', (e) => { const b = e.target.querySelector('button[type=submit]'); b.disabled = true; b.innerHTML = '<i class="fa-solid fa-circle-notch fa-spin"></i> Ingresando…'; });

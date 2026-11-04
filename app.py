@@ -27,7 +27,7 @@ from core.text import clean_df, fix_text_enc, money, norm, pretty_name  # noqa: 
 from whatsapp import whatsapp_bp
 
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
-APP_VERSION = "3.0"
+APP_VERSION = "3.1"
 
 app = Flask(__name__)
 app.secret_key = os.environ.get("SECRET_KEY", "homologaciones-aguachica-2026")
@@ -57,6 +57,9 @@ BACKUP_DIR = os.path.join(DATA_DIR, "backups")
 
 ALLOWED_IMAGE_EXTENSIONS = {"png", "jpg", "jpeg", "gif", "webp"}
 ALLOWED_PDF_EXTENSIONS = {"pdf"}
+
+# Versión de los archivos estáticos: cambia con cada despliegue para que el navegador no use una copia vieja
+ASSET_VERSION = str(int(max(os.path.getmtime(os.path.join(STATIC_DIR, f)) for f in ("css/app.css", "js/app.js"))))
 
 store = DataStore()
 activity = ActivityLog(os.path.join(DATA_DIR, "actividad.json"))
@@ -308,6 +311,7 @@ def inject_globals():
         "cfg": store.config,
         "is_admin": bool(session.get("admin")),
         "app_version": APP_VERSION,
+        "asset_v": ASSET_VERSION,
         "now": datetime.now(),
     }
 
