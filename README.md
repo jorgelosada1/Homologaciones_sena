@@ -23,8 +23,8 @@ Herramienta interna para los asesores de la Universidad Areandina. Sirve para co
 | **Panel** | Indicadores, búsquedas por día, títulos más consultados, búsquedas sin resultado (posibles títulos faltantes en el acta), gráficos de programas y precios. |
 | **Cruce de datos** | Caché (la primera carga tarda unos 3 s y las siguientes unos 10 ms), filtros por radar, fechas y rango, distribución por estado y observación, tabla con orden, paginación y selector de columnas, y exportación a **Excel** y CSV. |
 | **Capacitación e IA** | Guía del proceso más un asistente que responde con los datos reales (actas, precios y procesos). Con `ANTHROPIC_API_KEY` usa Claude; sin ella responde con reglas locales. |
-| **Pensum pregrado / posgrado** | Dos secciones separadas con el plan de estudios en PDF (carpetas `Pensum Pregrados` y `Pensum Posgrados`): buscador, visor integrado, descarga y botón para compartir. Los resultados de homologación y Explorar programas enlazan directo al pensum del programa. |
-| **Piezas y Brochures** | Galería con visor, navegación con flechas, botón **Compartir** (en el celular envía la imagen a WhatsApp) y vista previa de los PDF. |
+| **Brochures y pensum** | Pensum en PDF dividido en dos pestañas, **Pregrado** y **Posgrado** (carpetas `Pensum Pregrados` y `Pensum Posgrados`), con buscador, visor integrado, descarga y botón para compartir. Los PDF que suba el admin aparecen en la pestaña *Otros*. Los resultados de homologación y Explorar programas enlazan directo al pensum del programa. |
+| **Piezas gráficas** | Galería con visor, navegación con flechas y botón **Compartir** (en el celular envía la imagen a WhatsApp). |
 | **Administración** | CRUD de mensajes con vista previa en vivo y reordenamiento. Precios en tabla editable. **Carga del Excel de actas desde la web** (con validación, respaldo y limpieza automática de datos personales). **Configuración global** (descuento SENA, fechas de inicio, ahorros, cuotas). Buscar y reemplazar en todos los mensajes. Piezas con arrastrar y soltar, carpetas y renombrado. |
 
 ### Módulos ocultos

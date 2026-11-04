@@ -92,7 +92,7 @@
                 <div class="status-line"><i style="background:var(--orange-soft);color:var(--orange)" class="fa-solid fa-book-open"></i><div style="flex:1">Pensum<div class="small muted">{{ stats.pensum_pre }} pregrado · {{ stats.pensum_pos }} posgrado</div></div></div>
                 <div class="status-line"><i style="background:var(--purple-soft);color:var(--purple)" class="fa-solid fa-images"></i><div style="flex:1">Piezas gráficas<div class="small muted">{{ stats.piezas }} imágenes</div></div></div>
                 <div class="status-line"><i style="background:var(--pink-soft);color:var(--pink)" class="fa-solid fa-comments"></i><div style="flex:1">Mensajes<div class="small muted">{{ stats.total_pregrado }} pregrado · {{ stats.total_posgrado }} posgrado · {{ stats.total_mensajes_sena }} SENA</div></div></div>
-                {% if mod_on('cruce') %}<a class="btn btn-secondary btn-sm btn-block mt-1" href="/cruce"><i class="fa-solid fa-shuffle"></i> Ir a cruce de datos</a>{% else %}<a class="btn btn-secondary btn-sm btn-block mt-1" href="/pensum/pregrado"><i class="fa-solid fa-book-open"></i> Ver pensum</a>{% endif %}
+                {% if mod_on('cruce') %}<a class="btn btn-secondary btn-sm btn-block mt-1" href="/cruce"><i class="fa-solid fa-shuffle"></i> Ir a cruce de datos</a>{% else %}<a class="btn btn-secondary btn-sm btn-block mt-1" href="/brochures?nivel=pregrado"><i class="fa-solid fa-book-open"></i> Ver pensum</a>{% endif %}
             </div>
         </div>
     </div>

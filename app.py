@@ -223,13 +223,9 @@ NAV = [
         ("/simulador", "fa-calculator", "Simulador"),
         ("/whatsapp", "fa-brands fa-whatsapp", "Envío WhatsApp"),
     ]),
-    ("Pensum", [
-        ("/pensum/pregrado", "fa-book-open", "Pensum pregrado"),
-        ("/pensum/posgrado", "fa-book-bookmark", "Pensum posgrado"),
-    ]),
     ("Recursos", [
         ("/piezas", "fa-images", "Piezas gráficas"),
-        ("/brochures", "fa-file-pdf", "Brochures"),
+        ("/brochures", "fa-file-pdf", "Brochures y pensum"),
         ("/parametrizacion", "fa-calendar-days", "Parametrización"),
         ("/flujos", "fa-headset", "Flujo de llamada"),
         ("/capacitacion", "fa-user-graduate", "Capacitación e IA"),
@@ -288,7 +284,7 @@ def page_title():
     p = request.path
     if p in TITLES:
         return TITLES[p]
-    for prefix in ("/piezas", "/admin", "/aguachica", "/pensum/pregrado", "/pensum/posgrado"):
+    for prefix in ("/piezas", "/admin", "/aguachica", "/brochures"):
         if p.startswith(prefix):
             return TITLES.get(prefix, "Areandina")
     return "Areandina"
@@ -623,22 +619,17 @@ def piezas(subfolder=""):
 
 
 # =====================================================
-# PENSUM (PDF)
+# BROCHURES Y PENSUM (PDF)
 # =====================================================
 @app.route("/pensum")
-@login_required
-def pensum_index():
-    return redirect(url_for("pensum", nivel="pregrado"))
-
-
 @app.route("/pensum/<nivel>")
 @login_required
-def pensum(nivel):
-    if nivel not in PENSUM_DIRS:
-        abort(404)
-    return render_template("pensum.html", nivel=nivel, items=listar_pensum(nivel), ver=request.args.get("ver", ""))
+def pensum(nivel="pregrado"):
+    """Compatibilidad: el pensum ahora vive dentro de Brochures."""
+    return redirect(url_for("brochures", nivel=nivel if nivel in PENSUM_DIRS else "pregrado", ver=request.args.get("ver") or None))
 
 
+@app.route("/brochures/<nivel>/archivo/<path:filename>")
 @app.route("/pensum/<nivel>/archivo/<path:filename>")
 @login_required
 def pensum_archivo(nivel, filename):
@@ -653,9 +644,18 @@ def pensum_archivo(nivel, filename):
 @login_required
 def brochures():
     os.makedirs(BROCHURES_DIR, exist_ok=True)
-    archivos = [{"name": f, **file_info(os.path.join(BROCHURES_DIR, f))}
-                for f in sorted(os.listdir(BROCHURES_DIR)) if f.lower().endswith(".pdf")]
-    return render_template("brochures.html", archivos=archivos)
+    otros = [{"archivo": f, "nombre": os.path.splitext(f)[0].replace("_", " "), "categoria": "Otros documentos",
+              "size": file_info(os.path.join(BROCHURES_DIR, f))["size"]}
+             for f in sorted(os.listdir(BROCHURES_DIR)) if f.lower().endswith(".pdf")]
+    conteo = {"pregrado": len(listar_pensum("pregrado")), "posgrado": len(listar_pensum("posgrado")), "otros": len(otros)}
+    nivel = request.args.get("nivel", "pregrado")
+    if nivel not in conteo or (nivel == "otros" and not otros):
+        nivel = "pregrado"
+    if nivel == "otros":
+        items = [{**o, "url": url_for("static", filename="brochures/" + o["archivo"])} for o in otros]
+    else:
+        items = [{**it, "url": url_for("pensum_archivo", nivel=nivel, filename=it["archivo"])} for it in listar_pensum(nivel)]
+    return render_template("brochures.html", nivel=nivel, items=items, conteo=conteo, ver=request.args.get("ver", ""))
 
 
 # =====================================================

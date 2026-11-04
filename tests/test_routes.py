@@ -1,7 +1,7 @@
 import pytest
 
 PAGES = ["/", "/dashboard", "/presencial", "/programas", "/mensajes", "/mensajes?nivel=sena", "/precios",
-         "/piezas", "/brochures", "/flujos", "/parametrizacion", "/capacitacion", "/pensum/pregrado", "/pensum/posgrado"]
+         "/piezas", "/brochures", "/flujos", "/parametrizacion", "/capacitacion", "/brochures?nivel=posgrado"]
 OCULTOS = ["/simulador", "/whatsapp", "/cruce", "/aguachica"]
 
 
@@ -60,7 +60,7 @@ def test_modulos_ocultos_no_salen_en_menu(client):
     html = client.get("/").get_data(as_text=True)
     for path in OCULTOS:
         assert f'href="{path}"' not in html
-    assert 'href="/pensum/pregrado"' in html and 'href="/pensum/posgrado"' in html
+    assert 'href="/brochures"' in html and "/pensum/" not in html
 
 
 @pytest.mark.parametrize("path", ["/simulador", "/whatsapp", "/cruce"])
@@ -74,7 +74,11 @@ def test_pensum_pdf(client):
     r = client.get(f"/pensum/posgrado/archivo/{it['archivo']}")
     assert r.status_code == 200 and r.mimetype == "application/pdf"
     assert client.get("/pensum/posgrado/archivo/../app.py").status_code == 404
-    assert client.get("/pensum/otro").status_code == 404
+    assert client.get(f"/brochures/posgrado/archivo/{it['archivo']}").status_code == 200
+    r = client.get("/pensum/posgrado")
+    assert r.status_code == 302 and "/brochures?nivel=posgrado" in r.headers["Location"]
+    html = client.get("/brochures?nivel=posgrado").get_data(as_text=True)
+    assert it["nombre"] in html and "Pregrado" in html and "Posgrado" in html
 
 
 def test_pensum_enlazado_en_homologacion(client):
