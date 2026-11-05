@@ -234,6 +234,7 @@
             </div>
             <div class="sem-legend"><span><b>${p.homologados}</b> semestres homologados</span><span><b>${p.faltantes}</b> por cursar</span></div>
             <div class="sem-track">${sem}</div>
+            ${p.cohortes && p.cohortes.length ? `<div class="row small" style="margin-top:12px;gap:6px"><span class="muted"><i class="fa-regular fa-calendar"></i> Cohortes SENA:</span>${p.cohortes.map((c) => `<span class="badge green" title="Inicio de clases">${escapeHtml(c.corto)} · ${escapeHtml(c.inicio.replace(/ de (\d{4})$/, ' $1'))}</span>`).join('')}</div>` : ''}
             ${money3}
             <div class="prog-actions">
                 ${SIM_ON ? `<a class="btn btn-secondary btn-sm" href="${sim}"><i class="fa-solid fa-calculator"></i> Simular</a>` : ''}

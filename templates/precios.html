@@ -113,7 +113,7 @@
         const d = disc(p), ah = p.valor - fin(p);
         ofertaRaw = `🎓 *Oferta Universidad Areandina*\n*${p.programa}* en la *Universidad Areandina* tiene un valor regular de *${money(p.valor)}* por semestre.\n\n` +
             (d ? `Actualmente cuentas con un *${d}% de descuento*, lo que representa un ahorro de *${money(ah)}*.\n\n` : '') +
-            `✅ El valor final de tu matrícula queda en *${money(fin(p))}*.\n📚 Duración: ${p.semestres} semestres · 100% virtual\n\n📅 *Inicio de clases:* ${INICIO}\n📌 Cupos limitados. Aprovecha este beneficio exclusivo.`;
+            `✅ El valor final de tu matrícula queda en *${money(fin(p))}*.\n📚 Duración: ${p.semestres} semestres · 100% virtual\n\n📅 *Inicio de clases:* ${p.inicio || INICIO}\n📌 Cupos limitados. Aprovecha este beneficio exclusivo.`;
         $('ofertaTxt').innerHTML = waFormat(ofertaRaw); $('ofertaTxt').dataset.prog = p.programa;
         openModal('ofertaModal');
     });

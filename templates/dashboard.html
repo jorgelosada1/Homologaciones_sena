@@ -45,6 +45,17 @@
         <div class="card-head"><h3><i class="fa-solid fa-chart-line"></i> Búsquedas de los últimos 14 días</h3><span class="badge green">{{ actividad.por_dia|sum }} búsquedas</span></div>
         <div class="card-body"><div class="chart-box"><canvas id="chDias"></canvas></div></div>
     </div>
+    <div class="stack">
+    {% if hitos %}
+    <div class="card">
+        <div class="card-head"><h3><i class="fa-solid fa-calendar-check"></i> Próximas fechas</h3><a class="btn btn-ghost btn-sm" href="/parametrizacion">Calendario <i class="fa-solid fa-arrow-right"></i></a></div>
+        <div class="card-body" style="padding-top:4px">
+            {% for h in hitos %}
+            <div class="list-row"><span class="rank" style="width:auto;padding:0 8px;background:{{ 'var(--danger-soft);color:var(--danger)' if h.dias <= 15 else 'var(--surface-3)' }}">{{ h.corta }}</span><span style="flex:1;min-width:0">{{ h.titulo }} · <b>{{ h.grupo }} {{ h.cohorte }}</b></span><span class="badge">{{ h.dias }} d</span></div>
+            {% endfor %}
+        </div>
+    </div>
+    {% endif %}
     <div class="card">
         <div class="card-head"><h3><i class="fa-solid fa-fire"></i> Títulos más consultados</h3></div>
         <div class="card-body" style="padding-top:6px">
@@ -54,6 +65,7 @@
             <div class="empty" style="padding:30px 10px"><div class="empty-icon"><i class="fa-solid fa-chart-simple"></i></div><p>Aún no hay búsquedas registradas. Empieza en <a href="/" style="color:var(--brand-700)">Homologaciones</a>.</p></div>
             {% endfor %}
         </div>
+    </div>
     </div>
 </div>
 

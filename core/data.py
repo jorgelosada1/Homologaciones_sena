@@ -1,9 +1,11 @@
 """Carga de datos (Excel/JSON) con caché por fecha de modificación y lógica de homologación."""
 import os
 import threading
+from datetime import date as _date
 
 import pandas as pd
 
+from .parametrizacion import Parametrizacion, fecha_larga
 from .storage import load_json, save_json
 from .text import clean_df, norm, similarity, program_similarity, pretty_name, tokens
 
@@ -17,8 +19,8 @@ ACTAS_COLUMNS = ["PROGRAMA", "TÉCNICO O TECNOLOGÍA", "SEMTR HOMOLOGADOS", "FAL
 
 DEFAULT_CONFIG = {
     "descuento_sena": 20,
-    "inicio_clases": "2 de febrero de 2027",
-    "inicio_posgrado": "2027",
+    "inicio_clases": "1 de febrero de 2027",
+    "inicio_posgrado": "15 de febrero de 2027",
     "ahorro_inscripcion": 70000,
     "ahorro_estudio": 450000,
     "cuotas_financiacion": 5,
@@ -160,7 +162,18 @@ def sanitize_workbook(path):
     return removed
 
 
+PARAM = Parametrizacion()
+
+
+def _titulo_programa(titulo):
+    """'Administración de Empresas – Virtual' -> 'Administración de Empresas'."""
+    import re as _re
+    return _re.split(r"\s[–—-]\s", str(titulo))[0].strip()
+
+
 class DataStore:
+    param = PARAM
+
     """Mantiene los datos en memoria y los recarga solo cuando cambia el archivo."""
 
     def __init__(self):
@@ -201,11 +214,28 @@ class DataStore:
         cfg.update(self.json("config.json", {}) or {})
         return cfg
 
-    def render(self, text):
-        """Reemplaza variables de configuración dentro de los mensajes guardados."""
+    def inicio_de(self, titulo, tipo="pre"):
+        """Fecha (texto largo) del próximo inicio de clases del programa según la parametrización."""
+        cfg = self.config
+        nivel = "posgrado" if tipo == "pos" else "pregrado"
+        modalidad = "sena" if tipo == "sena" else "regular"
+        d = self.param.inicio_programa(_titulo_programa(titulo), nivel, modalidad) if titulo else None
+        if not d and modalidad == "sena":
+            d = self.param.inicio_programa(_titulo_programa(titulo), nivel, "regular")
+        if d:
+            return fecha_larga(d)
+        return cfg.get("inicio_posgrado" if tipo == "pos" else "inicio_clases", "")
+
+    def render(self, text, titulo=None, tipo=None):
+        """Reemplaza variables de configuración dentro de los mensajes guardados.
+
+        `{inicio}` toma la fecha del programa (según `titulo`) desde la parametrización.
+        """
         if not isinstance(text, str):
             return text
         cfg = self.config
+        if "{inicio}" in text:
+            text = text.replace("{inicio}", self.inicio_de(titulo, tipo or "pre") if titulo else cfg.get("inicio_clases", ""))
         valores = {
             "{inicio_pregrado}": cfg.get("inicio_clases", ""),
             "{inicio_clases}": cfg.get("inicio_clases", ""),
@@ -217,8 +247,13 @@ class DataStore:
             text = text.replace(k, str(v))
         return text
 
-    def render_list(self, items):
-        return [{**m, "titulo": self.render(m.get("titulo", "")), "texto": self.render(m.get("texto", ""))} for m in items]
+    def render_list(self, items, tipo=None):
+        out = []
+        for m in items:
+            t = tipo or m.get("nivel", "pre")
+            out.append({**m, "titulo": self.render(m.get("titulo", "")),
+                        "texto": self.render(m.get("texto", ""), m.get("titulo", ""), t)})
+        return out
 
     def precios(self):
         return self.json("precios.json")
@@ -361,6 +396,12 @@ def build_programa(store, programa, homologados, faltantes, cfg, total=None):
     from .pensum import buscar_pensum
     pen = buscar_pensum(programa)
     item["pensum"] = pen["archivo"] if pen else None
+    cohs = store.param.cohortes_programa(programa, "pregrado", "sena") or store.param.cohortes_programa(programa, "pregrado", "regular")
+    prox = store.param.proxima_cohorte(cohs) if cohs else None
+    item["cohortes"] = [{"corto": c["corto"], "inicio": fecha_larga(_date.fromisoformat(c["fechas"]["clases"]["desde"])),
+                         "cierre": c["fechas"].get("inscripcion", {}).get("hasta")} for c in cohs]
+    item["inicio"] = (fecha_larga(_date.fromisoformat(prox["fechas"]["clases"]["desde"])) if prox
+                      else cfg.get("inicio_clases", ""))
     pct = (homologados / item["total"] * 100) if item["total"] else 0
     item["porcentaje"] = round(pct)
     return item

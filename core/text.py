@@ -145,6 +145,11 @@ _ACCENT_WORDS = {
     "comunicacion": "comunicación", "contaduria": "contaduría", "biomedica": "biomédica",
     "grafico": "gráfico", "diseno": "diseño", "produccion": "producción", "informacion": "información",
     "tecnico": "técnico", "credito": "crédito", "electronica": "electrónica", "mecanica": "mecánica",
+    "maestria": "maestría", "auditoria": "auditoría", "pedagogia": "pedagogía", "pedagogica": "pedagógica",
+    "revisoria": "revisoría", "analitica": "analítica", "epidemiologia": "epidemiología", "innovacion": "innovación",
+    "matematicas": "matemáticas", "informatica": "informática", "especializacion": "especialización",
+    "direccion": "dirección", "comunicacion": "comunicación", "logistica": "logística", "ganaderia": "ganadería",
+    "propedeuticos": "propedéuticos", "practicas": "prácticas", "sociologia": "sociología",
 }
 
 

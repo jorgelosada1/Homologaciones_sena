@@ -36,6 +36,8 @@ def mensaje_homologacion(resultado, cfg, nombre="", incluir_precios=False, aseso
                     f"💰 Valor semestre: {money(pr['valor'])}\n"
                     f"✅ *Con {pr['descuento']}% SENA: {money(pr['valor_final'])}*\n"
                 )
+            if incluir_precios and p.get("inicio"):
+                texto += f"📅 Inicio de clases: {p['inicio']}\n"
             texto += "\n"
     if total == 1:
         texto += "¿Te gustaría recibir más información sobre este programa?\n\n"
@@ -44,10 +46,7 @@ def mensaje_homologacion(resultado, cfg, nombre="", incluir_precios=False, aseso
         texto += "¿De cuál de estas opciones te gustaría recibir más información?\n\n"
         texto += f"💡 *Los egresados SENA cuentan con un {desc}% de descuento* en estas homologaciones."
     if incluir_precios:
-        texto += (
-            f"\n📅 *Inicio de clases:* {cfg.get('inicio_clases')}"
-            "\n✔ Inscripción y estudio de homologación sin costo"
-        )
+        texto += "\n✔ Inscripción y estudio de homologación sin costo"
     return texto
 
 
@@ -63,10 +62,10 @@ def mensaje_precios(programas, cfg):
             f"💰 Valor: {money(pr['valor'])}\n"
             f"🏷️ Descuento SENA: {pr['descuento']}%\n"
             f"✅ *Valor con descuento: {money(pr['valor_final'])}*\n"
-            f"📚 Semestres por cursar: {p['faltantes']}\n\n"
+            f"📚 Semestres por cursar: {p['faltantes']}\n"
+            f"📅 Inicio de clases: *{p.get('inicio') or cfg.get('inicio_clases')}*\n\n"
         )
     texto += (
-        f"📅 *Inicio de clases:* {cfg.get('inicio_clases')}\n"
         "✔ Inscripción y estudio de homologación sin costo\n\n"
         "_Contamos con diferentes formas de financiación_ 👌"
     )

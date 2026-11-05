@@ -14,7 +14,7 @@
 </style>
 {% endblock %}
 {% block content %}
-<div class="page-head"><div><h2><span class="head-icon purple"><i class="fa-solid fa-comments"></i></span> {{ titulo }}</h2><p>Edita el texto con formato WhatsApp (*negrilla*, _cursiva_). Variables disponibles: <code>{inicio_pregrado}</code> ({{ cfg.inicio_clases }}), <code>{inicio_posgrado}</code> ({{ cfg.inicio_posgrado }}), <code>{descuento_sena}</code>, <code>{anio}</code>.</p></div>
+<div class="page-head"><div><h2><span class="head-icon purple"><i class="fa-solid fa-comments"></i></span> {{ titulo }}</h2><p>Edita el texto con formato WhatsApp (*negrilla*, _cursiva_). Variables disponibles: <code>{inicio}</code> (fecha de inicio del programa según la parametrización; en la vista previa se muestra la general), <code>{inicio_pregrado}</code> ({{ cfg.inicio_clases }}), <code>{inicio_posgrado}</code> ({{ cfg.inicio_posgrado }}), <code>{descuento_sena}</code>, <code>{anio}</code>.</p></div>
     <div class="actions"><button class="btn btn-primary" data-open-modal="newModal"><i class="fa-solid fa-plus"></i> Nuevo mensaje</button></div></div>
 {% include "_admin_nav.html" %}
 <div class="input-icon mb-2"><i class="fa-solid fa-magnifying-glass"></i><input type="text" id="flt" placeholder="Filtrar mensajes…" data-page-search></div>
@@ -59,7 +59,7 @@
 {% block scripts %}
 <script>
 document.querySelectorAll('.ed-head').forEach((h) => h.addEventListener('click', (e) => { if (e.target.closest('button,form')) return; h.parentElement.classList.toggle('open'); }));
-const VARS = { '{inicio_pregrado}': {{ cfg.inicio_clases|tojson }}, '{inicio_clases}': {{ cfg.inicio_clases|tojson }}, '{inicio_posgrado}': {{ cfg.inicio_posgrado|tojson }}, '{descuento_sena}': '{{ cfg.descuento_sena }}%', '{anio}': '{{ cfg.anio }}' };
+const VARS = { '{inicio}': {{ cfg.inicio_clases|tojson }}, '{inicio_pregrado}': {{ cfg.inicio_clases|tojson }}, '{inicio_clases}': {{ cfg.inicio_clases|tojson }}, '{inicio_posgrado}': {{ cfg.inicio_posgrado|tojson }}, '{descuento_sena}': '{{ cfg.descuento_sena }}%', '{anio}': '{{ cfg.anio }}' };
 const renderVars = (t) => Object.entries(VARS).reduce((acc, [k, v]) => acc.split(k).join(v), t);
 document.querySelectorAll('[data-preview]').forEach((ta) => { const b = ta.parentElement.querySelector('.wa-bubble'); const up = () => b.innerHTML = App.waFormat(renderVars(ta.value || ' ')); ta.addEventListener('input', up); up(); });
 document.getElementById('flt').addEventListener('input', (e) => { const q = App.normalize(e.target.value); document.querySelectorAll('#list [data-name]').forEach((el) => el.hidden = q && !App.normalize(el.dataset.name).includes(q)); });

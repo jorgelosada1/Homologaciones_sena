@@ -70,11 +70,82 @@ def _match_title(question, titles):
     return best if best_sc >= 0.75 else None
 
 
+FECHA_KEYS = ("FECHA", "INICIO", "INICIA", "EMPIEZA", "ARRANCA", "CLASES", "COHORTE", "INSCRIPCION", "INDUCCION", "CIERRA", "CUANDO")
+
+
+def _fmt_cohorte(c):
+    from datetime import date
+    from .parametrizacion import fecha_larga
+    f = c["fechas"]
+    partes = [f"*Cohorte {c['corto']}*: clases desde {fecha_larga(date.fromisoformat(f['clases']['desde']))}"]
+    ins = f.get("inscripcion") or {}
+    if ins.get("hasta"):
+        partes.append(f"inscripciones hasta {fecha_larga(date.fromisoformat(ins['hasta']))}")
+    ind = f.get("induccion") or {}
+    if ind.get("desde") and ind.get("hasta"):
+        d1, d2 = date.fromisoformat(ind["desde"]), date.fromisoformat(ind["hasta"])
+        partes.append(f"inducción del {d1.day} al {fecha_larga(d2)}" if d1.month == d2.month else f"inducción del {fecha_larga(d1)} al {fecha_larga(d2)}")
+    return " · ".join(partes)
+
+
+def calendario_texto(store):
+    """Resumen del calendario de cohortes para el asistente."""
+    lineas = []
+    for tipo, b in store.param.bloques():
+        nombre = {"pregrado": "PREGRADO", "especializaciones": "ESPECIALIZACIONES", "maestrias": "MAESTRÍAS"}[tipo]
+        lineas.append(f"{nombre}:")
+        lineas += ["  " + _fmt_cohorte(c).replace("*", "") for c in b["cohortes"]]
+        for p in b["programas"]:
+            extra = "; ".join(f"{'SENA' if 'SENA' in g.upper() else 'transferencia'}: {', '.join(v)}" for g, v in p["extra"].items())
+            lineas.append(f"  - {p['display']}: primera vez {', '.join(p['cohortes']) or 'no'}" + (f"; {extra}" if extra else ""))
+    return "\n".join(lineas)
+
+
+def _respuesta_fechas(question, store):
+    from datetime import date
+    from .parametrizacion import fecha_larga
+    q = norm(question)
+    nivel = "posgrado" if any(k in q for k in ("POSGRADO", "ESPECIALIZACION", "MAESTRIA")) else "pregrado"
+    modalidad = "sena" if "SENA" in q else "regular"
+    # ¿pregunta por un programa puntual?
+    mejor = None
+    for tipo, b in store.param.bloques():
+        for p in b["programas"]:
+            ptoks = tokens(p["display"], {"VIRTUAL", "ESPECIALIZACION", "MAESTRIA"})
+            if ptoks and all(any(similarity(t, w) >= 0.85 for w in tokens(question)) for t in ptoks):
+                if not mejor or len(ptoks) > mejor[0]:
+                    mejor = (len(ptoks), p, b, tipo)
+    if mejor:
+        _, p, b, tipo = mejor
+        cohs = store.param.cohortes_programa(p["nombre"], "pregrado" if tipo == "pregrado" else "posgrado", modalidad)
+        if not cohs and modalidad == "sena":
+            return f"🎓 *{p['display']}* no tiene cohortes abiertas para egresados SENA en la parametrización vigente."
+        return f"📅 *{p['display']}*{' (SENA)' if modalidad == 'sena' else ''}\n" + "\n".join("• " + _fmt_cohorte(c) for c in cohs)
+    lineas = []
+    for tipo, b in store.param.bloques():
+        if (nivel == "pregrado") != (tipo == "pregrado"):
+            continue
+        if "MAESTRIA" in q and "ESPECIALIZACION" not in q and tipo == "especializaciones":
+            continue
+        if "ESPECIALIZACION" in q and "MAESTRIA" not in q and tipo == "maestrias":
+            continue
+        titulo = {"pregrado": "Pregrado y SENA", "especializaciones": "Especializaciones", "maestrias": "Maestrías"}[tipo]
+        lineas.append(f"📅 *{titulo}*")
+        lineas += ["• " + _fmt_cohorte(c) for c in b["cohortes"]]
+    if not lineas:
+        cfg = store.config
+        return f"📅 El próximo inicio de clases configurado es *{cfg['inicio_clases']}*."
+    return "\n".join(lineas) + "\n\nPregúntame por un programa (ej. *¿cuándo inicia Derecho?*) para ver sus cohortes."
+
+
 def local_answer(question, store):
     q = norm(question)
     cfg = store.config
     if not q:
         return "Escríbeme tu pregunta 🙂"
+
+    if any(k in q.split() or k in q for k in FECHA_KEYS) and store.param.bloques():
+        return _respuesta_fechas(question, store)
 
     titulo = _match_title(question, store.titulos())
     if titulo:
@@ -88,7 +159,7 @@ def local_answer(question, store):
             valor = int(p["valor"])
             final = valor - round(valor * cfg["descuento_sena"] / 100)
             return (f"💰 *{p['programa']}*\n• Valor semestre: {money(valor)}\n• Con {cfg['descuento_sena']}% SENA: *{money(final)}*\n"
-                    f"• Duración: {p.get('semestres')} semestres\n• Inicio: {cfg['inicio_clases']}")
+                    f"• Duración: {p.get('semestres')} semestres\n• Inicio: {store.inicio_de(p['programa'], 'pre')}")
 
     for keys, ans in _FAQ:
         if any(norm(k) in q for k in keys):
@@ -101,9 +172,6 @@ def local_answer(question, store):
     if "DESCUENTO" in q or "BENEFICIO" in q:
         return (f"🏷️ Beneficios para egresados SENA:\n• {cfg['descuento_sena']}% de descuento en el semestre\n"
                 f"• Inscripción gratis (ahorra {money(cfg['ahorro_inscripcion'])})\n• Estudio de homologación gratis (ahorra {money(cfg['ahorro_estudio'])})")
-    if any(k in q for k in ("FECHA", "INICIO", "CLASES", "COHORTE")):
-        return (f"📅 *Inicio de clases {cfg['anio']}*\n• Pregrado y SENA: *{cfg['inicio_clases']}*\n"
-                f"• Posgrado: *{cfg.get('inicio_posgrado', '')}* (fecha exacta por confirmar)")
 
     return ("Puedo ayudarte con:\n• Qué homologa un título SENA (ej: *¿qué homologa Tecnología en Gestión Logística?*)\n"
             "• Precios de un programa (ej: *precio de Ingeniería Industrial*)\n• Documentos, inscripción en FDI, HubSpot y Zoho")
@@ -119,13 +187,14 @@ def _context(store):
         "Eres el asistente interno de los asesores comerciales de la Universidad Areandina (Colombia) "
         "para homologaciones de egresados SENA. Responde en español, de forma breve y práctica, usando el "
         "formato de WhatsApp (*negrilla*). Usa SOLO los datos de abajo; si algo no está, dilo y sugiere a quién consultar.\n\n"
-        f"CONFIGURACIÓN: descuento SENA {cfg['descuento_sena']}%, inicio de clases pregrado y SENA {cfg['inicio_clases']}, "
-        f"inicio posgrado {cfg.get('inicio_posgrado', '')} (fecha exacta por confirmar), "
+        f"CONFIGURACIÓN: descuento SENA {cfg['descuento_sena']}%, "
         f"ahorro inscripción {cfg['ahorro_inscripcion']}, ahorro estudio de homologación {cfg['ahorro_estudio']}.\n\n"
         f"GUÍA INTERNA:{GUIA}\n"
         "ACTAS DE HOMOLOGACIÓN VIRTUAL (título SENA | programa | semestres homologados | semestres por cursar):\n"
         + "\n".join(filas)
         + "\n\nPRECIOS POR SEMESTRE ANTES DE DESCUENTO (programa | valor COP | semestres):\n" + "\n".join(precios)
+        + "\n\nCALENDARIO DE COHORTES (parametrización vigente; las letras son las cohortes en que abre cada programa):\n"
+        + calendario_texto(store)
     )
 
 

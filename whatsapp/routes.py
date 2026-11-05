@@ -33,7 +33,7 @@ def whatsapp():
     plantillas = (
         [{"grupo": "Pregrado" if m.get("nivel") == "pre" else "Posgrado", "titulo": m["titulo"], "texto": m["texto"]}
          for m in store.render_list(store.mensajes_programas())]
-        + [{"grupo": "SENA", "titulo": m["titulo"], "texto": m["texto"]} for m in store.render_list(store.mensajes_sena())]
+        + [{"grupo": "SENA", "titulo": m["titulo"], "texto": m["texto"]} for m in store.render_list(store.mensajes_sena(), "sena")]
     )
     for i, p in enumerate(plantillas):
         p["idx"] = i

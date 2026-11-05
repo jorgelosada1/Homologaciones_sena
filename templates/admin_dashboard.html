@@ -23,7 +23,13 @@
                 <div class="row"><input type="file" name="archivo" accept=".xlsx" required style="flex:1;height:auto;padding:8px"><button class="btn btn-primary btn-sm" type="submit"><i class="fa-solid fa-upload"></i> Subir</button></div>
             </form>
             <form method="POST" action="/admin/datos" enctype="multipart/form-data" class="stack" style="gap:10px;padding:14px;border:1px dashed var(--border-strong);border-radius:14px">
-                <div class="row"><strong style="flex:1"><i class="fa-solid fa-school" style="color:var(--blue)"></i> Presencial 2026 (respaldo)</strong><a class="btn btn-ghost btn-sm" href="/admin/datos/descargar/presencial"><i class="fa-solid fa-download"></i> Actual</a></div>
+                <div class="row"><strong style="flex:1"><i class="fa-solid fa-calendar-days" style="color:var(--orange)"></i> Parametrización (cohortes y fechas)</strong><a class="btn btn-ghost btn-sm" href="/admin/datos/descargar/parametrizacion"><i class="fa-solid fa-download"></i> Actual</a></div>
+                <span class="small muted">{{ param_info.nombre }} · {{ param_info.mtime }}. Al subirla se actualizan la página de Parametrización y las fechas de inicio de todos los mensajes.</span>
+                <input type="hidden" name="tipo" value="parametrizacion">
+                <div class="row"><input type="file" name="archivo" accept=".xlsx" required style="flex:1;height:auto;padding:8px"><button class="btn btn-primary btn-sm" type="submit"><i class="fa-solid fa-upload"></i> Subir</button></div>
+            </form>
+            <form method="POST" action="/admin/datos" enctype="multipart/form-data" class="stack" style="gap:10px;padding:14px;border:1px dashed var(--border-strong);border-radius:14px">
+                <div class="row"><strong style="flex:1"><i class="fa-solid fa-school" style="color:var(--blue)"></i> Presencial (respaldo)</strong><a class="btn btn-ghost btn-sm" href="/admin/datos/descargar/presencial"><i class="fa-solid fa-download"></i> Actual</a></div>
                 <span class="small muted">Solo se usa si el acta no trae la hoja PRESENCIAL · {{ presencial_info.mtime }}</span>
                 <input type="hidden" name="tipo" value="presencial">
                 <div class="row"><input type="file" name="archivo" accept=".xlsx" required style="flex:1;height:auto;padding:8px"><button class="btn btn-secondary btn-sm" type="submit"><i class="fa-solid fa-upload"></i> Subir</button></div>

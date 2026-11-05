@@ -30,8 +30,15 @@ Herramienta interna para los asesores de la Universidad Areandina. Sirve para co
 ### Módulos ocultos
 Simulador, Envío WhatsApp, Cruce de datos y Aguachica están **ocultos** para los asesores: no aparecen en el menú ni en los enlaces. El administrador puede seguir entrando a ellos y los puede volver a mostrar en **Administración → Configuración → Módulos visibles**.
 
+### Parametrización (calendario de cohortes)
+La página **Parametrización** se genera a partir del Excel `PARAMETRIZACIÓN 2027.xlsx` (hojas *Pregrado 2027-10*, *Posgrado 2027-30*, *Transferencias y segundo posgrado*, *Prácticas* y *Zonificación*):
+- Muestra la próxima fecha clave con cuenta regresiva, una franja de próximos hitos, una línea de tiempo por cohorte (inscripciones, inducción y clases) y tarjetas por cohorte con su estado (abierta, próxima o cerrada).
+- Incluye una matriz de qué programa abre en qué cohorte (primera vez, SENA y transferencia), con filtros, además de prácticas/opción de grado y un buscador de zonificación por municipio.
+- **Las fechas de inicio de todos los mensajes salen de aquí, por programa** (variable `{inicio}`). Por ejemplo, Economía inicia el 22 de febrero porque solo abre en la cohorte 1B. El asistente también responde "¿cuándo inicia Derecho?".
+- Para el siguiente periodo, sube el nuevo Excel en **Administración → Resumen → Parametrización** y todo se actualiza.
+
 ### Datos 2027
-- Inicio de **pregrado y SENA: 2 de febrero de 2027**. Posgrado: **2027** (fecha por confirmar).
+- Inicios según la parametrización 2027: **pregrado y SENA desde el 1 de febrero de 2027** (cohorte 1A; 1B el 22 de febrero y 1C el 15 de marzo), **especializaciones desde el 15 de febrero** (3B) y **maestrías el 8 de marzo** (3E).
 - Los mensajes usan variables (`{inicio_pregrado}`, `{inicio_posgrado}`, `{descuento_sena}`, `{anio}`). Para cambiar una fecha en todos los mensajes basta con editarla en **Administración → Configuración**.
 - Acta actualizada: entra **Administración en Salud** y 10 títulos más, y se integran las tecnologías **EMSUB** (Escuela Militar de Suboficiales). La parte presencial ahora se lee de la hoja `PRESENCIAL` del acta, que suma Contaduría, Ingeniería Ambiental, Arquitectura, Gastronomía y otras carreras.
 

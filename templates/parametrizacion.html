@@ -1,506 +1,322 @@
 {% extends "layout.html" %}
-{% block content %}
-
+{% block title %}Parametrización {{ cfg.anio }}{% endblock %}
+{% block head %}
 <style>
-    .param-page {
-        animation: fadeIn 0.5s ease;
-        padding-bottom: 60px;
-    }
+    .cal-hero { position: relative; overflow: hidden; border-radius: var(--radius-xl); padding: 26px 28px; color: #eaf4ec; margin-bottom: 18px;
+        background: radial-gradient(70% 140% at 0% 0%, rgba(47,125,246,0.45), transparent 55%), radial-gradient(60% 120% at 100% 100%, rgba(127,181,54,0.4), transparent 60%), linear-gradient(140deg, #0f1f2e, #08130d); }
+    .cal-hero h2 { color: #fff; font-size: 28px; font-weight: 750; letter-spacing: -0.03em; }
+    .cal-hero p { color: rgba(234,244,236,0.75); margin-top: 6px; max-width: 640px; }
+    .cal-hero-grid { display: grid; grid-template-columns: minmax(0, 1.3fr) minmax(0, 1fr); gap: 20px; align-items: center; }
+    @media (max-width: 900px) { .cal-hero-grid { grid-template-columns: minmax(0, 1fr); } }
+    .next-box { background: rgba(255,255,255,0.07); border: 1px solid rgba(255,255,255,0.12); border-radius: 18px; padding: 16px 18px; display: flex; gap: 16px; align-items: center; }
+    .next-days { font-family: var(--font-display); font-size: 44px; font-weight: 800; line-height: 1; color: #a6d65f; min-width: 74px; text-align: center; }
+    .next-days small { display: block; font-size: 11px; font-weight: 700; letter-spacing: 0.08em; text-transform: uppercase; color: rgba(234,244,236,0.6); margin-top: 4px; }
+    .hero-stats { display: flex; gap: 10px; flex-wrap: wrap; margin-top: 16px; }
+    .hero-stat { background: rgba(255,255,255,0.07); border: 1px solid rgba(255,255,255,0.1); padding: 8px 12px; border-radius: 12px; font-size: 12.5px; }
+    .hero-stat b { color: #fff; font-size: 15px; margin-right: 4px; }
 
-    .param-header {
-        margin-bottom: 32px;
-    }
+    .hitos { display: flex; gap: 10px; overflow-x: auto; padding-bottom: 6px; margin-bottom: 20px; scrollbar-width: thin; }
+    .hito { flex: 0 0 auto; min-width: 190px; padding: 12px 14px; display: flex; gap: 12px; align-items: center; }
+    .hito .hd { width: 46px; text-align: center; flex-shrink: 0; }
+    .hito .hd b { display: block; font-family: var(--font-display); font-size: 20px; line-height: 1; }
+    .hito .hd span { font-size: 10.5px; color: var(--text-3); text-transform: uppercase; font-weight: 700; }
+    .hito .ht { font-size: 13px; font-weight: 600; line-height: 1.25; }
+    .hito .hs { font-size: 11.5px; color: var(--text-3); }
 
-    .param-header p {
-        color: var(--text-muted);
-        font-size: 14px;
-        margin-top: -20px;
-    }
+    .sec { display: none; } .sec.active { display: block; animation: pageIn .3s var(--ease); }
+    .block-title { font-family: var(--font-display); font-size: 18px; font-weight: 700; margin: 6px 0 12px; display: flex; align-items: center; gap: 10px; }
 
-    /* Tabs */
-    .param-tabs {
-        display: flex;
-        gap: 12px;
-        margin-bottom: 24px;
-        border-bottom: 1px solid var(--border);
-        padding-bottom: 12px;
-    }
+    /* Gantt */
+    .gantt { padding: 16px 18px 18px; margin-bottom: 18px; }
+    .g-head, .g-row { display: grid; grid-template-columns: 70px minmax(0, 1fr); gap: 10px; align-items: center; }
+    .g-scale { position: relative; height: 22px; border-bottom: 1px solid var(--border); }
+    .g-month { position: absolute; top: 0; height: 100%; font-size: 11px; color: var(--text-3); font-weight: 600; padding-left: 4px; border-left: 1px dashed var(--border); white-space: nowrap; overflow: hidden; }
+    .g-track { position: relative; height: 34px; border-bottom: 1px dashed var(--border); }
+    .g-row:last-child .g-track { border-bottom: 0; }
+    .g-label { font-weight: 700; font-size: 13px; }
+    .g-label span { display: block; font-size: 10.5px; color: var(--text-3); font-weight: 500; }
+    .g-seg { position: absolute; top: 8px; height: 18px; border-radius: 6px; cursor: default; }
+    .g-seg.insc { background: repeating-linear-gradient(135deg, var(--blue-soft) 0 6px, rgba(47,125,246,0.2) 6px 12px); border: 1px solid rgba(47,125,246,0.45); }
+    .g-seg.ind { background: var(--orange); top: 6px; height: 22px; z-index: 2; box-shadow: 0 2px 6px rgba(240,138,18,0.45); }
+    .g-seg.cls { background: linear-gradient(90deg, var(--brand), #a6d65f); }
+    .g-today { position: absolute; top: -4px; bottom: -4px; width: 2px; background: var(--pink); z-index: 3; }
+    .g-today.first::before { content: "Hoy"; position: absolute; top: -16px; left: -12px; font-size: 10px; font-weight: 700; color: var(--pink); }
+    .g-legend { display: flex; gap: 16px; flex-wrap: wrap; font-size: 12px; color: var(--text-2); margin-top: 12px; }
+    .g-legend i { display: inline-block; width: 14px; height: 10px; border-radius: 3px; margin-right: 6px; vertical-align: middle; }
 
-    .param-tab {
-        padding: 10px 20px;
-        border-radius: 12px;
-        background: transparent;
-        color: var(--text-muted);
-        font-size: 14px;
-        font-weight: 600;
-        cursor: pointer;
-        border: 1px solid transparent;
-        transition: var(--transition);
-    }
+    /* Cohortes */
+    .coh-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(290px, 1fr)); gap: 14px; margin-bottom: 18px; }
+    .coh { padding: 0; overflow: hidden; display: flex; flex-direction: column; }
+    .coh-top { padding: 16px 18px 12px; display: flex; align-items: flex-start; gap: 12px; }
+    .coh-code { width: 52px; height: 52px; border-radius: 14px; display: grid; place-items: center; font-family: var(--font-display); font-weight: 800; font-size: 19px; color: #0d1d0f; background: linear-gradient(140deg, #a6d65f, var(--brand)); flex-shrink: 0; }
+    .sec-posgrado .coh-code { background: linear-gradient(140deg, #ffc176, var(--orange)); }
+    .sec-transferencias .coh-code { background: linear-gradient(140deg, #8fb8ff, var(--blue)); color: #fff; }
+    .coh-top h4 { font-size: 15px; }
+    .coh-top .sub { font-size: 12px; color: var(--text-3); margin-top: 2px; }
+    .coh-start { margin: 0 18px; padding: 10px 12px; border-radius: 12px; background: var(--surface-2); border: 1px solid var(--border); display: flex; align-items: center; gap: 10px; }
+    .coh-start i { color: var(--brand-700); }
+    .coh-start small { display: block; font-size: 10.5px; color: var(--text-3); font-weight: 700; text-transform: uppercase; letter-spacing: 0.06em; }
+    .coh-start b { font-size: 14.5px; }
+    .coh-list { padding: 10px 18px 16px; }
+    .coh-row { display: flex; gap: 10px; padding: 7px 0; font-size: 13px; border-bottom: 1px dashed var(--border); }
+    .coh-row:last-child { border-bottom: 0; }
+    .coh-row i { width: 18px; text-align: center; color: var(--text-3); margin-top: 3px; }
+    .coh-row .n { color: var(--text-2); flex: 0 0 44%; }
+    .coh-row .v { font-weight: 600; text-align: right; flex: 1; }
+    .st { font-size: 11px; font-weight: 700; padding: 3px 9px; border-radius: 20px; white-space: nowrap; margin-left: auto; }
+    .st.abierta { background: var(--success-soft); color: var(--success); }
+    .st.proxima { background: var(--blue-soft); color: var(--blue); }
+    .st.cerrada { background: var(--surface-3); color: var(--text-3); }
 
-    .param-tab.active {
-        background: rgba(59, 130, 246, 0.1);
-        color: var(--accent-blue);
-        border-color: rgba(59, 130, 246, 0.3);
-    }
+    /* Matriz */
+    .mx-tools { display: flex; gap: 10px; flex-wrap: wrap; align-items: center; padding: 14px 16px; border-bottom: 1px solid var(--border); }
+    .mx th, .mx td { text-align: center; }
+    .mx th:first-child, .mx td:first-child { text-align: left; position: sticky; left: 0; background: var(--surface); z-index: 1; }
+    .mx thead th:first-child { background: var(--surface-2); z-index: 3; }
+    .mx td:first-child { font-weight: 600; min-width: 230px; }
+    .mx .grp { font-size: 11px; letter-spacing: 0.06em; text-transform: uppercase; }
+    .mx .grp-sena { color: var(--pink); } .mx .grp-tr { color: var(--blue); }
+    .dot { display: inline-grid; place-items: center; min-width: 30px; height: 26px; padding: 0 7px; border-radius: 8px; font-size: 11.5px; font-weight: 700; }
+    .dot.on { background: var(--brand-soft); color: var(--brand-ink); }
+    .dot.sena { background: var(--pink-soft); color: var(--pink); }
+    .dot.tr { background: var(--blue-soft); color: var(--blue); }
+    .dot.off { color: var(--border-strong); }
+    .dot.txt { font-size: 10.5px; font-weight: 650; max-width: 170px; white-space: normal; line-height: 1.2; padding: 4px 7px; height: auto; }
+    .mx tr.hide-row { display: none; }
+    .first-start { font-size: 11.5px; color: var(--text-3); font-weight: 500; display: block; }
 
-    /* Timeline Cards */
-    .param-grid {
-        display: grid;
-        grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
-        gap: 20px;
-    }
-
-    .param-section {
-        display: none;
-    }
-
-    .param-section.active {
-        display: grid;
-        animation: slideUp 0.4s ease;
-    }
-
-    .tilt-card {
-        background: var(--surface);
-        border: 1px solid var(--border);
-        border-radius: 20px;
-        padding: 24px;
-        transition: box-shadow 0.3s ease;
-        transform-style: preserve-3d;
-        box-shadow: var(--shadow-xs);
-    }
-
-    .tilt-card:hover {
-        box-shadow: var(--shadow-md);
-        border-color: var(--border-strong);
-    }
-
-    .card-header {
-        display: flex;
-        justify-content: space-between;
-        align-items: center;
-        margin-bottom: 20px;
-        border-bottom: 1px dashed var(--border-strong);
-        padding-bottom: 12px;
-        transform: translateZ(30px);
-    }
-
-    .card-badge {
-        background: linear-gradient(135deg, var(--accent-blue), var(--accent-purple));
-        padding: 6px 12px;
-        border-radius: 8px;
-        font-size: 12px;
-        font-weight: 700;
-        color: white;
-        letter-spacing: 0.5px;
-    }
-
-    .card-title {
-        font-size: 18px;
-        font-weight: 700;
-        color: var(--text-primary);
-    }
-
-    .timeline-item {
-        display: flex;
-        gap: 16px;
-        margin-bottom: 16px;
-        transform: translateZ(20px);
-    }
-
-    .timeline-item:last-child {
-        margin-bottom: 0;
-    }
-
-    .timeline-icon {
-        width: 32px;
-        height: 32px;
-        border-radius: 10px;
-        background: var(--brand-soft);
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        color: var(--accent);
-        flex-shrink: 0;
-    }
-
-    .tl-info {
-        flex: 1;
-    }
-
-    .tl-label {
-        font-size: 11px;
-        color: var(--text-muted);
-        text-transform: uppercase;
-        letter-spacing: 0.5px;
-        margin-bottom: 4px;
-        font-weight: 600;
-    }
-
-    .tl-date {
-        font-size: 14px;
-        color: var(--text-primary);
-        font-weight: 500;
-    }
-
-    /* Stagger init */
-    .tilt-card:nth-child(1) {
-        animation-delay: 0.1s;
-    }
-
-    .tilt-card:nth-child(2) {
-        animation-delay: 0.2s;
-    }
-
-    .tilt-card:nth-child(3) {
-        animation-delay: 0.3s;
-    }
-
-    .careers-list {
-        margin-top: 16px;
-        padding-top: 16px;
-        border-top: 1px dashed var(--border-strong);
-        transform: translateZ(10px);
-    }
-
-    .cl-title {
-        font-size: 13px;
-        font-weight: 600;
-        color: var(--accent-blue);
-        margin-bottom: 8px;
-        display: flex;
-        align-items: center;
-        gap: 6px;
-    }
-
-    .careers-list ul {
-        list-style: none;
-        padding: 0;
-        margin: 0;
-        display: grid;
-        grid-template-columns: repeat(auto-fit, minmax(130px, 1fr));
-        gap: 6px;
-    }
-
-    .careers-list li {
-        font-size: 12.5px;
-        color: var(--text-2);
-        display: flex;
-        align-items: flex-start;
-        gap: 6px;
-        line-height: 1.3;
-    }
-
-    .careers-list li::before {
-        content: "•";
-        color: var(--accent);
-    }
+    .zona-chip { display: inline-flex; align-items: center; gap: 6px; padding: 6px 12px; border-radius: 20px; border: 1px solid var(--border); background: var(--surface); font-size: 12.5px; cursor: pointer; }
+    .zona-chip.active { background: var(--brand); border-color: var(--brand); color: #0d1d0f; font-weight: 600; }
 </style>
-
-<div class="param-page">
-    <div class="page-head">
+{% endblock %}
+{% block content %}
+{% if not secciones %}
+<div class="card"><div class="empty"><div class="empty-icon"><i class="fa-regular fa-calendar-xmark"></i></div><h4>No hay parametrización cargada</h4><p>Sube el Excel de parametrización desde Administración.</p></div></div>
+{% else %}
+{% set prox = hitos[0] if hitos else None %}
+<section class="cal-hero fade-up">
+    <div class="cal-hero-grid">
         <div>
-            <h2><span class="head-icon blue"><i class="fa-solid fa-calendar-days"></i></span> Parametrización {{ cfg.anio }}</h2>
-            <p>Fechas clave de ingreso. Las fechas de inicio se administran desde <b>Administración → Configuración</b> y se reflejan en todos los mensajes.</p>
+            <p class="eyebrow" style="color:#8fb8ff"><i class="fa-solid fa-calendar-days"></i> Parametrización {{ cfg.anio }}</p>
+            <h2>Calendario académico {{ cfg.anio }}</h2>
+            <p>Fechas de inscripción, inducción y clases por cohorte, y qué programas abren en cada una. Fuente: <b>{{ d.archivo }}</b>.</p>
+            <div class="hero-stats">
+                <span class="hero-stat"><b>{{ abiertas }}</b> cohortes con inscripción abierta</span>
+                {% if d.pregrado %}<span class="hero-stat"><b>{{ d.pregrado.programas|length }}</b> programas de pregrado</span>{% endif %}
+                {% if d.posgrado %}<span class="hero-stat"><b>{{ (d.posgrado.especializaciones.programas|length if d.posgrado.especializaciones else 0) + (d.posgrado.maestrias.programas|length if d.posgrado.maestrias else 0) }}</b> posgrados</span>{% endif %}
+            </div>
         </div>
+        {% if prox %}
+        <div class="next-box">
+            <div class="next-days">{{ prox.dias }}<small>{{ 'día' if prox.dias == 1 else 'días' }}</small></div>
+            <div>
+                <p class="eyebrow" style="color:#a6d65f">Próxima fecha clave</p>
+                <div style="font-family:var(--font-display);font-size:18px;font-weight:700;color:#fff;margin-top:2px">{{ prox.titulo }} · {{ prox.grupo }} {{ prox.cohorte }}</div>
+                <div style="color:rgba(234,244,236,0.7);font-size:13.5px">{{ prox.larga }}</div>
+            </div>
+        </div>
+        {% endif %}
     </div>
+</section>
 
-    <div class="grid grid-2 mb-2">
-        <div class="card card-pad" style="background:linear-gradient(135deg,var(--brand-soft),transparent 70%),var(--surface)">
-            <div class="row"><span class="head-icon"><i class="fa-solid fa-user-graduate"></i></span><div><p class="eyebrow">Ingreso {{ cfg.anio }}</p><h3 style="font-size:18px">Pregrado y SENA</h3></div></div>
-            <div class="kpi-value" style="margin-top:14px;font-size:32px">{{ cfg.inicio_clases }}</div>
-            <p class="small muted mt-1"><i class="fa-solid fa-circle-check" style="color:var(--brand)"></i> Fecha confirmada de inicio de clases</p>
-        </div>
-        <div class="card card-pad" style="background:linear-gradient(135deg,var(--orange-soft),transparent 70%),var(--surface)">
-            <div class="row"><span class="head-icon orange"><i class="fa-solid fa-award"></i></span><div><p class="eyebrow" style="color:var(--orange)">Ingreso {{ cfg.anio }}</p><h3 style="font-size:18px">Posgrados</h3></div></div>
-            <div class="kpi-value" style="margin-top:14px;font-size:32px">{{ cfg.inicio_posgrado }}</div>
-            <p class="small muted mt-1"><i class="fa-solid fa-hourglass-half" style="color:var(--orange)"></i> Fecha exacta por confirmar</p>
-        </div>
+{% if hitos %}
+<div class="hitos stagger">
+    {% for h in hitos %}
+    <div class="card hito">
+        <div class="hd"><b>{{ h.corta.split(' ')[0] }}</b><span>{{ h.corta.split(' ')[1] }}</span></div>
+        <div><div class="ht"><i class="fa-solid {{ h.icono }}" style="color:var(--text-3);margin-right:4px"></i>{{ h.titulo }}</div><div class="hs">{{ h.grupo }} · {{ h.cohorte }} · en {{ h.dias }} días</div></div>
     </div>
+    {% endfor %}
+</div>
+{% endif %}
 
-    <p class="eyebrow" style="color:var(--text-3);margin:22px 0 10px"><i class="fa-solid fa-clock-rotate-left"></i> Calendario de cohortes 2026 (referencia)</p>
-
-    <div class="param-tabs">
-        <button class="param-tab active" onclick="switchTab('pregrado', this)">PREGRADO 2026</button>
-        <button class="param-tab" onclick="switchTab('posgrado', this)">POSGRADOS 2026</button>
-    </div>
-
-    <!-- PREGRADO -->
-    <div id="pregrado" class="param-section param-grid active">
-        <!-- 1A -->
-        <div class="tilt-card" data-tilt data-tilt-max="15" data-tilt-speed="400" data-tilt-glare
-            data-tilt-max-glare="0.2">
-            <div class="card-header">
-                <div class="card-title">Cohorte 1A</div>
-                <div class="card-badge">2026-10</div>
-            </div>
-            <div class="timeline-item">
-                <div class="timeline-icon"><i class="fa-solid fa-user-plus"></i></div>
-                <div class="tl-info">
-                    <div class="tl-label">Inscripción Nuevos</div>
-                    <div class="tl-date">28-oct a 31-ene</div>
-                </div>
-            </div>
-            <div class="timeline-item">
-                <div class="timeline-icon"><i class="fa-solid fa-right-left"></i></div>
-                <div class="tl-info">
-                    <div class="tl-label">Transferencias</div>
-                    <div class="tl-date">Hasta el 22-ene</div>
-                </div>
-            </div>
-            <div class="timeline-item">
-                <div class="timeline-icon"><i class="fa-solid fa-chalkboard-user"></i></div>
-                <div class="tl-info">
-                    <div class="tl-label">Clases (Inicio - Fin)</div>
-                    <div class="tl-date">3 feb al 2 jun</div>
-                </div>
-            </div>
-
-            <div class="careers-list">
-                <div class="cl-title"><i class="fa-solid fa-bookmark"></i> Carreras Disponibles</div>
-                <ul>
-                    <li>Marketing de Negocios</li>
-                    <li>Administración de Empresas</li>
-                    <li>Finanzas y Negocios Intern.</li>
-                    <li>Ing. de Sistemas Virtual</li>
-                    <li>Ingeniería Industrial</li>
-                    <li>Lic. en Ciencias Sociales</li>
-                    <li>Lic. en Educación Infantil</li>
-                    <li>Psicología Virtual</li>
-                    <li>Derecho</li>
-                    <li>Comunicación Social</li>
-                </ul>
-            </div>
-        </div>
-
-        <!-- 1B -->
-        <div class="tilt-card" data-tilt data-tilt-max="15" data-tilt-speed="400" data-tilt-glare
-            data-tilt-max-glare="0.2">
-            <div class="card-header">
-                <div class="card-title">Cohorte 1B</div>
-                <div class="card-badge">2026-10</div>
-            </div>
-            <div class="timeline-item">
-                <div class="timeline-icon"><i class="fa-solid fa-user-plus"></i></div>
-                <div class="tl-info">
-                    <div class="tl-label">Inscripción Nuevos</div>
-                    <div class="tl-date">28-oct a 21-feb</div>
-                </div>
-            </div>
-            <div class="timeline-item">
-                <div class="timeline-icon"><i class="fa-solid fa-right-left"></i></div>
-                <div class="tl-info">
-                    <div class="tl-label">Transferencias</div>
-                    <div class="tl-date">Hasta el 14-feb</div>
-                </div>
-            </div>
-            <div class="timeline-item">
-                <div class="timeline-icon"><i class="fa-solid fa-chalkboard-user"></i></div>
-                <div class="tl-info">
-                    <div class="tl-label">Clases (Inicio - Fin)</div>
-                    <div class="tl-date">24 feb al 23 jun</div>
-                </div>
-            </div>
-
-            <div class="careers-list">
-                <div class="cl-title"><i class="fa-solid fa-bookmark"></i> Carreras Disponibles</div>
-                <ul>
-                    <li>Administración Pública</li>
-                    <li>Economía</li>
-                </ul>
-            </div>
-        </div>
-
-        <!-- 1C -->
-        <div class="tilt-card" data-tilt data-tilt-max="15" data-tilt-speed="400" data-tilt-glare
-            data-tilt-max-glare="0.2">
-            <div class="card-header">
-                <div class="card-title">Cohorte 1C</div>
-                <div class="card-badge" style="background: linear-gradient(135deg, var(--accent), #059669)">2026-10
-                </div>
-            </div>
-            <div class="timeline-item">
-                <div class="timeline-icon"><i class="fa-solid fa-user-plus"></i></div>
-                <div class="tl-info">
-                    <div class="tl-label">Inscripción Nuevos</div>
-                    <div class="tl-date">17-mar a 14-jul</div>
-                </div>
-            </div>
-            <div class="timeline-item">
-                <div class="timeline-icon"><i class="fa-solid fa-right-left"></i></div>
-                <div class="tl-info">
-                    <div class="tl-label">Transferencias</div>
-                    <div class="tl-date">3-feb hasta 7-mar</div>
-                </div>
-            </div>
-            <div class="timeline-item">
-                <div class="timeline-icon"><i class="fa-solid fa-chalkboard-user"></i></div>
-                <div class="tl-info">
-                    <div class="tl-label">Clases (Inicio - Fin)</div>
-                    <div class="tl-date">17 mar al 14 jul</div>
-                </div>
-            </div>
-
-            <div class="careers-list">
-                <div class="cl-title" style="color:var(--accent)"><i class="fa-solid fa-bookmark"></i> Carreras
-                    Disponibles</div>
-                <ul>
-                    <li>Marketing de Negocios</li>
-                    <li>Administración de Empresas</li>
-                    <li>Finanzas y Negocios Intern.</li>
-                    <li>Ing. de Sistemas Virtual</li>
-                    <li>Ingeniería Industrial</li>
-                    <li>Lic. en Ciencias Sociales</li>
-                    <li>Lic. en Educación Infantil</li>
-                    <li>Derecho</li>
-                </ul>
-            </div>
-        </div>
-    </div>
-
-    <!-- POSGRADOS -->
-    <div id="posgrado" class="param-section param-grid">
-        <!-- 3B -->
-        <div class="tilt-card" data-tilt data-tilt-max="15" data-tilt-speed="400" data-tilt-glare
-            data-tilt-max-glare="0.2">
-            <div class="card-header">
-                <div class="card-title">Cohorte 3B</div>
-                <div class="card-badge" style="background: linear-gradient(135deg, var(--accent-orange), #ea580c)">
-                    2026-30</div>
-            </div>
-            <div class="timeline-item">
-                <div class="timeline-icon"><i class="fa-solid fa-user-plus"></i></div>
-                <div class="tl-info">
-                    <div class="tl-label">Inscripción Nuevos</div>
-                    <div class="tl-date">28-oct hasta 14-feb</div>
-                </div>
-            </div>
-            <div class="timeline-item">
-                <div class="timeline-icon"><i class="fa-solid fa-right-left"></i></div>
-                <div class="tl-info">
-                    <div class="tl-label">Transferencias</div>
-                    <div class="tl-date">28-oct hasta 14-feb</div>
-                </div>
-            </div>
-            <div class="timeline-item">
-                <div class="timeline-icon"><i class="fa-solid fa-chalkboard-user"></i></div>
-                <div class="tl-info">
-                    <div class="tl-label">Clases (Inicio - Fin)</div>
-                    <div class="tl-date">17 feb hasta 16 jun</div>
-                </div>
-            </div>
-
-            <div class="careers-list">
-                <div class="cl-title" style="color:var(--accent-orange)"><i class="fa-solid fa-bookmark"></i> Posgrados
-                    Disponibles</div>
-                <ul>
-                    <li>Esp. Auditoría Salud</li>
-                    <li>Esp. Informática Educativa</li>
-                    <li>Esp. Ger. Seg. y Salud Trab.</li>
-                    <li>Esp. Pedagogía y Docencia</li>
-                    <li>Esp. Gestión Ambiental</li>
-                    <li>Esp. Gerencia Financiera</li>
-                    <li>Esp. Alta Gerencia</li>
-                    <li>Esp. Revisoría Fiscal</li>
-                </ul>
-            </div>
-        </div>
-
-        <!-- 3D -->
-        <div class="tilt-card" data-tilt data-tilt-max="15" data-tilt-speed="400" data-tilt-glare
-            data-tilt-max-glare="0.2">
-            <div class="card-header">
-                <div class="card-title">Cohorte 3D</div>
-                <div class="card-badge" style="background: linear-gradient(135deg, var(--accent-orange), #ea580c)">
-                    2026-30</div>
-            </div>
-            <div class="timeline-item">
-                <div class="timeline-icon"><i class="fa-solid fa-user-plus"></i></div>
-                <div class="tl-info">
-                    <div class="tl-label">Inscripción Nuevos</div>
-                    <div class="tl-date">17-feb hasta 21-mar</div>
-                </div>
-            </div>
-            <div class="timeline-item">
-                <div class="timeline-icon"><i class="fa-solid fa-right-left"></i></div>
-                <div class="tl-info">
-                    <div class="tl-label">Transferencias</div>
-                    <div class="tl-date">17-feb hasta 14-mar</div>
-                </div>
-            </div>
-            <div class="timeline-item">
-                <div class="timeline-icon"><i class="fa-solid fa-chalkboard-user"></i></div>
-                <div class="tl-info">
-                    <div class="tl-label">Clases (Inicio - Fin)</div>
-                    <div class="tl-date">24 mar hasta 21 jul</div>
-                </div>
-            </div>
-
-            <div class="careers-list">
-                <div class="cl-title" style="color:var(--accent-orange)"><i class="fa-solid fa-bookmark"></i> Posgrados
-                    Disponibles</div>
-                <ul>
-                    <li>Esp. Derechos de Autor</li>
-                    <li>Esp. Dir. y Prod. Audiovisual</li>
-                    <li>Esp. Infancia y Adolescencia</li>
-                </ul>
-            </div>
-        </div>
-
-        <!-- 3F -->
-        <div class="tilt-card" data-tilt data-tilt-max="15" data-tilt-speed="400" data-tilt-glare
-            data-tilt-max-glare="0.2">
-            <div class="card-header">
-                <div class="card-title">Cohorte 3F</div>
-                <div class="card-badge" style="background: linear-gradient(135deg, var(--accent-orange), #ea580c)">
-                    2026-30</div>
-            </div>
-            <div class="timeline-item">
-                <div class="timeline-icon"><i class="fa-solid fa-user-plus"></i></div>
-                <div class="tl-info">
-                    <div class="tl-label">Inscripción Nuevos</div>
-                    <div class="tl-date">10-mar hasta 25-abr</div>
-                </div>
-            </div>
-            <div class="timeline-item">
-                <div class="timeline-icon"><i class="fa-solid fa-right-left"></i></div>
-                <div class="tl-info">
-                    <div class="tl-label">Transferencias</div>
-                    <div class="tl-date">10-mar hasta 21-abr</div>
-                </div>
-            </div>
-            <div class="timeline-item">
-                <div class="timeline-icon"><i class="fa-solid fa-chalkboard-user"></i></div>
-                <div class="tl-info">
-                    <div class="tl-label">Clases (Inicio - Fin)</div>
-                    <div class="tl-date">28 abr hasta 18 ago</div>
-                </div>
-            </div>
-
-            <div class="careers-list">
-                <div class="cl-title" style="color:var(--accent-orange)"><i class="fa-solid fa-bookmark"></i> Posgrados
-                    Disponibles</div>
-                <ul>
-                    <li>Esp. Auditoría Salud</li>
-                    <li>Esp. Informática Educativa</li>
-                    <li>Esp. Ger. Seg. y Salud Trab.</li>
-                    <li>Esp. Pedagogía y Docencia</li>
-                    <li>Esp. Gestión Ambiental</li>
-                </ul>
-            </div>
-        </div>
-    </div>
+<div class="tabs" id="tabs">
+    {% for s in secciones %}<button class="tab {{ 'active' if loop.first }}" data-tab="{{ s.id }}"><i class="fa-solid {{ s.icono }}"></i> {{ s.titulo }}</button>{% endfor %}
+    {% if d.practicas %}<button class="tab" data-tab="practicas"><i class="fa-solid fa-briefcase"></i> Prácticas y grado</button>{% endif %}
+    {% if d.zonificacion %}<button class="tab" data-tab="zonas"><i class="fa-solid fa-map-location-dot"></i> Zonificación</button>{% endif %}
 </div>
 
-<!-- Vanilla Tilt JS -->
-<script src="https://cdnjs.cloudflare.com/ajax/libs/vanilla-tilt/1.8.0/vanilla-tilt.min.js"></script>
-<script>
-    function switchTab(id, btn) {
-        document.querySelectorAll('.param-tab').forEach(t => t.classList.remove('active'));
-        document.querySelectorAll('.param-section').forEach(s => s.classList.remove('active'));
-        btn.classList.add('active');
-        document.getElementById(id).classList.add('active');
-    }
-</script>
+{% for s in secciones %}
+<section class="sec sec-{{ s.id }} {{ 'active' if loop.first }}" id="sec-{{ s.id }}">
+    {% if s.gantt %}
+    <div class="card gantt">
+        <div class="row" style="margin-bottom:12px"><h3 style="font-size:15px"><i class="fa-solid fa-timeline" style="color:var(--text-3)"></i> Línea de tiempo · {{ s.sub }}</h3></div>
+        <div style="overflow-x:auto"><div style="min-width:640px">
+            <div class="g-head"><span></span><div class="g-scale">{% for m in s.gantt.meses %}<span class="g-month" style="left:{{ m.left }}%;width:{{ m.width }}%">{{ m.label }}</span>{% endfor %}</div></div>
+            {% for f in s.gantt.filas %}
+            <div class="g-row">
+                <div class="g-label">{{ f.corto }}<span>{{ f.codigo.split('-')[0] }}</span></div>
+                <div class="g-track">
+                    {% for g in f.segs %}<span class="g-seg {{ g.cls }}" style="left:{{ g.left }}%;width:{{ g.width }}%" title="{{ g.titulo }}: {{ g.texto }}"></span>{% endfor %}
+                    {% if s.gantt.hoy is not none %}<span class="g-today {{ 'first' if loop.first }}" style="left:{{ s.gantt.hoy }}%"></span>{% endif %}
+                </div>
+            </div>
+            {% endfor %}
+        </div></div>
+        <div class="g-legend"><span><i style="background:var(--blue-soft);border:1px solid rgba(47,125,246,.45)"></i>Inscripciones</span><span><i style="background:var(--orange)"></i>Inducción</span><span><i style="background:var(--brand)"></i>Clases</span><span><i style="background:var(--pink);width:3px"></i>Hoy</span></div>
+    </div>
+    {% endif %}
 
+    {% for bl in s.bloques %}
+    {% if s.bloques|length > 1 %}<div class="block-title">{{ bl.titulo }} <span class="badge">{{ bl.bloque.programas|length }} programas</span></div>{% endif %}
+    <div class="coh-grid">
+        {% for c in bl.cohortes %}
+        <article class="card coh">
+            <div class="coh-top">
+                <div class="coh-code">{{ c.corto }}</div>
+                <div style="flex:1;min-width:0"><h4>Cohorte {{ c.corto }}</h4><div class="sub">{{ c.codigo }}{% if not bl.texto %} · {{ c.n_programas }} programas{% endif %}</div></div>
+                <span class="st {{ c.estado }}">{% if c.estado == 'abierta' %}Inscripción abierta{% elif c.estado == 'proxima' %}Próxima{% else %}Cerrada{% endif %}</span>
+            </div>
+            <div class="coh-start"><i class="fa-solid fa-flag-checkered"></i><div><small>Inicio de clases</small><b>{{ c.inicio }}</b></div>
+                {% if c.estado == 'abierta' and c.dias is not none %}<span class="badge {{ 'red' if c.dias <= 15 else 'yellow' if c.dias <= 45 else 'green' }}" style="margin-left:auto">Cierra en {{ c.dias }} d</span>{% endif %}</div>
+            <div class="coh-list">
+                {% for f in c.filas %}<div class="coh-row"><i class="fa-solid {{ f.icono }}"></i><span class="n">{{ f.nombre }}</span><span class="v">{{ f.rango }}</span></div>{% endfor %}
+            </div>
+        </article>
+        {% endfor %}
+    </div>
+
+    {% set b = bl.bloque %}
+    {% set cods = b.cohortes|map(attribute='corto')|list %}
+    {% set extra = b.grupos_extra %}
+    <div class="card mb-2" style="overflow:hidden">
+        <div class="mx-tools">
+            <strong style="font-size:14px"><i class="fa-solid fa-table-cells" style="color:var(--text-3)"></i> ¿En qué cohorte abre cada programa?</strong>
+            <span class="spacer"></span>
+            <div class="input-icon" style="width:240px"><i class="fa-solid fa-magnifying-glass"></i><input type="text" placeholder="Filtrar programa…" data-mx-filter></div>
+            {% if extra %}<div class="seg" data-mx-mode><button class="active" data-m="all">Todos</button><button data-m="sena">Con SENA</button><button data-m="tr">Con transferencia</button></div>{% endif %}
+        </div>
+        <div style="overflow:auto">
+        <table class="table mx">
+            <thead>
+                {% if extra and not bl.texto %}
+                <tr><th rowspan="2">Programa</th><th colspan="{{ cods|length }}" class="grp">Primera vez</th>
+                    {% for g in extra %}<th colspan="{{ cods|length }}" class="grp {{ 'grp-sena' if 'SENA' in g|upper else 'grp-tr' }}">{{ 'SENA' if 'SENA' in g|upper else 'Transferencia / 2º pregrado' }}</th>{% endfor %}</tr>
+                <tr>{% for _ in range(1 + extra|length) %}{% for c in cods %}<th>{{ c }}</th>{% endfor %}{% endfor %}</tr>
+                {% else %}
+                <tr><th>Programa</th>{% for c in cods %}<th>{{ c }}</th>{% endfor %}{% if not bl.texto %}<th>Admite</th>{% endif %}</tr>
+                {% endif %}
+            </thead>
+            <tbody>
+            {% for p in b.programas %}
+            {% set ns = namespace(sena=0, tr=0) %}
+            {% for g in p.extra %}{% if 'SENA' in g|upper %}{% set ns.sena = 1 %}{% else %}{% set ns.tr = 1 %}{% endif %}{% endfor %}
+            <tr data-name="{{ p.display }}" data-sena="{{ ns.sena }}" data-tr="{{ ns.tr }}">
+                <td>{{ p.display }}
+                    {% set ini = b.cohortes|selectattr('corto', 'in', p.cohortes.keys()|list)|map(attribute='fechas')|map(attribute='clases')|map(attribute='desde')|list|sort %}
+                    {% if ini and not bl.texto %}<span class="first-start">Desde {{ ini[0]|fecha_larga }}</span>{% endif %}
+                </td>
+                {% for c in cods %}
+                    {% set v = p.cohortes.get(c) %}
+                    <td>{% if v %}{% if bl.texto %}<span class="dot tr txt">{{ v|title }}</span>{% else %}<span class="dot on" title="{{ v }}">{{ c }}</span>{% endif %}{% else %}<span class="dot off">—</span>{% endif %}</td>
+                {% endfor %}
+                {% if extra and not bl.texto %}
+                    {% for g in extra %}{% for c in cods %}
+                        {% set v = p.extra.get(g, {}).get(c) %}
+                        <td>{% if v %}<span class="dot {{ 'sena' if 'SENA' in g|upper else 'tr' }} {{ 'txt' if v|length > 3 }}" title="{{ v }}">{{ c if v|length <= 3 else v|title }}</span>{% else %}<span class="dot off">—</span>{% endif %}</td>
+                    {% endfor %}{% endfor %}
+                {% elif not bl.texto %}
+                    <td style="white-space:nowrap">{% for a in p.admite %}<span class="badge {{ 'green' if 'Primera' in a else 'blue' }}" style="margin:2px">{{ a }}</span>{% else %}<span class="muted small">—</span>{% endfor %}</td>
+                {% endif %}
+            </tr>
+            {% endfor %}
+            </tbody>
+        </table>
+        </div>
+    </div>
+    {% endfor %}
+</section>
+{% endfor %}
+
+{% if d.practicas %}
+<section class="sec" id="sec-practicas">
+    <div class="card" style="overflow:hidden">
+        <div class="mx-tools"><strong style="font-size:14px"><i class="fa-solid fa-briefcase" style="color:var(--text-3)"></i> Prácticas y opción de grado por programa</strong><span class="spacer"></span><div class="input-icon" style="width:240px"><i class="fa-solid fa-magnifying-glass"></i><input type="text" placeholder="Filtrar programa…" data-mx-filter></div></div>
+        <div style="overflow:auto"><table class="table mx">
+            <thead><tr><th>Programa</th><th>Prácticas</th><th>Opción de grado</th></tr></thead>
+            <tbody>{% for p in d.practicas %}
+                {% set tiene = not p.practicas|upper|trim == 'NO' %}
+                <tr data-name="{{ p.programa }}"><td>{{ p.programa }}</td>
+                    <td>{% if tiene %}<span class="badge green"><i class="fa-solid fa-check"></i> {{ p.practicas|replace('SI ', 'Sí ')|replace('( ', '(')|lower|capitalize }}</span>{% else %}<span class="badge">No requiere</span>{% endif %}</td>
+                    <td>{% if p.opcion_grado|upper|trim == 'SI' %}<span class="badge blue"><i class="fa-solid fa-check"></i> Sí</span>{% else %}<span class="badge">No</span>{% endif %}</td></tr>
+            {% endfor %}</tbody>
+        </table></div>
+    </div>
+</section>
+{% endif %}
+
+{% if d.zonificacion %}
+<section class="sec" id="sec-zonas">
+    {% set zonas = d.zonificacion|groupby('zona') %}
+    <div class="card card-pad mb-2">
+        <div class="row">
+            <div class="input-icon" style="flex:1;min-width:240px"><i class="fa-solid fa-location-dot"></i><input type="text" id="zq" placeholder="Escribe una ciudad o municipio (ej. Soacha, Pereira)…"></div>
+        </div>
+        <div class="row mt-2" id="zChips">
+            <button class="zona-chip active" data-z="">Todas <span class="badge">{{ d.zonificacion|length }}</span></button>
+            {% for z, items in zonas %}<button class="zona-chip" data-z="{{ z }}">{{ z|title }} <span class="badge">{{ items|length }}</span></button>{% endfor %}
+        </div>
+    </div>
+    <div class="card" style="overflow:hidden">
+        <div style="overflow:auto;max-height:60vh"><table class="table">
+            <thead><tr><th>Ciudad / municipio</th><th>Departamento</th><th>Zona</th></tr></thead>
+            <tbody id="zBody"></tbody>
+        </table></div>
+        <div class="pager"><span class="muted small" id="zCount"></span></div>
+    </div>
+</section>
+{% endif %}
+{% endif %}
+{% endblock %}
+{% block scripts %}
+<script>
+(() => {
+    const { normalize, escapeHtml, debounce, store } = App;
+    const tabs = document.getElementById('tabs');
+    if (!tabs) return;
+    function show(id) {
+        tabs.querySelectorAll('.tab').forEach((t) => t.classList.toggle('active', t.dataset.tab === id));
+        document.querySelectorAll('.sec').forEach((s) => s.classList.toggle('active', s.id === 'sec-' + id));
+        store.set('param-tab', id);
+    }
+    tabs.addEventListener('click', (e) => { const t = e.target.closest('[data-tab]'); if (t) show(t.dataset.tab); });
+    const saved = store.get('param-tab', ''); if (saved && document.getElementById('sec-' + saved)) show(saved);
+
+    // Filtros de matrices
+    document.querySelectorAll('[data-mx-filter]').forEach((inp) => {
+        const card = inp.closest('.card');
+        const apply = () => {
+            const q = normalize(inp.value.trim());
+            const mode = card.querySelector('[data-mx-mode] .active')?.dataset.m || 'all';
+            card.querySelectorAll('tbody tr').forEach((tr) => {
+                let ok = !q || normalize(tr.dataset.name).includes(q);
+                if (mode === 'sena') ok = ok && tr.dataset.sena === '1';
+                if (mode === 'tr') ok = ok && tr.dataset.tr === '1';
+                tr.classList.toggle('hide-row', !ok);
+            });
+        };
+        inp.addEventListener('input', debounce(apply, 120));
+        card.querySelector('[data-mx-mode]')?.addEventListener('click', (e) => {
+            const b = e.target.closest('[data-m]'); if (!b) return;
+            b.parentElement.querySelectorAll('button').forEach((x) => x.classList.toggle('active', x === b)); apply();
+        });
+    });
+
+    // Zonificación
+    const Z = {{ (d.zonificacion or []) | tojson }};
+    const zq = document.getElementById('zq');
+    if (zq) {
+        let zona = '';
+        const render = () => {
+            const q = normalize(zq.value.trim());
+            const list = Z.filter((z) => (!zona || z.zona === zona) && (!q || normalize(z.ciudad + ' ' + z.departamento).includes(q)));
+            document.getElementById('zBody').innerHTML = list.slice(0, 200).map((z) => `<tr><td><b>${escapeHtml(z.ciudad)}</b></td><td>${escapeHtml(z.departamento)}</td><td><span class="badge green">${escapeHtml(z.zona)}</span></td></tr>`).join('') || '<tr><td colspan="3"><div class="empty" style="padding:20px">Sin resultados</div></td></tr>';
+            document.getElementById('zCount').textContent = `${list.length} municipios${list.length > 200 ? ' (mostrando 200)' : ''}`;
+        };
+        zq.addEventListener('input', debounce(render, 120));
+        document.getElementById('zChips').addEventListener('click', (e) => { const b = e.target.closest('[data-z]'); if (!b) return; zona = b.dataset.z; document.querySelectorAll('#zChips .zona-chip').forEach((x) => x.classList.toggle('active', x === b)); render(); });
+        render();
+    }
+})();
+</script>
 {% endblock %}

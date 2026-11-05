@@ -5,6 +5,7 @@ Herramienta interna para asesores comerciales: consulta de homologaciones SENA
 inversión, cruce GEN NACIONAL vs FUNNEL, piezas gráficas y panel administrativo.
 """
 import os
+import re
 import shutil
 from datetime import datetime, timedelta
 from functools import wraps
@@ -147,6 +148,18 @@ def human_size(n):
 app.jinja_env.filters["money"] = money
 app.jinja_env.filters["pretty"] = pretty_name
 app.jinja_env.filters["human_size"] = human_size
+
+
+def _fecha_larga_filter(v):
+    from core.parametrizacion import fecha_larga
+    from datetime import date as _d
+    try:
+        return fecha_larga(_d.fromisoformat(str(v)))
+    except ValueError:
+        return v
+
+
+app.jinja_env.filters["fecha_larga"] = _fecha_larga_filter
 
 
 # =====================================================
@@ -470,7 +483,7 @@ def mensajes():
     if nivel not in ("pre", "pos", "sena", "fav"):
         nivel = "pre"
     return render_template("mensajes.html", programas=store.render_list(store.mensajes_programas()),
-                           sena=store.render_list(store.mensajes_sena()),
+                           sena=store.render_list(store.mensajes_sena(), "sena"),
                            nivel=nivel, q=request.args.get("q", ""))
 
 
@@ -486,7 +499,8 @@ def sena():
 @app.route("/precios")
 @login_required
 def precios():
-    return render_template("precios.html", programas=store.precios())
+    progs = [{**p, "inicio": store.inicio_de(p["programa"], "pre")} for p in store.precios()]
+    return render_template("precios.html", programas=progs)
 
 
 @app.route("/simulador")
@@ -555,7 +569,7 @@ def dashboard():
         "precios_values": [p["valor"] for p in sorted(precios_data, key=lambda x: x["valor"])],
     }
     return render_template("dashboard.html", stats=stats, chart=chart, actividad=activity.summary(14),
-                           cruce=cruce_data.status())
+                           cruce=cruce_data.status(), hitos=store.param.hitos(limite=5))
 
 
 @app.route("/stats")
@@ -573,10 +587,107 @@ def flujos():
     return render_template("flujos.html")
 
 
+def _gantt(bloques):
+    """Escala de tiempo común (porcentajes) para dibujar las cohortes."""
+    from datetime import date as _d
+    fechas = []
+    for b in bloques:
+        for c in b["cohortes"]:
+            for f in c["fechas"].values():
+                fechas += [_d.fromisoformat(x) for x in (f.get("desde"), f.get("hasta")) if x]
+    if not fechas:
+        return None
+    ini = min(fechas).replace(day=1)
+    fin = max(fechas)
+    fin = (fin.replace(day=28) + timedelta(days=4)).replace(day=1)  # primer día del mes siguiente
+    total = (fin - ini).days or 1
+    pos = lambda d: round((_d.fromisoformat(d) - ini).days / total * 100, 2)
+    meses, m = [], ini
+    nombres = ["", "Ene", "Feb", "Mar", "Abr", "May", "Jun", "Jul", "Ago", "Sep", "Oct", "Nov", "Dic"]
+    while m < fin:
+        sig = (m.replace(day=28) + timedelta(days=4)).replace(day=1)
+        meses.append({"label": nombres[m.month] + (f" {str(m.year)[2:]}" if m.month == 1 or not meses else ""),
+                      "left": pos(m.isoformat()), "width": round((sig - m).days / total * 100, 2)})
+        m = sig
+    hoy = datetime.now().date()
+    filas = []
+    for b in bloques:
+        for c in b["cohortes"]:
+            segs = []
+            ins_key = next((k for k in ("inscripcion", "transf_extension", "transferencias", "segundo_pos") if k in c["fechas"]), "inscripcion")
+            for key, cls in ((ins_key, "insc"), ("induccion", "ind"), ("clases", "cls")):
+                f = c["fechas"].get(key)
+                if f and f.get("desde") and f.get("hasta"):
+                    left = pos(f["desde"])
+                    segs.append({"cls": cls, "left": left, "width": max(round(pos(f["hasta"]) - left, 2), 0.8),
+                                 "titulo": f["nombre"], "texto": f["texto"]})
+            filas.append({"codigo": c["codigo"], "corto": c["corto"], "segs": segs})
+    hoy_pos = pos(hoy.isoformat()) if ini <= hoy <= fin else None
+    return {"meses": meses, "filas": filas, "hoy": hoy_pos}
+
+
+MESES_CORTOS = ["", "ene", "feb", "mar", "abr", "may", "jun", "jul", "ago", "sep", "oct", "nov", "dic"]
+
+
+def _vista_cohortes(bloque):
+    from core.parametrizacion import estado, fecha_larga as fl
+    from datetime import date as _d
+    hoy = datetime.now().date()
+    out = []
+    for c in bloque["cohortes"]:
+        f = c["fechas"]
+        ins = f.get("inscripcion") or next((v for k, v in f.items() if k != "clases" and k != "induccion"), {})
+        est = estado(ins.get("desde"), ins.get("hasta"))
+        dias = (_d.fromisoformat(ins["hasta"]) - hoy).days if ins.get("hasta") else None
+        filas = []
+        for key, icono in (("inscripcion", "fa-user-plus"), ("transferencias", "fa-right-left"), ("transf_extension", "fa-arrows-turn-to-dots"),
+                           ("segundo_pos", "fa-user-graduate"), ("induccion", "fa-chalkboard-user"), ("clases", "fa-graduation-cap")):
+            v = f.get(key)
+            if not v:
+                continue
+            d1 = _d.fromisoformat(v["desde"]) if v.get("desde") else None
+            d2 = _d.fromisoformat(v["hasta"]) if v.get("hasta") else None
+            corta = lambda x, anio=True: f"{x.day} {MESES_CORTOS[x.month]}" + (f" {x.year}" if anio else "")
+            if d1 and d2 and d1 != d2:
+                rango = f"{corta(d1, d1.year != d2.year)} – {corta(d2)}"
+            else:
+                rango = ("Hasta el " if d2 and not d1 else "") + corta(d2 or d1)
+            filas.append({"nombre": v["nombre"], "icono": icono, "rango": rango or v["texto"], "key": key})
+        n_prog = sum(1 for p in bloque["programas"] if c["corto"] in p["cohortes"])
+        out.append({**c, "estado": est, "dias": dias, "filas": filas, "n_programas": n_prog,
+                    "inicio": fl(_d.fromisoformat(f["clases"]["desde"]))})
+    return out
+
+
 @app.route("/parametrizacion")
 @login_required
 def parametrizacion():
-    return render_template("parametrizacion.html")
+    P = store.param
+    d = P.data()
+    if not d:
+        return render_template("parametrizacion.html", d={}, secciones=[], hitos=[], abiertas=0)
+    secciones = []
+    if d.get("pregrado"):
+        b = d["pregrado"]
+        secciones.append({"id": "pregrado", "titulo": "Pregrado", "sub": b["hoja"], "icono": "fa-user-graduate", "color": "green",
+                          "bloques": [{"titulo": "Pregrado – primera vez, SENA y transferencias", "bloque": b, "cohortes": _vista_cohortes(b)}],
+                          "gantt": _gantt([b])})
+    pos = d.get("posgrado") or {}
+    bls = [x for x in (pos.get("especializaciones"), pos.get("maestrias")) if x]
+    if bls:
+        secciones.append({"id": "posgrado", "titulo": "Posgrado", "sub": pos.get("hoja", ""), "icono": "fa-award", "color": "orange",
+                          "bloques": [{"titulo": ("Maestrías" if any(norm(p["nombre"]).startswith("MAESTRIA") for p in x["programas"]) else "Especializaciones"),
+                                       "bloque": x, "cohortes": _vista_cohortes(x)} for x in bls],
+                          "gantt": _gantt(bls)})
+    tr = (d.get("transferencias_posgrado") or {}).get("bloques") or []
+    if tr:
+        secciones.append({"id": "transferencias", "titulo": "Transferencias posgrado", "sub": "Externa · extensión · segundo posgrado",
+                          "icono": "fa-right-left", "color": "blue",
+                          "bloques": [{"titulo": ("Maestrías" if any(norm(p["nombre"]).startswith("MAESTRIA") for p in x["programas"]) else "Especializaciones"),
+                                       "bloque": x, "cohortes": _vista_cohortes(x), "texto": True} for x in tr],
+                          "gantt": _gantt(tr)})
+    abiertas = sum(1 for s_ in secciones[:2] for bl in s_["bloques"] for c in bl["cohortes"] if c["estado"] == "abierta")
+    return render_template("parametrizacion.html", d=d, secciones=secciones, hitos=P.hitos(limite=8), abiertas=abiertas)
 
 
 @app.route("/capacitacion")
@@ -893,7 +1004,10 @@ def admin_dashboard():
         "combinaciones": int(len(store.actas())),
         "presencial": len(store.presencial()),
     }
+    from core.parametrizacion import archivo_actual
+    pa = archivo_actual()
     return render_template("admin_dashboard.html", stats=stats, actas_info=file_info(ACTAS_FILE),
+                           param_info={"nombre": os.path.basename(pa) if pa else "Sin cargar", **(file_info(pa) if pa else {"size": 0, "mtime": ""})},
                            presencial_info=file_info(PRESENCIAL_FILE), actividad=activity.summary(7))
 
 
@@ -1006,11 +1120,36 @@ def admin_reemplazar():
     return redirect(url_for("admin_dashboard", reemplazos=total))
 
 
+def _subir_parametrizacion(file):
+    from core.parametrizacion import archivo_actual, parse_excel
+    os.makedirs(BACKUP_DIR, exist_ok=True)
+    tmp = os.path.join(BACKUP_DIR, "_subida_parametrizacion.xlsx")
+    file.save(tmp)
+    try:
+        d = parse_excel(tmp)
+    except Exception as e:
+        os.remove(tmp)
+        return redirect(url_for("admin_dashboard", error=f"No se pudo leer la parametrización: {e}"))
+    if not d.get("pregrado") and not d.get("posgrado"):
+        os.remove(tmp)
+        return redirect(url_for("admin_dashboard", error="No encontré hojas 'Pregrado AAAA-10' ni 'Posgrado AAAA-30' con la fila COHORTE."))
+    anio = (re.findall(r"20\d\d", (d.get("pregrado") or {}).get("hoja", "") or (d.get("posgrado") or {}).get("hoja", "")) or [str(datetime.now().year)])[0]
+    actual = archivo_actual()
+    if actual:
+        shutil.copy2(actual, os.path.join(BACKUP_DIR, f"parametrizacion_{datetime.now():%Y%m%d_%H%M%S}.xlsx"))
+    os.replace(tmp, os.path.join(BASE_DIR, f"PARAMETRIZACIÓN {anio}.xlsx"))
+    store.param.invalidate()
+    n = len((d.get("pregrado") or {}).get("cohortes", [])) + sum(len((x or {}).get("cohortes", [])) for x in (d.get("posgrado") or {}).values() if isinstance(x, dict))
+    return redirect(url_for("admin_dashboard", ok=f"Parametrización {anio} cargada: {n} cohortes. Las fechas de los mensajes ya se actualizaron."))
+
+
 @app.route("/admin/datos", methods=["POST"])
 @admin_only
 def admin_datos():
     kind = request.form.get("tipo")
     file = request.files.get("archivo")
+    if kind == "parametrizacion" and file and file.filename.lower().endswith(".xlsx"):
+        return _subir_parametrizacion(file)
     target, validator = {"actas": (ACTAS_FILE, validar_actas), "presencial": (PRESENCIAL_FILE, validar_presencial)}.get(kind, (None, None))
     if not target or not file or not file.filename.lower().endswith(".xlsx"):
         return redirect(url_for("admin_dashboard", error="Selecciona un archivo .xlsx válido"))
@@ -1040,7 +1179,8 @@ def admin_datos():
 @app.route("/admin/datos/descargar/<kind>")
 @admin_only
 def admin_datos_descargar(kind):
-    target = {"actas": ACTAS_FILE, "presencial": PRESENCIAL_FILE}.get(kind)
+    from core.parametrizacion import archivo_actual
+    target = {"actas": ACTAS_FILE, "presencial": PRESENCIAL_FILE, "parametrizacion": archivo_actual()}.get(kind)
     if not target or not os.path.exists(target):
         abort(404)
     return send_file(target, as_attachment=True)

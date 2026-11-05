@@ -7,8 +7,8 @@
 <form method="POST" class="card card-pad" style="max-width:820px">
     <div class="grid grid-2">
         <div class="field"><label class="label">Descuento SENA (%)</label><input type="number" name="descuento_sena" min="0" max="100" value="{{ config.descuento_sena }}"></div>
-        <div class="field"><label class="label">Inicio de clases pregrado y SENA <code>{inicio_pregrado}</code></label><input type="text" name="inicio_clases" value="{{ config.inicio_clases }}" placeholder="2 de febrero de 2027"></div>
-        <div class="field"><label class="label">Inicio de clases posgrado <code>{inicio_posgrado}</code></label><input type="text" name="inicio_posgrado" value="{{ config.inicio_posgrado }}" placeholder="2027"></div>
+        <div class="field"><label class="label">Inicio por defecto pregrado y SENA <code>{inicio_pregrado}</code></label><input type="text" name="inicio_clases" value="{{ config.inicio_clases }}" placeholder="2 de febrero de 2027"></div>
+        <div class="field"><label class="label">Inicio por defecto posgrado <code>{inicio_posgrado}</code></label><input type="text" name="inicio_posgrado" value="{{ config.inicio_posgrado }}" placeholder="2027"></div>
         <div class="field"><label class="label">Ahorro inscripción ($)</label><input type="number" name="ahorro_inscripcion" min="0" step="1000" value="{{ config.ahorro_inscripcion }}"></div>
         <div class="field"><label class="label">Ahorro estudio de homologación ($)</label><input type="number" name="ahorro_estudio" min="0" step="1000" value="{{ config.ahorro_estudio }}"></div>
         <div class="field"><label class="label">Cuotas de financiación por defecto</label><input type="number" name="cuotas_financiacion" min="1" max="12" value="{{ config.cuotas_financiacion }}"></div>
@@ -24,6 +24,6 @@
         <label class="switch card" style="padding:12px 14px"><input type="checkbox" name="modulos_visibles" value="{{ key }}" {% if key not in ocultos %}checked{% endif %}><span class="track"></span> {{ m.label }}</label>
         {% endfor %}
     </div>
-    <div class="row mt-3"><button class="btn btn-primary" type="submit"><i class="fa-solid fa-floppy-disk"></i> Guardar configuración</button><span class="small muted">Los mensajes que usan <code>{inicio_pregrado}</code> y <code>{inicio_posgrado}</code> se actualizan solos al guardar.</span></div>
+    <div class="row mt-3"><button class="btn btn-primary" type="submit"><i class="fa-solid fa-floppy-disk"></i> Guardar configuración</button><span class="small muted">Los mensajes usan <code>{inicio}</code>: la fecha de cada programa sale de la parametrización. Estos valores se usan solo si un programa no aparece allí.</span></div>
 </form>
 {% endblock %}

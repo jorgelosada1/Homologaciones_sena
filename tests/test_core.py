@@ -65,7 +65,7 @@ def test_mensaje_formato_whatsapp():
     txt = mensaje_homologacion(res, store.config, nombre="Ana", incluir_precios=True)
     assert txt.startswith("¡Hola Ana!")
     assert "🔹 *ADMINISTRACIÓN DE EMPRESAS*" in txt
-    assert "2 de febrero de 2027" in txt
+    assert "1 de febrero de 2027" in txt
 
 
 def test_presencial_por_sede():
@@ -78,3 +78,31 @@ def test_mensajes_usan_fechas_2027():
     for m in store.render_list(store.mensajes_programas()) + store.render_list(store.mensajes_sena()):
         assert "2026" not in m["texto"], m["titulo"]
         assert "{inicio" not in m["texto"]
+
+
+def test_parametrizacion_cohortes():
+    from core.parametrizacion import parse_rango
+    from datetime import date
+    d = store.param.data()
+    pre = d["pregrado"]
+    assert [c["corto"] for c in pre["cohortes"]] == ["1A", "1B", "1C"]
+    assert pre["cohortes"][0]["fechas"]["clases"]["desde"] == "2027-02-01"
+    assert parse_rango("Del 26 - oct - 26-hasta el 29 - ene -27") == (date(2026, 10, 26), date(2027, 1, 29))
+    assert parse_rango("Del 25 al 29 de enero del 2027") == (date(2027, 1, 25), date(2027, 1, 29))
+    # error de año del Excel (8-mar-26) corregido
+    mae = d["posgrado"]["maestrias"]["cohortes"][0]
+    assert mae["fechas"]["clases"]["desde"] == "2027-03-08"
+
+
+def test_inicio_por_programa():
+    assert store.inicio_de("Economía", "pre") == "22 de febrero de 2027"
+    assert store.inicio_de("Psicología", "pre") == "1 de febrero de 2027"
+    assert store.inicio_de("Maestría en Innovación", "pos") == "8 de marzo de 2027"
+    assert store.inicio_de("Especialización en Ciberseguridad", "pos") == "29 de marzo de 2027"
+    assert store.inicio_de("Administración de Empresas – Virtual", "sena") == "1 de febrero de 2027"
+
+
+def test_mensajes_con_fecha_de_su_programa():
+    msgs = {m["titulo"]: m["texto"] for m in store.render_list(store.mensajes_programas())}
+    assert "22 de febrero de 2027" in msgs["Economía"]
+    assert "8 de marzo de 2027" in msgs["Maestría en Innovación"]
