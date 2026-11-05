@@ -6,11 +6,6 @@
         background: radial-gradient(70% 140% at 0% 0%, rgba(47,125,246,0.45), transparent 55%), radial-gradient(60% 120% at 100% 100%, rgba(127,181,54,0.4), transparent 60%), linear-gradient(140deg, #0f1f2e, #08130d); }
     .cal-hero h2 { color: #fff; font-size: 28px; font-weight: 750; letter-spacing: -0.03em; }
     .cal-hero p { color: rgba(234,244,236,0.75); margin-top: 6px; max-width: 640px; }
-    .cal-hero-grid { display: grid; grid-template-columns: minmax(0, 1.3fr) minmax(0, 1fr); gap: 20px; align-items: center; }
-    @media (max-width: 900px) { .cal-hero-grid { grid-template-columns: minmax(0, 1fr); } }
-    .next-box { background: rgba(255,255,255,0.07); border: 1px solid rgba(255,255,255,0.12); border-radius: 18px; padding: 16px 18px; display: flex; gap: 16px; align-items: center; }
-    .next-days { font-family: var(--font-display); font-size: 44px; font-weight: 800; line-height: 1; color: #a6d65f; min-width: 74px; text-align: center; }
-    .next-days small { display: block; font-size: 11px; font-weight: 700; letter-spacing: 0.08em; text-transform: uppercase; color: rgba(234,244,236,0.6); margin-top: 4px; }
     .hero-stats { display: flex; gap: 10px; flex-wrap: wrap; margin-top: 16px; }
     .hero-stat { background: rgba(255,255,255,0.07); border: 1px solid rgba(255,255,255,0.1); padding: 8px 12px; border-radius: 12px; font-size: 12.5px; }
     .hero-stat b { color: #fff; font-size: 15px; margin-right: 4px; }
@@ -25,24 +20,6 @@
 
     .sec { display: none; } .sec.active { display: block; animation: pageIn .3s var(--ease); }
     .block-title { font-family: var(--font-display); font-size: 18px; font-weight: 700; margin: 6px 0 12px; display: flex; align-items: center; gap: 10px; }
-
-    /* Gantt */
-    .gantt { padding: 16px 18px 18px; margin-bottom: 18px; }
-    .g-head, .g-row { display: grid; grid-template-columns: 70px minmax(0, 1fr); gap: 10px; align-items: center; }
-    .g-scale { position: relative; height: 22px; border-bottom: 1px solid var(--border); }
-    .g-month { position: absolute; top: 0; height: 100%; font-size: 11px; color: var(--text-3); font-weight: 600; padding-left: 4px; border-left: 1px dashed var(--border); white-space: nowrap; overflow: hidden; }
-    .g-track { position: relative; height: 34px; border-bottom: 1px dashed var(--border); }
-    .g-row:last-child .g-track { border-bottom: 0; }
-    .g-label { font-weight: 700; font-size: 13px; }
-    .g-label span { display: block; font-size: 10.5px; color: var(--text-3); font-weight: 500; }
-    .g-seg { position: absolute; top: 8px; height: 18px; border-radius: 6px; cursor: default; }
-    .g-seg.insc { background: repeating-linear-gradient(135deg, var(--blue-soft) 0 6px, rgba(47,125,246,0.2) 6px 12px); border: 1px solid rgba(47,125,246,0.45); }
-    .g-seg.ind { background: var(--orange); top: 6px; height: 22px; z-index: 2; box-shadow: 0 2px 6px rgba(240,138,18,0.45); }
-    .g-seg.cls { background: linear-gradient(90deg, var(--brand), #a6d65f); }
-    .g-today { position: absolute; top: -4px; bottom: -4px; width: 2px; background: var(--pink); z-index: 3; }
-    .g-today.first::before { content: "Hoy"; position: absolute; top: -16px; left: -12px; font-size: 10px; font-weight: 700; color: var(--pink); }
-    .g-legend { display: flex; gap: 16px; flex-wrap: wrap; font-size: 12px; color: var(--text-2); margin-top: 12px; }
-    .g-legend i { display: inline-block; width: 14px; height: 10px; border-radius: 3px; margin-right: 6px; vertical-align: middle; }
 
     /* Cohortes */
     .coh-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(290px, 1fr)); gap: 14px; margin-bottom: 18px; }
@@ -87,15 +64,61 @@
 
     .zona-chip { display: inline-flex; align-items: center; gap: 6px; padding: 6px 12px; border-radius: 20px; border: 1px solid var(--border); background: var(--surface); font-size: 12.5px; cursor: pointer; }
     .zona-chip.active { background: var(--brand); border-color: var(--brand); color: #0d1d0f; font-weight: 600; }
+    /* Tabla tipo Excel */
+    .xl { overflow: hidden; margin-bottom: 8px; }
+    .xl-head { display: flex; justify-content: space-between; gap: 14px; flex-wrap: wrap; align-items: flex-start; padding: 18px 20px 12px; }
+    .xl-head h3 { font-size: 18px; font-weight: 700; display: flex; gap: 10px; align-items: center; }
+    .xl-head p { margin-top: 6px; max-width: 720px; line-height: 1.5; }
+    .ok-txt { color: var(--success); }
+    .xl-tools { display: flex; gap: 12px; flex-wrap: wrap; align-items: center; padding: 0 20px 14px; border-bottom: 1px solid var(--border); }
+    .xl-wrap { display: none; overflow: auto; max-height: 72vh; }
+    .xl-wrap.active { display: block; }
+    .xl-table { width: 100%; border-collapse: collapse; font-size: 13.5px; }
+    .xl-table th, .xl-table td { border: 1px solid var(--border); padding: 10px 12px; vertical-align: middle; }
+    .xl-table thead th { position: sticky; top: 0; z-index: 2; background: var(--surface-2); text-align: center; font-weight: 600; color: var(--text); }
+    .xl-table th.xl-prog { text-align: left; min-width: 240px; left: 0; z-index: 3; font-size: 13px; color: var(--text-2); }
+    .xl-table td.xl-prog { position: sticky; left: 0; background: var(--surface); font-weight: 600; z-index: 1; }
+    .xl-table tbody tr:nth-child(even) td { background: var(--surface-2); }
+    .xl-table tbody tr:nth-child(even) td.xl-prog { background: var(--surface-2); }
+    .xl-table tbody tr:hover td { background: var(--brand-soft); }
+    .xl-col { min-width: 170px; }
+    .xl-coh { font-family: var(--font-display); font-size: 17px; font-weight: 800; margin-bottom: 4px; }
+    .xl-date { font-size: 12px; color: var(--text-2); font-weight: 500; white-space: nowrap; }
+    .xl-date i { width: 14px; color: var(--text-3); }
+    .xl-note { font-size: 11px; color: var(--blue); font-weight: 600; margin-top: 4px; }
+    .xl-st { display: inline-block; margin-top: 6px; font-size: 10.5px; font-weight: 700; padding: 2px 8px; border-radius: 20px; }
+    .xl-st.abierta { background: var(--success-soft); color: var(--success); }
+    .xl-st.proxima { background: var(--blue-soft); color: var(--blue); }
+    .xl-st.cerrada { background: var(--surface-3); color: var(--text-3); }
+    .xl-table td.yes, .xl-table td.no { text-align: center; }
+    .xl-table td.yes { background: rgba(47,163,107,0.07); }
+    .xl-table tbody tr:nth-child(even) td.yes { background: rgba(47,163,107,0.11); }
+    .ok { display: inline-grid; place-items: center; width: 26px; height: 26px; border-radius: 50%; background: var(--success); color: #fff; font-weight: 800; font-size: 14px; }
+    .tags { display: flex; gap: 4px; justify-content: center; flex-wrap: wrap; margin-top: 6px; }
+    .tg { font-size: 11px; font-weight: 700; padding: 2px 8px; border-radius: 6px; white-space: nowrap; }
+    .tg.nuevo { background: var(--brand-soft); color: var(--brand-ink); }
+    .tg.sena { background: var(--pink-soft); color: var(--pink); }
+    .tg.tr { background: var(--blue-soft); color: var(--blue); }
+    .nope { color: var(--text-3); font-size: 12px; }
+    .xl-first { text-align: center; min-width: 140px; }
+    td.xl-first b { color: var(--brand-ink); }
+    .xl-empty td { text-align: center; color: var(--text-3); padding: 24px; }
+    .xl-legend { display: flex; gap: 18px; flex-wrap: wrap; padding: 14px 20px; border-top: 1px solid var(--border); font-size: 12.5px; color: var(--text-2); }
+    .xl-legend > span { display: inline-flex; gap: 6px; align-items: center; }
+    .xl[data-nivel="pregrado"] .xl-pos-only { display: none; }
+    @media (max-width: 700px) {
+        .xl-table th.xl-prog, .xl-table td.xl-prog { min-width: 130px; max-width: 150px; font-size: 12.5px; }
+        .xl-col { min-width: 150px; }
+        .xl-head, .xl-tools { padding-left: 14px; padding-right: 14px; }
+    }
 </style>
 {% endblock %}
 {% block content %}
 {% if not secciones %}
 <div class="card"><div class="empty"><div class="empty-icon"><i class="fa-regular fa-calendar-xmark"></i></div><h4>No hay parametrización cargada</h4><p>Sube el Excel de parametrización desde Administración.</p></div></div>
 {% else %}
-{% set prox = hitos[0] if hitos else None %}
 <section class="cal-hero fade-up">
-    <div class="cal-hero-grid">
+    <div>
         <div>
             <p class="eyebrow" style="color:#8fb8ff"><i class="fa-solid fa-calendar-days"></i> Parametrización {{ cfg.anio }}</p>
             <h2>Calendario académico {{ cfg.anio }}</h2>
@@ -106,20 +129,74 @@
                 {% if d.posgrado %}<span class="hero-stat"><b>{{ (d.posgrado.especializaciones.programas|length if d.posgrado.especializaciones else 0) + (d.posgrado.maestrias.programas|length if d.posgrado.maestrias else 0) }}</b> posgrados</span>{% endif %}
             </div>
         </div>
-        {% if prox %}
-        <div class="next-box">
-            <div class="next-days">{{ prox.dias }}<small>{{ 'día' if prox.dias == 1 else 'días' }}</small></div>
-            <div>
-                <p class="eyebrow" style="color:#a6d65f">Próxima fecha clave</p>
-                <div style="font-family:var(--font-display);font-size:18px;font-weight:700;color:#fff;margin-top:2px">{{ prox.titulo }} · {{ prox.grupo }} {{ prox.cohorte }}</div>
-                <div style="color:rgba(234,244,236,0.7);font-size:13.5px">{{ prox.larga }}</div>
-            </div>
-        </div>
-        {% endif %}
     </div>
 </section>
 
+
+{% if tablas %}
+<section class="card xl fade-up" id="tablaCohortes" data-nivel="pregrado">
+    <div class="xl-head">
+        <div>
+            <h3><i class="fa-solid fa-table-cells" style="color:var(--brand)"></i> ¿En qué cohorte puede entrar cada programa?</h3>
+            <p class="muted small">Busca el programa en la fila y mira las columnas: <b class="ok-txt">✔</b> significa que ese programa abre en esa cohorte. Arriba de cada columna está la fecha en que empiezan las clases y hasta cuándo hay inscripción.</p>
+        </div>
+        <div class="row">
+            <div class="seg" id="xlTabs">{% for t in tablas %}<button class="{{ 'active' if loop.first }}" data-t="{{ t.id }}"><i class="fa-solid {{ t.icono }}"></i> {{ t.titulo }}</button>{% endfor %}</div>
+        </div>
+    </div>
+    <div class="xl-tools">
+        <div class="input-icon" style="flex:1;min-width:220px"><i class="fa-solid fa-magnifying-glass"></i><input type="text" id="xlQ" placeholder="Escribe el programa (ej. Derecho, Psicología, Alta Gerencia)…" data-page-search><button type="button" class="input-clear"><i class="fa-solid fa-xmark"></i></button></div>
+        <label class="switch" id="xlSenaWrap"><input type="checkbox" id="xlSena"><span class="track"></span> Solo programas que reciben SENA</label>
+        <button class="btn btn-secondary btn-sm" id="xlExcel"><i class="fa-solid fa-file-excel" style="color:#1d7044"></i> Descargar en Excel</button>
+    </div>
+    {% for t in tablas %}
+    <div class="xl-wrap {{ 'active' if loop.first }}" data-tabla="{{ t.id }}">
+        <table class="xl-table" data-titulo="{{ t.titulo }}">
+            <thead>
+                <tr>
+                    <th class="xl-prog">Programa</th>
+                    {% for c in t.cols %}
+                    <th class="xl-col">
+                        <div class="xl-coh">Cohorte {{ c.corto }}</div>
+                        <div class="xl-date"><i class="fa-solid fa-graduation-cap"></i> Clases: <b>{{ c.clases }}</b></div>
+                        <div class="xl-date"><i class="fa-solid fa-user-plus"></i> Inscripción hasta: <b>{{ c.cierre }}</b></div>
+                        {% if c.solo_transf %}<div class="xl-note">Solo transferencias, extensión y 2º posgrado</div>{% endif %}
+                        <span class="xl-st {{ c.estado }}">{% if c.estado == 'abierta' %}Inscripción abierta{% elif c.estado == 'proxima' %}Aún no abre{% else %}Cerrada{% endif %}</span>
+                    </th>
+                    {% endfor %}
+                    <th class="xl-col xl-first">Primer inicio<br><span class="muted" style="font-weight:500">(estudiante nuevo)</span></th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for f in t.filas %}
+                <tr data-name="{{ f.programa }}" data-sena="{{ 1 if f.sena else 0 }}">
+                    <td class="xl-prog">{{ f.programa }}</td>
+                    {% for cel in f.celdas %}
+                    <td class="{{ 'yes' if cel.tags else 'no' }}">
+                        {% if cel.tags %}<span class="ok">✔</span><div class="tags">{% for tg in cel.tags %}<span class="tg {{ 'sena' if tg == 'SENA' else 'nuevo' if tg == 'Nuevo' else 'tr' }}">{{ tg }}</span>{% endfor %}</div>
+                        {% else %}<span class="nope">No abre</span>{% endif %}
+                    </td>
+                    {% endfor %}
+                    <td class="xl-first"><b>{{ f.proximo or '—' }}</b></td>
+                </tr>
+                {% endfor %}
+                <tr class="xl-empty" hidden><td colspan="{{ t.cols|length + 2 }}">No hay programas con ese nombre.</td></tr>
+            </tbody>
+        </table>
+    </div>
+    {% endfor %}
+    <div class="xl-legend">
+        <span><span class="tg nuevo">Nuevo</span> estudiante que entra por primera vez</span>
+        <span><span class="tg sena">SENA</span> egresado SENA que homologa</span>
+        <span><span class="tg tr">Transferencia</span> viene de otra universidad o es segundo pregrado</span>
+        <span class="xl-pos-only"><span class="tg tr">Extensión</span> continúa la especialización que tomó como opción de grado</span>
+        <span class="xl-pos-only"><span class="tg tr">2º posgrado</span> ya tiene un posgrado y hace otro</span>
+    </div>
+</section>
+{% endif %}
+
 {% if hitos %}
+<h3 class="block-title" style="margin-top:22px"><i class="fa-solid fa-calendar-check" style="color:var(--text-3)"></i> Próximas fechas</h3>
 <div class="hitos stagger">
     {% for h in hitos %}
     <div class="card hito">
@@ -130,6 +207,7 @@
 </div>
 {% endif %}
 
+<h3 class="block-title" style="margin-top:8px"><i class="fa-solid fa-list-check" style="color:var(--text-3)"></i> Detalle de fechas por cohorte</h3>
 <div class="tabs" id="tabs">
     {% for s in secciones %}<button class="tab {{ 'active' if loop.first }}" data-tab="{{ s.id }}"><i class="fa-solid {{ s.icono }}"></i> {{ s.titulo }}</button>{% endfor %}
     {% if d.practicas %}<button class="tab" data-tab="practicas"><i class="fa-solid fa-briefcase"></i> Prácticas y grado</button>{% endif %}
@@ -138,24 +216,6 @@
 
 {% for s in secciones %}
 <section class="sec sec-{{ s.id }} {{ 'active' if loop.first }}" id="sec-{{ s.id }}">
-    {% if s.gantt %}
-    <div class="card gantt">
-        <div class="row" style="margin-bottom:12px"><h3 style="font-size:15px"><i class="fa-solid fa-timeline" style="color:var(--text-3)"></i> Línea de tiempo · {{ s.sub }}</h3></div>
-        <div style="overflow-x:auto"><div style="min-width:640px">
-            <div class="g-head"><span></span><div class="g-scale">{% for m in s.gantt.meses %}<span class="g-month" style="left:{{ m.left }}%;width:{{ m.width }}%">{{ m.label }}</span>{% endfor %}</div></div>
-            {% for f in s.gantt.filas %}
-            <div class="g-row">
-                <div class="g-label">{{ f.corto }}<span>{{ f.codigo.split('-')[0] }}</span></div>
-                <div class="g-track">
-                    {% for g in f.segs %}<span class="g-seg {{ g.cls }}" style="left:{{ g.left }}%;width:{{ g.width }}%" title="{{ g.titulo }}: {{ g.texto }}"></span>{% endfor %}
-                    {% if s.gantt.hoy is not none %}<span class="g-today {{ 'first' if loop.first }}" style="left:{{ s.gantt.hoy }}%"></span>{% endif %}
-                </div>
-            </div>
-            {% endfor %}
-        </div></div>
-        <div class="g-legend"><span><i style="background:var(--blue-soft);border:1px solid rgba(47,125,246,.45)"></i>Inscripciones</span><span><i style="background:var(--orange)"></i>Inducción</span><span><i style="background:var(--brand)"></i>Clases</span><span><i style="background:var(--pink);width:3px"></i>Hoy</span></div>
-    </div>
-    {% endif %}
 
     {% for bl in s.bloques %}
     {% if s.bloques|length > 1 %}<div class="block-title">{{ bl.titulo }} <span class="badge">{{ bl.bloque.programas|length }} programas</span></div>{% endif %}
@@ -176,54 +236,6 @@
         {% endfor %}
     </div>
 
-    {% set b = bl.bloque %}
-    {% set cods = b.cohortes|map(attribute='corto')|list %}
-    {% set extra = b.grupos_extra %}
-    <div class="card mb-2" style="overflow:hidden">
-        <div class="mx-tools">
-            <strong style="font-size:14px"><i class="fa-solid fa-table-cells" style="color:var(--text-3)"></i> ¿En qué cohorte abre cada programa?</strong>
-            <span class="spacer"></span>
-            <div class="input-icon" style="width:240px"><i class="fa-solid fa-magnifying-glass"></i><input type="text" placeholder="Filtrar programa…" data-mx-filter></div>
-            {% if extra %}<div class="seg" data-mx-mode><button class="active" data-m="all">Todos</button><button data-m="sena">Con SENA</button><button data-m="tr">Con transferencia</button></div>{% endif %}
-        </div>
-        <div style="overflow:auto">
-        <table class="table mx">
-            <thead>
-                {% if extra and not bl.texto %}
-                <tr><th rowspan="2">Programa</th><th colspan="{{ cods|length }}" class="grp">Primera vez</th>
-                    {% for g in extra %}<th colspan="{{ cods|length }}" class="grp {{ 'grp-sena' if 'SENA' in g|upper else 'grp-tr' }}">{{ 'SENA' if 'SENA' in g|upper else 'Transferencia / 2º pregrado' }}</th>{% endfor %}</tr>
-                <tr>{% for _ in range(1 + extra|length) %}{% for c in cods %}<th>{{ c }}</th>{% endfor %}{% endfor %}</tr>
-                {% else %}
-                <tr><th>Programa</th>{% for c in cods %}<th>{{ c }}</th>{% endfor %}{% if not bl.texto %}<th>Admite</th>{% endif %}</tr>
-                {% endif %}
-            </thead>
-            <tbody>
-            {% for p in b.programas %}
-            {% set ns = namespace(sena=0, tr=0) %}
-            {% for g in p.extra %}{% if 'SENA' in g|upper %}{% set ns.sena = 1 %}{% else %}{% set ns.tr = 1 %}{% endif %}{% endfor %}
-            <tr data-name="{{ p.display }}" data-sena="{{ ns.sena }}" data-tr="{{ ns.tr }}">
-                <td>{{ p.display }}
-                    {% set ini = b.cohortes|selectattr('corto', 'in', p.cohortes.keys()|list)|map(attribute='fechas')|map(attribute='clases')|map(attribute='desde')|list|sort %}
-                    {% if ini and not bl.texto %}<span class="first-start">Desde {{ ini[0]|fecha_larga }}</span>{% endif %}
-                </td>
-                {% for c in cods %}
-                    {% set v = p.cohortes.get(c) %}
-                    <td>{% if v %}{% if bl.texto %}<span class="dot tr txt">{{ v|title }}</span>{% else %}<span class="dot on" title="{{ v }}">{{ c }}</span>{% endif %}{% else %}<span class="dot off">—</span>{% endif %}</td>
-                {% endfor %}
-                {% if extra and not bl.texto %}
-                    {% for g in extra %}{% for c in cods %}
-                        {% set v = p.extra.get(g, {}).get(c) %}
-                        <td>{% if v %}<span class="dot {{ 'sena' if 'SENA' in g|upper else 'tr' }} {{ 'txt' if v|length > 3 }}" title="{{ v }}">{{ c if v|length <= 3 else v|title }}</span>{% else %}<span class="dot off">—</span>{% endif %}</td>
-                    {% endfor %}{% endfor %}
-                {% elif not bl.texto %}
-                    <td style="white-space:nowrap">{% for a in p.admite %}<span class="badge {{ 'green' if 'Primera' in a else 'blue' }}" style="margin:2px">{{ a }}</span>{% else %}<span class="muted small">—</span>{% endfor %}</td>
-                {% endif %}
-            </tr>
-            {% endfor %}
-            </tbody>
-        </table>
-        </div>
-    </div>
     {% endfor %}
 </section>
 {% endfor %}
@@ -282,6 +294,49 @@
     tabs.addEventListener('click', (e) => { const t = e.target.closest('[data-tab]'); if (t) show(t.dataset.tab); });
     const saved = store.get('param-tab', ''); if (saved && document.getElementById('sec-' + saved)) show(saved);
 
+
+    // Tabla tipo Excel
+    const xl = document.getElementById('tablaCohortes');
+    if (xl) {
+        const q = document.getElementById('xlQ'), soloSena = document.getElementById('xlSena');
+        const activa = () => xl.querySelector('.xl-wrap.active');
+        const filtrar = () => {
+            const t = normalize(q.value.trim()); let vis = 0;
+            const w = activa();
+            w.querySelectorAll('tbody tr[data-name]').forEach((tr) => {
+                const ok = (!t || normalize(tr.dataset.name).includes(t)) && (!soloSena.checked || tr.dataset.sena === '1');
+                tr.hidden = !ok; if (ok) vis++;
+            });
+            w.querySelector('.xl-empty').hidden = vis > 0;
+        };
+        document.getElementById('xlTabs').addEventListener('click', (e) => {
+            const b = e.target.closest('[data-t]'); if (!b) return;
+            document.querySelectorAll('#xlTabs button').forEach((x) => x.classList.toggle('active', x === b));
+            xl.querySelectorAll('.xl-wrap').forEach((w) => w.classList.toggle('active', w.dataset.tabla === b.dataset.t));
+            xl.dataset.nivel = b.dataset.t === 'pregrado' ? 'pregrado' : 'posgrado';
+            const tieneSena = !!activa().querySelector('tr[data-sena="1"]');
+            document.getElementById('xlSenaWrap').hidden = !tieneSena;
+            if (!tieneSena) soloSena.checked = false;
+            filtrar();
+        });
+        q.addEventListener('input', debounce(filtrar, 100));
+        soloSena.addEventListener('change', filtrar);
+        document.getElementById('xlExcel').addEventListener('click', () => {
+            const tabla = activa().querySelector('table');
+            const cols = [...tabla.querySelectorAll('thead th.xl-col')].map((th) => (th.querySelector('.xl-coh')?.textContent || 'Primer inicio (nuevo)') + (th.querySelector('.xl-date b') ? ` - clases ${th.querySelectorAll('.xl-date b')[0].textContent}` : ''));
+            const filas = [['Programa', ...cols]];
+            tabla.querySelectorAll('tbody tr[data-name]').forEach((tr) => {
+                if (tr.hidden) return;
+                const tds = [...tr.querySelectorAll('td')];
+                filas.push([tds[0].textContent.trim(), ...tds.slice(1, -1).map((td) => td.classList.contains('yes') ? 'Sí (' + [...td.querySelectorAll('.tg')].map((x) => x.textContent).join(', ') + ')' : 'No'), tds[tds.length - 1].textContent.trim()]);
+            });
+            const csv = filas.map((r) => r.map((v) => `"${String(v).replace(/"/g, '""')}"`).join(';')).join('\n');
+            const a = document.createElement('a');
+            a.href = URL.createObjectURL(new Blob(['\ufeff' + csv], { type: 'text/csv;charset=utf-8' }));
+            a.download = `cohortes_${tabla.dataset.titulo.toLowerCase()}_${new Date().getFullYear()}.csv`; a.click();
+            App.toast('Tabla descargada (se abre en Excel)');
+        });
+    }
     // Filtros de matrices
     document.querySelectorAll('[data-mx-filter]').forEach((inp) => {
         const card = inp.closest('.card');

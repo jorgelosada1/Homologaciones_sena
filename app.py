@@ -587,45 +587,6 @@ def flujos():
     return render_template("flujos.html")
 
 
-def _gantt(bloques):
-    """Escala de tiempo común (porcentajes) para dibujar las cohortes."""
-    from datetime import date as _d
-    fechas = []
-    for b in bloques:
-        for c in b["cohortes"]:
-            for f in c["fechas"].values():
-                fechas += [_d.fromisoformat(x) for x in (f.get("desde"), f.get("hasta")) if x]
-    if not fechas:
-        return None
-    ini = min(fechas).replace(day=1)
-    fin = max(fechas)
-    fin = (fin.replace(day=28) + timedelta(days=4)).replace(day=1)  # primer día del mes siguiente
-    total = (fin - ini).days or 1
-    pos = lambda d: round((_d.fromisoformat(d) - ini).days / total * 100, 2)
-    meses, m = [], ini
-    nombres = ["", "Ene", "Feb", "Mar", "Abr", "May", "Jun", "Jul", "Ago", "Sep", "Oct", "Nov", "Dic"]
-    while m < fin:
-        sig = (m.replace(day=28) + timedelta(days=4)).replace(day=1)
-        meses.append({"label": nombres[m.month] + (f" {str(m.year)[2:]}" if m.month == 1 or not meses else ""),
-                      "left": pos(m.isoformat()), "width": round((sig - m).days / total * 100, 2)})
-        m = sig
-    hoy = datetime.now().date()
-    filas = []
-    for b in bloques:
-        for c in b["cohortes"]:
-            segs = []
-            ins_key = next((k for k in ("inscripcion", "transf_extension", "transferencias", "segundo_pos") if k in c["fechas"]), "inscripcion")
-            for key, cls in ((ins_key, "insc"), ("induccion", "ind"), ("clases", "cls")):
-                f = c["fechas"].get(key)
-                if f and f.get("desde") and f.get("hasta"):
-                    left = pos(f["desde"])
-                    segs.append({"cls": cls, "left": left, "width": max(round(pos(f["hasta"]) - left, 2), 0.8),
-                                 "titulo": f["nombre"], "texto": f["texto"]})
-            filas.append({"codigo": c["codigo"], "corto": c["corto"], "segs": segs})
-    hoy_pos = pos(hoy.isoformat()) if ini <= hoy <= fin else None
-    return {"meses": meses, "filas": filas, "hoy": hoy_pos}
-
-
 MESES_CORTOS = ["", "ene", "feb", "mar", "abr", "may", "jun", "jul", "ago", "sep", "oct", "nov", "dic"]
 
 
@@ -659,6 +620,107 @@ def _vista_cohortes(bloque):
     return out
 
 
+def _tablas_cohortes(d):
+    """Tablas simples 'programa x cohorte' para asesores (tipo Excel)."""
+    from core.parametrizacion import estado
+    from datetime import date as _d
+    hoy = datetime.now().date()
+
+    def corta(iso, anio=True):
+        if not iso:
+            return ""
+        x = _d.fromisoformat(iso)
+        return f"{x.day} {MESES_CORTOS[x.month]}" + (f" {x.year}" if anio else "")
+
+    def columnas(cohortes, solo_transf=()):
+        cols = []
+        for c in sorted(cohortes, key=lambda c: c["fechas"]["clases"]["desde"]):
+            f = c["fechas"]
+            ins = f.get("inscripcion") or f.get("transf_extension") or f.get("transferencias") or {}
+            cols.append({"corto": c["corto"], "clases": corta(f["clases"]["desde"]), "clases_iso": f["clases"]["desde"],
+                         "cierre": corta(ins.get("hasta")), "estado": estado(ins.get("desde"), ins.get("hasta")),
+                         "solo_transf": c["corto"] in solo_transf})
+        return cols
+
+    def tags_transf(texto):
+        t = norm(texto)
+        out = []
+        if "EXTERNA" in t:
+            out.append("Transferencia")
+        if "EXTENSION" in t:
+            out.append("Extensión")
+        if "SEGUNDO" in t:
+            out.append("2º posgrado")
+        return out or [texto.title()]
+
+    def armar(titulo, icono, color, cols, programas):
+        filas = []
+        for p in programas:
+            celdas, inicios = [], []
+            for col in cols:
+                tags = p["celdas"].get(col["corto"], [])
+                celdas.append({"tags": tags})
+                if tags:
+                    inicios.append(col)
+            nuevos = [col for col, cel in zip(cols, celdas) if "Nuevo" in cel["tags"]] or inicios
+            prox = next((c for c in nuevos if c["clases_iso"] >= hoy.isoformat()), nuevos[0] if nuevos else None)
+            filas.append({"programa": p["programa"], "celdas": celdas, "proximo": prox["clases"] if prox else "",
+                          "sena": any("SENA" in t for c in celdas for t in c["tags"])})
+        return {"id": norm(titulo).lower().replace(" ", "-"), "titulo": titulo, "icono": icono, "color": color, "cols": cols, "filas": filas}
+
+    tablas = []
+    pre = d.get("pregrado")
+    if pre:
+        progs = []
+        for p in pre["programas"]:
+            celdas = {}
+            for c in pre["cohortes"]:
+                k = c["corto"]
+                tags = []
+                if k in p["cohortes"]:
+                    tags.append("Nuevo")
+                for g, vals in p["extra"].items():
+                    if k in vals:
+                        v = vals[k]
+                        if "SENA" in g.upper():
+                            tags.append("SENA")
+                        else:
+                            tags.append("Transferencia" + (" (solo FFMM)" if "FFMM" in v.upper() else ""))
+                celdas[k] = tags
+            progs.append({"programa": p["display"], "celdas": celdas})
+        tablas.append(armar("Pregrado", "fa-user-graduate", "green", columnas(pre["cohortes"]), progs))
+
+    # Posgrado: se combinan primera vez + transferencias/extensión/segundo posgrado
+    pos = d.get("posgrado") or {}
+    tr = (d.get("transferencias_posgrado") or {}).get("bloques") or []
+    for clave, titulo, icono in (("especializaciones", "Especializaciones", "fa-award"), ("maestrias", "Maestrías", "fa-book-bookmark")):
+        b = pos.get(clave)
+        if not b:
+            continue
+        es_mae = clave == "maestrias"
+        tb = next((x for x in tr if any(norm(p["nombre"]).startswith("MAESTRIA") for p in x["programas"]) == es_mae), None)
+        cohortes = {c["corto"]: c for c in b["cohortes"]}
+        solo_tr = []
+        if tb:
+            for c in tb["cohortes"]:
+                if c["corto"] not in cohortes:
+                    cohortes[c["corto"]] = c
+                    solo_tr.append(c["corto"])
+        tr_por_prog = {norm(p["nombre"]): p for p in (tb["programas"] if tb else [])}
+        progs = []
+        for p in b["programas"]:
+            celdas = {}
+            pt = tr_por_prog.get(norm(p["nombre"]))
+            for k in cohortes:
+                tags = ["Nuevo"] if k in p["cohortes"] else []
+                if pt and pt["cohortes"].get(k):
+                    tags += [t for t in tags_transf(pt["cohortes"][k]) if t not in tags]
+                celdas[k] = tags
+            progs.append({"programa": p["display"], "celdas": celdas})
+        tablas.append(armar(titulo, icono, "orange" if not es_mae else "purple", columnas(cohortes.values(), solo_tr), progs))
+    return tablas
+
+
 @app.route("/parametrizacion")
 @login_required
 def parametrizacion():
@@ -670,24 +732,22 @@ def parametrizacion():
     if d.get("pregrado"):
         b = d["pregrado"]
         secciones.append({"id": "pregrado", "titulo": "Pregrado", "sub": b["hoja"], "icono": "fa-user-graduate", "color": "green",
-                          "bloques": [{"titulo": "Pregrado – primera vez, SENA y transferencias", "bloque": b, "cohortes": _vista_cohortes(b)}],
-                          "gantt": _gantt([b])})
+                          "bloques": [{"titulo": "Pregrado – primera vez, SENA y transferencias", "bloque": b, "cohortes": _vista_cohortes(b)}]})
     pos = d.get("posgrado") or {}
     bls = [x for x in (pos.get("especializaciones"), pos.get("maestrias")) if x]
     if bls:
         secciones.append({"id": "posgrado", "titulo": "Posgrado", "sub": pos.get("hoja", ""), "icono": "fa-award", "color": "orange",
                           "bloques": [{"titulo": ("Maestrías" if any(norm(p["nombre"]).startswith("MAESTRIA") for p in x["programas"]) else "Especializaciones"),
-                                       "bloque": x, "cohortes": _vista_cohortes(x)} for x in bls],
-                          "gantt": _gantt(bls)})
+                                       "bloque": x, "cohortes": _vista_cohortes(x)} for x in bls]})
     tr = (d.get("transferencias_posgrado") or {}).get("bloques") or []
     if tr:
         secciones.append({"id": "transferencias", "titulo": "Transferencias posgrado", "sub": "Externa · extensión · segundo posgrado",
                           "icono": "fa-right-left", "color": "blue",
                           "bloques": [{"titulo": ("Maestrías" if any(norm(p["nombre"]).startswith("MAESTRIA") for p in x["programas"]) else "Especializaciones"),
-                                       "bloque": x, "cohortes": _vista_cohortes(x), "texto": True} for x in tr],
-                          "gantt": _gantt(tr)})
+                                       "bloque": x, "cohortes": _vista_cohortes(x), "texto": True} for x in tr]})
     abiertas = sum(1 for s_ in secciones[:2] for bl in s_["bloques"] for c in bl["cohortes"] if c["estado"] == "abierta")
-    return render_template("parametrizacion.html", d=d, secciones=secciones, hitos=P.hitos(limite=8), abiertas=abiertas)
+    return render_template("parametrizacion.html", d=d, secciones=secciones, hitos=P.hitos(limite=8), abiertas=abiertas,
+                           tablas=_tablas_cohortes(d))
 
 
 @app.route("/capacitacion")
