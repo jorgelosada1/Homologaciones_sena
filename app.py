@@ -61,7 +61,7 @@ ALLOWED_IMAGE_EXTENSIONS = {"png", "jpg", "jpeg", "gif", "webp"}
 ALLOWED_PDF_EXTENSIONS = {"pdf"}
 
 # Versión de los archivos estáticos: cambia con cada despliegue para que el navegador no use una copia vieja
-ASSET_VERSION = str(int(max(os.path.getmtime(os.path.join(STATIC_DIR, f)) for f in ("css/app.css", "js/app.js"))))
+ASSET_VERSION = str(int(max(os.path.getmtime(os.path.join(STATIC_DIR, f)) for f in ("css/app.css", "js/app.js", "js/imagen-homologacion.js"))))
 
 store = DataStore()
 activity = ActivityLog(os.path.join(DATA_DIR, "actividad.json"))
