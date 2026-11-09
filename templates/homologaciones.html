@@ -113,6 +113,35 @@
 {% endblock %}
 
 {% block scripts %}
+<div class="modal" id="imgModal" aria-hidden="true">
+    <div class="modal-box lg">
+        <div class="modal-head"><h3><i class="fa-regular fa-image" style="color:var(--brand)"></i> Imagen para WhatsApp</h3><button class="icon-btn sm" data-close-modal aria-label="Cerrar"><i class="fa-solid fa-xmark"></i></button></div>
+        <div class="modal-body img-body">
+            <div class="img-opts">
+                <div class="field" id="imgGrupoWrap" hidden><label class="label">Título SENA</label><select id="imgGrupo"></select></div>
+                <div class="field"><label class="label">Carreras en la imagen <span class="muted">(máx. 4)</span></label><div id="imgProgs" class="stack" style="gap:6px"></div></div>
+                <label class="switch"><input type="checkbox" id="imgPrecio" checked><span class="track"></span> Mostrar precio y ahorro</label>
+                <p class="small muted">Usa el nombre del prospecto que escribiste arriba. La imagen se genera en tu navegador.</p>
+                <div class="stack" style="gap:8px;margin-top:auto">
+                    <button class="btn btn-wa" id="imgShare"><i class="fa-solid fa-share-nodes"></i> Compartir</button>
+                    <button class="btn btn-secondary" id="imgCopy"><i class="fa-regular fa-copy"></i> Copiar imagen</button>
+                    <button class="btn btn-primary" id="imgDl"><i class="fa-solid fa-download"></i> Descargar PNG</button>
+                </div>
+            </div>
+            <div class="img-prev"><div class="spinner" id="imgSpin"></div><img id="imgPrev" alt="Vista previa de la imagen" hidden></div>
+        </div>
+    </div>
+</div>
+<style>
+    .img-body { display: grid; grid-template-columns: 260px minmax(0, 1fr); gap: 20px; }
+    .img-opts { display: flex; flex-direction: column; gap: 14px; }
+    .img-prev { background: var(--surface-3); border-radius: 16px; padding: 14px; display: grid; place-items: center; min-height: 420px; max-height: 70vh; overflow: auto; }
+    .img-prev img { width: 100%; max-width: 420px; border-radius: 10px; box-shadow: var(--shadow-md); }
+    .img-prog { display: flex; gap: 8px; align-items: flex-start; font-size: 13px; cursor: pointer; }
+    .img-prog input { margin-top: 3px; }
+    @media (max-width: 760px) { .img-body { grid-template-columns: minmax(0, 1fr); } .img-prev { min-height: 300px; } }
+</style>
+<script src="{{ url_for('static', filename='js/imagen-homologacion.js') }}?v={{ asset_v }}"></script>
 <script>
 (() => {
     const { escapeHtml, money, normalize, highlight, waFormat, copyText, openWhatsApp, toast, api, store, debounce } = App;
@@ -272,7 +301,8 @@
                         <div class="wa-actions">
                             <button class="btn btn-pink" id="btnCopy"><i class="fa-regular fa-copy"></i> Copiar</button>
                             <button class="btn btn-wa" id="btnWa"><i class="fa-brands fa-whatsapp"></i> WhatsApp</button>
-                            <button class="btn btn-secondary full" id="btnCopyBoth"><i class="fa-solid fa-layer-group"></i> Copiar mensaje + precios</button>
+                            <button class="btn btn-secondary" id="btnCopyBoth"><i class="fa-solid fa-layer-group"></i> Mensaje + precios</button>
+                            <button class="btn btn-dark" id="btnImagen"><i class="fa-regular fa-image"></i> Crear imagen</button>
                         </div>
                     </div>
                     <p class="small muted" style="margin-top:10px;text-align:center"><i class="fa-solid fa-circle-info"></i> El mensaje usa formato de WhatsApp (*negrilla*).</p>
@@ -293,6 +323,7 @@
         if (e.target.closest('#btnCopy')) copyText(currentText(), msgMode === 'precios' ? '¡Precios copiados!' : '¡Mensaje copiado!', last.query);
         if (e.target.closest('#btnCopyBoth')) copyText(last.mensaje + '\n\n' + last.mensaje_precios, '¡Mensaje y precios copiados!', last.query);
         if (e.target.closest('#btnWa')) openWhatsApp($('phone').value, currentText(), last.query);
+        if (e.target.closest('#btnImagen')) abrirImagen();
         const cp = e.target.closest('[data-copy-prog]');
         if (cp) {
             const p = last.grupos.flatMap((g) => g.programas).find((x) => x.programa_display === cp.dataset.copyProg);
@@ -301,6 +332,53 @@
             if (p.precio) t += `\n💰 Semestre${p.precio.descuento ? ` con ${p.precio.descuento}% ${p.precio.tipo_descuento === 'SENA' ? 'SENA' : 'de descuento'}` : ''}: *${money(p.precio.valor_final)}*\n💵 Inversión total: ${money(p.precio.inversion_total)}\n🎉 Ahorro estimado: ${money(p.precio.ahorro_total)}`;
             copyText(t, 'Resumen copiado', last.query);
         }
+    });
+
+    // ---------- Imagen para WhatsApp ----------
+    const IMG_CFG = { asesor: {{ cfg.nombre_asesor | tojson }}, descuento: {{ cfg.descuento_sena | int }} };
+    let imgBlob = null, imgGen = 0;
+    function grupoImg() { return last.grupos[+($('imgGrupo').value || 0)] || last.grupos[0]; }
+    function listaProgramasImg() {
+        const g = grupoImg();
+        $('imgProgs').innerHTML = g.programas.map((p, i) => `<label class="img-prog"><input type="checkbox" value="${i}" ${i < 4 ? 'checked' : ''}> <span>${escapeHtml(p.programa_display)} <span class="muted">· ${p.homologados} sem.</span></span></label>`).join('');
+    }
+    async function pintarImagen() {
+        const g = grupoImg(); const sel = [...$('imgProgs').querySelectorAll('input:checked')].map((i) => +i.value).slice(0, 4);
+        const programas = sel.map((i) => g.programas[i]);
+        $('imgSpin').hidden = false; $('imgPrev').hidden = true;
+        if (!programas.length) { $('imgSpin').hidden = true; imgBlob = null; return; }
+        const gen = ++imgGen;
+        const cv = await window.ImagenHomologacion.generar({ titulo: g.titulo, programas, nombre: $('nombre').value.trim(), conPrecio: $('imgPrecio').checked, cfg: IMG_CFG });
+        if (gen !== imgGen) return;
+        imgBlob = await new Promise((r) => cv.toBlob(r, 'image/png'));
+        $('imgPrev').src = URL.createObjectURL(imgBlob); $('imgPrev').hidden = false; $('imgSpin').hidden = true;
+    }
+    function abrirImagen() {
+        if (!last || !last.grupos.length) return;
+        $('imgGrupoWrap').hidden = last.grupos.length < 2;
+        $('imgGrupo').innerHTML = last.grupos.map((g, i) => `<option value="${i}">${escapeHtml(g.titulo)}</option>`).join('');
+        listaProgramasImg(); App.openModal('imgModal'); pintarImagen();
+    }
+    $('imgGrupo').addEventListener('change', () => { listaProgramasImg(); pintarImagen(); });
+    $('imgProgs').addEventListener('change', (e) => {
+        const marcados = $('imgProgs').querySelectorAll('input:checked');
+        if (marcados.length > 4) { e.target.checked = false; toast('Máximo 4 carreras por imagen', 'info'); return; }
+        pintarImagen();
+    });
+    $('imgPrecio').addEventListener('change', pintarImagen);
+    const nombreArchivo = () => `homologacion_${(grupoImg().titulo || 'sena').normalize('NFD').replace(/[\u0300-\u036f]/g, '').replace(/[^a-z0-9]+/gi, '_').toLowerCase().slice(0, 50)}.png`;
+    $('imgDl').addEventListener('click', () => { if (!imgBlob) return; const a = document.createElement('a'); a.href = URL.createObjectURL(imgBlob); a.download = nombreArchivo(); a.click(); App.track('copia', last.query); });
+    $('imgCopy').addEventListener('click', async () => {
+        if (!imgBlob) return;
+        try { await navigator.clipboard.write([new ClipboardItem({ 'image/png': imgBlob })]); toast('Imagen copiada: pégala en WhatsApp Web'); App.track('copia', last.query); }
+        catch { toast('Tu navegador no permite copiar imágenes; usa Descargar', 'error'); }
+    });
+    $('imgShare').addEventListener('click', async () => {
+        if (!imgBlob) return;
+        const file = new File([imgBlob], nombreArchivo(), { type: 'image/png' });
+        if (navigator.canShare && navigator.canShare({ files: [file] })) {
+            try { await navigator.share({ files: [file], text: last.mensaje }); App.track('whatsapp', last.query); } catch (e) { /* cancelado */ }
+        } else { $('imgDl').click(); toast('Se descargó la imagen para que la adjuntes en WhatsApp', 'info', 3500); }
     });
 
     const initial = input.value.trim();

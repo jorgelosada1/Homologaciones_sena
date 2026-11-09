@@ -203,7 +203,7 @@
         "programa": "Especialización en Derechos de Autor, Propiedad Industrial y Nuevas Tecnologías",
         "valor": 5160000,
         "descuento": 10,
-        "descuento_sena": 30,
+        "descuento_sena": null,
         "semestres": 2
     },
     {
@@ -212,7 +212,7 @@
         "programa": "Especialización en Dirección y Producción de Contenidos Audiovisuales",
         "valor": 4550000,
         "descuento": 10,
-        "descuento_sena": 30,
+        "descuento_sena": null,
         "semestres": 2
     },
     {
@@ -221,7 +221,7 @@
         "programa": "Especialización en Infancia, Adolescencia y Desarrollo Familiar",
         "valor": 5490000,
         "descuento": 0,
-        "descuento_sena": 30,
+        "descuento_sena": null,
         "semestres": 2
     },
     {
@@ -230,7 +230,7 @@
         "programa": "Especialización en Auditoría en Salud",
         "valor": 8640000,
         "descuento": 10,
-        "descuento_sena": 30,
+        "descuento_sena": null,
         "semestres": 2
     },
     {
@@ -239,7 +239,7 @@
         "programa": "Especialización en Gestión Ambiental",
         "valor": 4350000,
         "descuento": 10,
-        "descuento_sena": 30,
+        "descuento_sena": null,
         "semestres": 2
     },
     {
@@ -248,7 +248,7 @@
         "programa": "Especialización en Informática para la Innovación Educativa",
         "valor": 4140000,
         "descuento": 10,
-        "descuento_sena": 25,
+        "descuento_sena": null,
         "semestres": 2
     },
     {
@@ -257,7 +257,7 @@
         "programa": "Especialización en Pedagogía y Docencia",
         "valor": 4200000,
         "descuento": 0,
-        "descuento_sena": 25,
+        "descuento_sena": null,
         "semestres": 2
     },
     {
@@ -266,7 +266,7 @@
         "programa": "Especialización en Gerencia en Seguridad y Salud en el Trabajo",
         "valor": 8030000,
         "descuento": 10,
-        "descuento_sena": 30,
+        "descuento_sena": null,
         "semestres": 2
     },
     {
@@ -275,7 +275,7 @@
         "programa": "Especialización en Revisoría Fiscal y Auditoría Forense",
         "valor": 4770000,
         "descuento": 10,
-        "descuento_sena": 30,
+        "descuento_sena": null,
         "semestres": 2
     },
     {
@@ -284,7 +284,7 @@
         "programa": "Especialización en Alta Gerencia",
         "valor": 6170000,
         "descuento": 10,
-        "descuento_sena": 25,
+        "descuento_sena": null,
         "semestres": 2
     },
     {
@@ -293,7 +293,7 @@
         "programa": "Especialización en Gerencia Financiera",
         "valor": 6090000,
         "descuento": 10,
-        "descuento_sena": 25,
+        "descuento_sena": null,
         "semestres": 2
     },
     {
@@ -302,7 +302,7 @@
         "programa": "Especialización en Derecho Administrativo y Constitucional",
         "valor": 5200000,
         "descuento": 0,
-        "descuento_sena": 30,
+        "descuento_sena": null,
         "semestres": 2
     },
     {
@@ -320,7 +320,7 @@
         "programa": "Maestría en Epidemiología",
         "valor": 9310000,
         "descuento": 0,
-        "descuento_sena": 25,
+        "descuento_sena": null,
         "semestres": 3
     },
     {
@@ -329,7 +329,7 @@
         "programa": "Maestría en Educación para la Innovación Pedagógica",
         "valor": 5880000,
         "descuento": 10,
-        "descuento_sena": 25,
+        "descuento_sena": null,
         "semestres": 4
     },
     {
@@ -338,7 +338,7 @@
         "programa": "Maestría en Innovación",
         "valor": 7550000,
         "descuento": 10,
-        "descuento_sena": 25,
+        "descuento_sena": null,
         "semestres": 3
     },
     {
@@ -347,7 +347,7 @@
         "programa": "Maestría en Gerencia de Mercadeo Digital",
         "valor": 6940000,
         "descuento": 10,
-        "descuento_sena": 25,
+        "descuento_sena": null,
         "semestres": 4
     },
     {
@@ -356,7 +356,7 @@
         "programa": "Maestría en Analítica de Datos",
         "valor": 6600000,
         "descuento": 0,
-        "descuento_sena": 25,
+        "descuento_sena": null,
         "semestres": 3
     },
     {
@@ -365,7 +365,7 @@
         "programa": "Maestría en Inteligencia de Negocios",
         "valor": 7000000,
         "descuento": 0,
-        "descuento_sena": 25,
+        "descuento_sena": null,
         "semestres": 3
     },
     {
@@ -374,7 +374,7 @@
         "programa": "Maestría en Gestión del Talento Humano",
         "valor": 7200000,
         "descuento": 0,
-        "descuento_sena": 25,
+        "descuento_sena": null,
         "semestres": 3
     }
 ]

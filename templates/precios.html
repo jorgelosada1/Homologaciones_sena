@@ -29,7 +29,7 @@
 <div class="page-head">
     <div>
         <h2><span class="head-icon orange"><i class="fa-solid fa-tags"></i></span> Precios {{ cfg.anio }}</h2>
-        <p>Valor por semestre de cada programa virtual, con el precio para estudiante nuevo (primera vez) y para egresado SENA. Genera la oferta para el prospecto en un clic.</p>
+        <p>Valor por semestre de cada programa virtual, con su descuento y, en pregrado, el precio para egresado SENA. Genera la oferta para el prospecto en un clic.</p>
     </div>
     <div class="actions">
         <button class="btn btn-secondary" id="exportCsv"><i class="fa-solid fa-file-excel" style="color:#1d7044"></i> Descargar en Excel</button>
@@ -44,7 +44,7 @@
 
 <div class="p-toolbar">
     <div class="input-icon" style="flex:1;min-width:220px"><i class="fa-solid fa-magnifying-glass"></i><input type="text" id="q" placeholder="Buscar programa…" data-page-search><button type="button" class="input-clear"><i class="fa-solid fa-xmark"></i></button></div>
-    <label class="switch"><input type="checkbox" id="soloSena"><span class="track"></span> Solo con descuento SENA</label>
+    <label class="switch" id="soloSenaWrap"><input type="checkbox" id="soloSena"><span class="track"></span> Solo con descuento SENA</label>
     <select id="sort" style="width:auto">
         <option value="nombre">Ordenar: nombre</option>
         <option value="asc">Precio: menor a mayor</option>
@@ -95,6 +95,8 @@
     function render() {
         document.querySelectorAll('#view button').forEach((b) => b.classList.toggle('active', b.dataset.v === view));
         document.querySelectorAll('#nivelTabs .tab').forEach((b) => b.classList.toggle('active', b.dataset.n === nivel));
+        $('soloSenaWrap').hidden = nivel === 'pos';
+        if (nivel === 'pos') $('soloSena').checked = false;
         const l = list(); const q = $('q').value.trim();
         if (!l.length) { $('out').innerHTML = '<div class="card"><div class="empty"><div class="empty-icon"><i class="fa-solid fa-tags"></i></div><h4>Sin programas</h4></div></div>'; return; }
         if (view === 'grid') {
@@ -105,7 +107,7 @@
                     <div class="p-full">Valor pleno por semestre: <b>${money(p.valor)}</b></div>
                     <div class="p-rows">
                         <div class="p-row"><div class="lbl">Primera vez<small>${p.descuento ? `${p.descuento}% de descuento` : 'Sin descuento'}</small></div><div class="val"><strong>${money(pv(p))}</strong>${p.descuento ? `<span>ahorra ${money(p.valor - pv(p))}</span>` : ''}</div></div>
-                        ${sena(p) != null
+                        ${p.nivel === 'pos' ? '' : sena(p) != null
                             ? `<div class="p-row sena"><div class="lbl">Egresado SENA<small>${p.descuento_sena}% de descuento</small></div><div class="val"><strong>${money(sena(p))}</strong><span>ahorra ${money(p.valor - sena(p))}</span></div></div>`
                             : `<div class="p-row na"><div class="lbl">Egresado SENA<small>No aplica descuento SENA</small></div></div>`}
                     </div>
@@ -115,10 +117,11 @@
                     </div>
                 </article>`).join('')}</div>`;
         } else {
-            $('out').innerHTML = `<div class="table-wrap"><table class="table"><thead><tr><th>Programa</th><th class="num">Semestres</th><th class="num">Valor pleno</th><th class="num">% primera vez</th><th class="num">Valor primera vez</th><th class="num">% SENA</th><th class="num">Valor SENA</th><th></th></tr></thead><tbody>${l.map((p) => `
+            const conSena = nivel !== 'pos';
+            $('out').innerHTML = `<div class="table-wrap"><table class="table"><thead><tr><th>Programa</th><th class="num">Semestres</th><th class="num">Valor pleno</th><th class="num">% descuento</th><th class="num">Valor con descuento</th>${conSena ? '<th class="num">% SENA</th><th class="num">Valor SENA</th>' : ''}<th></th></tr></thead><tbody>${l.map((p) => `
                 <tr data-id="${p.id}"><td><b>${highlight(p.programa, q)}</b></td><td class="num">${p.semestres || '—'}</td><td class="num">${money(p.valor)}</td>
                 <td class="num">${p.descuento || 0}%</td><td class="num"><span class="t-pv">${money(pv(p))}</span></td>
-                <td class="num">${p.descuento_sena != null ? p.descuento_sena + '%' : '—'}</td><td class="num">${sena(p) != null ? `<span class="t-sena">${money(sena(p))}</span>` : '<span class="muted">No aplica</span>'}</td>
+                ${conSena ? `<td class="num">${p.descuento_sena != null ? p.descuento_sena + '%' : '—'}</td><td class="num">${sena(p) != null ? `<span class="t-sena">${money(sena(p))}</span>` : '<span class="muted">No aplica</span>'}</td>` : ''}
                 <td class="num"><button class="btn btn-ghost btn-sm" data-oferta title="Oferta"><i class="fa-solid fa-paper-plane"></i></button></td></tr>`).join('')}</tbody></table></div>`;
         }
     }
@@ -136,10 +139,11 @@
     }
     function pintarOferta() {
         const p = oferta.p;
+        $('ofTipo').hidden = p.nivel === 'pos';
         $('ofTipo').querySelector('[data-t=sena]').disabled = p.descuento_sena == null;
         if (p.descuento_sena == null && oferta.tipo === 'sena') oferta.tipo = 'pv';
         $('ofTipo').querySelectorAll('button').forEach((b) => b.classList.toggle('active', b.dataset.t === oferta.tipo));
-        $('ofNota').textContent = p.descuento_sena == null ? 'Este programa no tiene descuento SENA.' : '';
+        $('ofNota').textContent = p.nivel !== 'pos' && p.descuento_sena == null ? 'Este programa no tiene descuento SENA.' : '';
         $('ofertaTxt').innerHTML = waFormat(textoOferta());
     }
     $('out').addEventListener('click', (e) => {
