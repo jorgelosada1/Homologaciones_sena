@@ -30,159 +30,160 @@
         ctx.strokeStyle = fg; ctx.lineWidth = r * 0.22; ctx.lineCap = 'round'; ctx.lineJoin = 'round';
         ctx.beginPath(); ctx.moveTo(cx - r * 0.42, cy + r * 0.02); ctx.lineTo(cx - r * 0.1, cy + r * 0.34); ctx.lineTo(cx + r * 0.45, cy - r * 0.3); ctx.stroke();
     }
-    function chip(ctx, x, y, text, bg, fg, h = 50) {
-        font(ctx, 700, 21, BODY);
-        const w = ctx.measureText(text).width + 40;
-        ctx.fillStyle = bg; rr(ctx, x, y, w, h, h / 2); ctx.fill();
-        ctx.fillStyle = fg; ctx.textBaseline = 'middle'; ctx.fillText(text, x + 20, y + h / 2 + 1); ctx.textBaseline = 'alphabetic';
-        return w;
-    }
     function loadImg(src) {
         return new Promise((res) => { const i = new Image(); i.onload = () => res(i); i.onerror = () => res(null); i.src = src; });
     }
 
-    // Textos de los chips (precio / inicio) y si caben en una sola fila
-    const CHIPS_W = W - PAD * 2 - 300 - 44;
-    function textosChips(ctx, p, conPrecio) {
-        const pr = p.precio;
-        const precio = conPrecio && pr
-            ? (pr.descuento ? `${pr.descuento}% ${pr.tipo_descuento === 'SENA' ? 'SENA' : 'dcto.'}: ${money(pr.valor_final)}/semestre` : `Semestre: ${money(pr.valor)}`)
-            : null;
-        const inicio = p.inicio ? `Inicio: ${p.inicio.replace(/ de (\d{4})$/, ' $1')}` : null;
-        font(ctx, 700, 21, BODY);
-        const wp = precio ? ctx.measureText(precio).width + 40 : 0;
-        const wi = inicio ? ctx.measureText(inicio).width + 40 : 0;
-        const dosFilas = !!(precio && inicio) && wp + 12 + wi > CHIPS_W;
-        return { precio, inicio, dosFilas };
+    const H = 1350; // formato 4:5 para que WhatsApp la muestre completa
+    const fechaCorta = (t) => String(t || '').replace(/ de (\d{4})$/, ' $1');
+    function textoPrecio(p) {
+        const pr = p.precio; if (!pr) return null;
+        return pr.descuento
+            ? `${pr.descuento}% ${pr.tipo_descuento === 'SENA' ? 'SENA' : 'dcto.'}: ${money(pr.valor_final)}/sem`
+            : `${money(pr.valor)}/semestre`;
     }
 
-    function medirPrograma(ctx, p, conPrecio) {
-        font(ctx, 700, 36, DISPLAY);
-        const nameLines = wrap(ctx, p.programa_display, 600, 2);
-        let h = 48 + nameLines.length * 44 + 20 + 58 + 18 + 30;
-        const t = textosChips(ctx, p, conPrecio);
-        if (t.precio || t.inicio) h += 26 + 50 + (t.dosFilas ? 62 : 0);
-        return { nameLines, h: Math.max(h + 40, 300) };
-    }
-
-    function dibujarPrograma(ctx, p, y, m, conPrecio) {
-        const x = PAD, w = W - PAD * 2, h = m.h;
-        ctx.fillStyle = C.card; rr(ctx, x, y, w, h, 34); ctx.fill();
-        ctx.strokeStyle = C.line; ctx.lineWidth = 2; rr(ctx, x, y, w, h, 34); ctx.stroke();
+    function dibujarPrograma(ctx, p, y, R, conPrecio, inicioPropio) {
+        const x = PAD, w = W - PAD * 2;
+        ctx.fillStyle = C.card; rr(ctx, x, y, w, R, 28); ctx.fill();
+        ctx.strokeStyle = C.line; ctx.lineWidth = 2; rr(ctx, x, y, w, R, 28); ctx.stroke();
 
         // Dona: % de la carrera homologada
-        const cx = x + 150, cy = y + h / 2, r = 98, lw = 28;
+        const r = Math.min(R * 0.34, 74), lw = Math.max(12, r * 0.27), cx = x + 34 + r + lw / 2, cy = y + R / 2;
         const pct = Math.max(0, Math.min(100, p.porcentaje || 0));
         ctx.lineCap = 'round'; ctx.lineWidth = lw; ctx.strokeStyle = C.line;
         ctx.beginPath(); ctx.arc(cx, cy, r, 0, Math.PI * 2); ctx.stroke();
         const g = ctx.createLinearGradient(cx - r, cy - r, cx + r, cy + r); g.addColorStop(0, '#a6d65f'); g.addColorStop(1, C.green2);
         ctx.strokeStyle = g; ctx.beginPath(); ctx.arc(cx, cy, r, -Math.PI / 2, -Math.PI / 2 + Math.PI * 2 * pct / 100); ctx.stroke();
-        ctx.textAlign = 'center'; ctx.fillStyle = C.ink; font(ctx, 800, 56, DISPLAY); ctx.fillText(`${pct}%`, cx, cy + 14);
-        ctx.fillStyle = C.text2; font(ctx, 600, 19, BODY); ctx.fillText('homologado', cx, cy + 46); ctx.textAlign = 'left';
+        ctx.textAlign = 'center'; ctx.fillStyle = C.ink; font(ctx, 800, Math.round(r * 0.62), DISPLAY);
+        ctx.fillText(`${pct}%`, cx, cy + (r > 60 ? 4 : r * 0.22));
+        if (r > 60) { ctx.fillStyle = C.text2; font(ctx, 600, 16, BODY); ctx.fillText('homologado', cx, cy + 30); }
+        ctx.textAlign = 'left';
 
-        // Contenido
-        const x0 = x + 300, maxW = w - 300 - 44;
-        let yy = y + 48 + 32;
-        ctx.fillStyle = C.ink; font(ctx, 700, 36, DISPLAY);
-        m.nameLines.forEach((l) => { ctx.fillText(l, x0, yy); yy += 44; });
-        yy += 4;
+        // Contenido (bloque centrado verticalmente)
+        const x0 = cx + r + lw / 2 + 34, cw = x + w - 32 - x0;
+        const cl = (v, a, b) => Math.round(Math.max(a, Math.min(b, v)));
+        const nameS = cl(R * 0.2, 25, 32), barH = cl(R * 0.27, 32, 44), txtS = cl(R * 0.14, 17, 21), sp = cl(R * 0.075, 9, 14);
+        const B = nameS + sp + barH + sp + txtS;
+        let yy = y + (R - B) / 2 + nameS * 0.8;
+        ctx.fillStyle = C.ink; font(ctx, 700, nameS, DISPLAY);
+        ctx.fillText(wrap(ctx, p.programa_display, cw, 1)[0], x0, yy);
+        yy += nameS * 0.2 + sp;
 
-        // Barra de semestres
-        const n = Math.max(1, p.total || (p.homologados + p.faltantes)); const gap = 10;
-        const size = Math.min(58, (maxW - gap * (n - 1)) / n);
+        // Chip de precio a la derecha de la barra
+        let chipW = 0; const precio = conPrecio ? textoPrecio(p) : null;
+        if (precio) { font(ctx, 700, txtS - 1, BODY); chipW = ctx.measureText(precio).width + 36; }
+        const n = Math.max(1, p.total || (p.homologados + p.faltantes)); const gap = 8;
+        const barMax = cw - (chipW ? chipW + 20 : 0);
+        const size = Math.min(48, (barMax - gap * (n - 1)) / n);
         for (let i = 0; i < n; i++) {
             const sx = x0 + i * (size + gap), done = i < p.homologados;
-            ctx.fillStyle = done ? C.green : C.white; rr(ctx, sx, yy, size, 58, 14); ctx.fill();
-            if (!done) { ctx.strokeStyle = '#cfd8c7'; ctx.lineWidth = 2; rr(ctx, sx, yy, size, 58, 14); ctx.stroke(); }
-            ctx.fillStyle = done ? C.white : C.text3; font(ctx, 700, size > 44 ? 18 : 14, BODY); ctx.textAlign = 'center';
-            ctx.fillText(`S${i + 1}`, sx + size / 2, yy + 36); ctx.textAlign = 'left';
+            ctx.fillStyle = done ? C.green : C.white; rr(ctx, sx, yy, size, barH, 11); ctx.fill();
+            if (!done) { ctx.strokeStyle = '#cfd8c7'; ctx.lineWidth = 2; rr(ctx, sx, yy, size, barH, 11); ctx.stroke(); }
+            ctx.fillStyle = done ? C.white : C.text3; font(ctx, 700, size > 40 ? 16 : 13, BODY); ctx.textAlign = 'center';
+            ctx.fillText(`S${i + 1}`, sx + size / 2, yy + barH / 2 + 6); ctx.textAlign = 'left';
         }
-        yy += 58 + 40;
-        font(ctx, 800, 23, BODY); ctx.fillStyle = C.green2; const a = `${p.homologados} semestres homologados`; ctx.fillText(a, x0, yy);
-        let lx = x0 + ctx.measureText(a).width; font(ctx, 600, 23, BODY); ctx.fillStyle = C.text2; ctx.fillText(`  ·  ${p.faltantes} por cursar`, lx, yy);
+        if (precio) {
+            const ch = barH, cxp = x + w - 32 - chipW;
+            ctx.fillStyle = C.pinkSoft; rr(ctx, cxp, yy, chipW, ch, ch / 2); ctx.fill();
+            ctx.fillStyle = C.pink; font(ctx, 700, txtS - 1, BODY); ctx.textBaseline = 'middle';
+            ctx.fillText(precio, cxp + 18, yy + ch / 2 + 1); ctx.textBaseline = 'alphabetic';
+        }
+        yy += barH + sp + txtS * 0.85;
 
-        // Chips de precio e inicio
-        const t = textosChips(ctx, p, conPrecio);
-        if (t.precio || t.inicio) {
-            yy += 26; let cxp = x0;
-            if (t.precio) cxp += chip(ctx, cxp, yy, t.precio, C.pinkSoft, C.pink) + 12;
-            if (t.inicio) {
-                if (t.dosFilas) { cxp = x0; yy += 62; }
-                chip(ctx, cxp, yy, t.inicio, C.greenSoft, C.green2);
-            }
-        }
+        font(ctx, 800, txtS, BODY); ctx.fillStyle = C.green2; const a = `${p.homologados} semestres homologados`; ctx.fillText(a, x0, yy);
+        let resto = `  ·  ${p.faltantes} por cursar`;
+        if (inicioPropio && p.inicio) resto += `  ·  Inicio: ${fechaCorta(p.inicio)}`;
+        font(ctx, 600, txtS, BODY); ctx.fillStyle = C.text2; ctx.fillText(resto, x0 + ctx.measureText(a).width + 4, yy);
     }
 
     async function generar({ titulo, programas, nombre, conPrecio, cfg }) {
-        try { await Promise.all(['800 56px Outfit', '700 36px Outfit', '600 22px Inter', '700 22px Inter', '800 22px Inter'].map((f) => document.fonts.load(f))); } catch (e) { /* fuentes del sistema */ }
+        try { await Promise.all(['800 56px Outfit', '700 32px Outfit', '600 22px Inter', '700 22px Inter', '800 22px Inter'].map((f) => document.fonts.load(f))); } catch (e) { /* fuentes del sistema */ }
         const logo = await loadImg('/logo.jpg');
-        const tmp = document.createElement('canvas').getContext('2d');
-
-        // Medidas
-        font(tmp, 800, 58, DISPLAY);
-        const head = wrap(tmp, 'Tu título SENA te acerca a tu carrera profesional', W - PAD * 2, 2);
-        font(tmp, 600, 27, BODY);
-        const tit = wrap(tmp, titulo, W - PAD * 2 - 60, 2);
-        const heroH = 210 + (nombre ? 46 : 0) + head.length * 66 + 30 + tit.length * 36 + 50 + 60;
-        const medidas = programas.map((p) => medirPrograma(tmp, p, conPrecio));
-        const ahorro = conPrecio ? Math.max(0, ...programas.map((p) => (p.precio && p.precio.ahorro_total) || 0)) : 0;
-        let H = heroH + 40 + 50 + medidas.reduce((s, m) => s + m.h + 24, 0) + (ahorro ? 150 : 0) + 140 + 150;
-
         const cv = document.createElement('canvas'); cv.width = W; cv.height = H;
         const ctx = cv.getContext('2d');
         ctx.fillStyle = C.white; ctx.fillRect(0, 0, W, H);
 
+        const n = programas.length;
+        const inicios = [...new Set(programas.map((p) => p.inicio).filter(Boolean))];
+        const inicioComun = inicios.length === 1 ? inicios[0] : null;
+        const ahorro = conPrecio ? Math.max(0, ...programas.map((p) => (p.precio && p.precio.ahorro_total) || 0)) : 0;
+
         // ---- Encabezado
+        font(ctx, 800, 50, DISPLAY);
+        const head = wrap(ctx, 'Tu título SENA te acerca a tu carrera profesional', W - PAD * 2, 2);
+        const heroH = 168 + (nombre ? 40 : 0) + head.length * 58 + 24 + 52 + 38;
         const hg = ctx.createLinearGradient(0, 0, W, heroH); hg.addColorStop(0, '#8cc63f'); hg.addColorStop(1, '#3f6a17');
         ctx.fillStyle = hg; ctx.fillRect(0, 0, W, heroH);
-        ctx.save(); ctx.globalAlpha = 0.12; ctx.fillStyle = C.white; ctx.beginPath(); ctx.arc(W - 90, 70, 260, 0, Math.PI * 2); ctx.fill();
-        ctx.globalAlpha = 0.85; ctx.fillStyle = C.pink; ctx.beginPath(); ctx.arc(W + 20, heroH + 10, 150, 0, Math.PI * 2); ctx.fill(); ctx.restore();
-        ctx.fillStyle = C.white; rr(ctx, PAD, 60, 100, 100, 26); ctx.fill();
-        if (logo) ctx.drawImage(logo, PAD + 14, 74, 72, 72);
-        ctx.fillStyle = C.white; font(ctx, 800, 44, DISPLAY); ctx.fillText('Areandina', PAD + 128, 108);
-        ctx.globalAlpha = 0.85; font(ctx, 600, 22, BODY); ctx.fillText('Homologación para egresados SENA · 100% virtual', PAD + 128, 144); ctx.globalAlpha = 1;
-        let y = 230;
-        if (nombre) { font(ctx, 600, 30, BODY); ctx.globalAlpha = 0.95; ctx.fillText(`¡Hola, ${nombre}!`, PAD, y); ctx.globalAlpha = 1; y += 46; }
-        font(ctx, 800, 58, DISPLAY); head.forEach((l) => { ctx.fillText(l, PAD, y + 50); y += 66; });
-        y += 30;
-        const pillH = tit.length * 36 + 40;
-        ctx.fillStyle = 'rgba(255,255,255,0.18)'; rr(ctx, PAD, y, W - PAD * 2, pillH, 22); ctx.fill();
-        ctx.fillStyle = C.white; font(ctx, 600, 18, BODY); ctx.globalAlpha = 0.8; ctx.fillText('TU TÍTULO', PAD + 30, y + 30); ctx.globalAlpha = 1;
-        font(ctx, 700, 27, BODY); tit.forEach((l, i) => ctx.fillText(l, PAD + 30, y + 66 + i * 36));
-        y = heroH + 40;
+        ctx.save(); ctx.globalAlpha = 0.12; ctx.fillStyle = C.white; ctx.beginPath(); ctx.arc(W - 70, 40, 230, 0, Math.PI * 2); ctx.fill(); ctx.restore();
+        ctx.fillStyle = C.white; rr(ctx, PAD, 50, 88, 88, 22); ctx.fill();
+        if (logo) ctx.drawImage(logo, PAD + 12, 62, 64, 64);
+        ctx.fillStyle = C.white; font(ctx, 800, 40, DISPLAY); ctx.fillText('Areandina', PAD + 112, 92);
+        ctx.globalAlpha = 0.88; font(ctx, 600, 20, BODY); ctx.fillText('Homologación para egresados SENA · 100% virtual', PAD + 112, 124); ctx.globalAlpha = 1;
+        let y = 196;
+        if (nombre) { font(ctx, 600, 28, BODY); ctx.fillText(`¡Hola, ${nombre}!`, PAD, y); y += 40; }
+        font(ctx, 800, 50, DISPLAY); head.forEach((l) => { ctx.fillText(l, PAD, y + 44); y += 58; });
+        y += 24;
+        font(ctx, 600, 17, BODY); const lbl = 'TU TÍTULO'; const lw0 = ctx.measureText(lbl).width;
+        font(ctx, 700, 23, BODY); const t1 = wrap(ctx, titulo, W - PAD * 2 - lw0 - 76, 1)[0];
+        const pillW = Math.min(W - PAD * 2, lw0 + ctx.measureText(t1).width + 76);
+        ctx.fillStyle = 'rgba(255,255,255,0.2)'; rr(ctx, PAD, y, pillW, 52, 26); ctx.fill();
+        ctx.fillStyle = C.white; ctx.globalAlpha = 0.8; font(ctx, 700, 17, BODY); ctx.fillText(lbl, PAD + 26, y + 33); ctx.globalAlpha = 1;
+        font(ctx, 700, 23, BODY); ctx.fillText(t1, PAD + 26 + lw0 + 20, y + 34);
+
+        // ---- Zonas fijas de abajo hacia arriba
+        const pieH = 104, pieY = H - pieH;
+        const conBeneficios = n < 4; // con 4 carreras se omiten para dar espacio
+        const benY = conBeneficios ? pieY - 30 - 56 : pieY;
+        const banda = ahorro || inicioComun;
+        const bandaY = benY - 26 - 104;
+        const progEnd = (banda ? bandaY : benY) - 26;
 
         // ---- Programas
-        ctx.fillStyle = C.ink; font(ctx, 800, 34, DISPLAY);
-        ctx.fillText(programas.length > 1 ? `Puedes homologar en ${programas.length} carreras` : 'Puedes homologar en esta carrera', PAD, y + 30);
-        y += 60;
-        programas.forEach((p, i) => { dibujarPrograma(ctx, p, y, medidas[i], conPrecio); y += medidas[i].h + 24; });
+        y = heroH + 52;
+        ctx.fillStyle = C.ink; font(ctx, 800, 32, DISPLAY);
+        ctx.fillText(n > 1 ? `Puedes homologar en ${n} carreras` : 'Puedes homologar en esta carrera', PAD, y);
+        y += 26;
+        const gapP = n >= 4 ? 12 : 14, disp = progEnd - y;
+        const R = Math.min(220, (disp - gapP * (n - 1)) / n);
+        y += (disp - (R * n + gapP * (n - 1))) / 2;
+        programas.forEach((p) => { dibujarPrograma(ctx, p, y, R, conPrecio, !inicioComun); y += R + gapP; });
 
-        // ---- Ahorro
-        if (ahorro) {
+        // ---- Banda: ahorro e inicio de clases
+        if (banda) {
+            const bw = W - PAD * 2;
             const ag = ctx.createLinearGradient(PAD, 0, W - PAD, 0); ag.addColorStop(0, C.pink); ag.addColorStop(1, '#ff4fa8');
-            ctx.fillStyle = ag; rr(ctx, PAD, y + 6, W - PAD * 2, 120, 30); ctx.fill();
-            ctx.fillStyle = C.white; font(ctx, 600, 23, BODY); ctx.fillText('Ahorro estimado frente a cursar la carrera completa', PAD + 36, y + 52);
-            font(ctx, 800, 44, DISPLAY); ctx.fillText(`Hasta ${money(ahorro)}`, PAD + 36, y + 102);
-            y += 150;
+            ctx.fillStyle = ag; rr(ctx, PAD, bandaY, bw, 104, 28); ctx.fill();
+            ctx.fillStyle = C.white;
+            const col = (bx, label, value) => {
+                ctx.globalAlpha = 0.9; font(ctx, 600, 20, BODY); ctx.fillText(label, bx, bandaY + 40); ctx.globalAlpha = 1;
+                font(ctx, 800, 36, DISPLAY); ctx.fillText(value, bx, bandaY + 82);
+            };
+            if (ahorro && inicioComun) {
+                col(PAD + 34, 'Ahorro estimado', `Hasta ${money(ahorro)}`);
+                ctx.globalAlpha = 0.35; ctx.fillRect(PAD + bw * 0.55, bandaY + 22, 2, 60); ctx.globalAlpha = 1;
+                col(PAD + bw * 0.55 + 32, 'Inicio de clases', fechaCorta(inicioComun));
+            } else if (ahorro) col(PAD + 34, 'Ahorro estimado frente a cursar la carrera completa', `Hasta ${money(ahorro)}`);
+            else col(PAD + 34, 'Inicio de clases', fechaCorta(inicioComun));
         }
 
         // ---- Beneficios
-        const ben = ['Inscripción sin costo', 'Estudio de homologación sin costo', 'Clases en vivo después de las 6 p. m.'];
+        const ben = conBeneficios ? ['Inscripción sin costo', 'Estudio de homologación sin costo', 'Clases en vivo después de las 6 p. m.'] : [];
         const colW = (W - PAD * 2) / 3;
         ben.forEach((b, i) => {
-            const bx = PAD + i * colW; check(ctx, bx + 24, y + 40, 22, C.green, C.white);
-            ctx.fillStyle = C.ink; font(ctx, 700, 21, BODY);
-            wrap(ctx, b, colW - 70, 2).forEach((l, j) => ctx.fillText(l, bx + 58, y + 34 + j * 26));
+            const bx = PAD + i * colW; check(ctx, bx + 20, benY + 26, 20, C.green, C.white);
+            ctx.fillStyle = C.ink; font(ctx, 700, 19, BODY);
+            const ls = wrap(ctx, b, colW - 64, 2);
+            ls.forEach((l, j) => ctx.fillText(l, bx + 52, benY + 33 - (ls.length - 1) * 12 + j * 24));
         });
-        y += 110;
 
         // ---- Pie
-        ctx.fillStyle = C.dark; ctx.fillRect(0, H - 150, W, 150);
-        ctx.fillStyle = C.white; font(ctx, 800, 32, DISPLAY); ctx.fillText('¡Escríbeme y empieza tu carrera!', PAD, H - 86);
-        ctx.globalAlpha = 0.7; font(ctx, 500, 20, BODY);
+        ctx.fillStyle = C.dark; ctx.fillRect(0, pieY, W, pieH);
+        ctx.fillStyle = C.green; ctx.fillRect(0, pieY, W, 6);
+        ctx.fillStyle = C.white; font(ctx, 800, 30, DISPLAY); ctx.fillText('¡Escríbeme y empieza tu carrera!', PAD, pieY + 50);
+        ctx.globalAlpha = 0.7; font(ctx, 500, 19, BODY);
         const pie = [cfg && cfg.asesor ? `Tu asesor: ${cfg.asesor}` : 'Universidad Areandina', 'Valores por semestre', 'Cupos limitados'].join('  ·  ');
-        ctx.fillText(pie, PAD, H - 48); ctx.globalAlpha = 1;
-        ctx.fillStyle = C.green; ctx.fillRect(0, H - 150, W, 6);
+        ctx.fillText(pie, PAD, pieY + 82); ctx.globalAlpha = 1;
         return cv;
     }
 
