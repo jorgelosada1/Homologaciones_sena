@@ -49,7 +49,9 @@ def _fmt_homologacion(res, cfg):
         for p in g["programas"]:
             l = f"• *{p['programa_display']}*: {p['homologados']} semestres homologados, {p['faltantes']} por cursar"
             if p.get("precio"):
-                l += f" — {money(p['precio']['valor_final'])}/sem con {p['precio']['descuento']}% SENA"
+                pr = p["precio"]
+                l += (f" — {money(pr['valor_final'])}/sem con {pr['descuento']}% {'SENA' if pr.get('tipo_descuento') == 'SENA' else 'de descuento'}"
+                      if pr["descuento"] else f" — {money(pr['valor'])}/sem")
             lines.append(l)
     return "\n".join(lines)
 
@@ -153,13 +155,20 @@ def local_answer(question, store):
         if res["grupos"]:
             return _fmt_homologacion(res, cfg) + f"\n\n💡 Recuerda: {cfg['descuento_sena']}% de descuento SENA, inscripción y estudio de homologación sin costo."
 
-    for p in store.precios():
+    for p in sorted(store.precios(), key=lambda x: -len(tokens(x["programa"], {"VIRTUAL"}))):
         ptoks = tokens(p["programa"], {"VIRTUAL"})
         if ptoks and all(any(similarity(t, w) >= 0.85 for w in tokens(question)) for t in ptoks):
             valor = int(p["valor"])
-            final = valor - round(valor * cfg["descuento_sena"] / 100)
-            return (f"💰 *{p['programa']}*\n• Valor semestre: {money(valor)}\n• Con {cfg['descuento_sena']}% SENA: *{money(final)}*\n"
-                    f"• Duración: {p.get('semestres')} semestres\n• Inicio: {store.inicio_de(p['programa'], 'pre')}")
+            nivel = "pos" if p.get("nivel") == "pos" else "pre"
+            lineas = [f"💰 *{p['programa']}*", f"• Valor semestre: {money(valor)}"]
+            if p.get("descuento"):
+                lineas.append(f"• Primera vez ({p['descuento']}%): *{money(valor - round(valor * p['descuento'] / 100))}*")
+            if p.get("descuento_sena") is not None:
+                lineas.append(f"• Con {p['descuento_sena']}% SENA: *{money(valor - round(valor * p['descuento_sena'] / 100))}*")
+            if p.get("semestres"):
+                lineas.append(f"• Duración: {p['semestres']} semestres")
+            lineas.append(f"• Inicio: {store.inicio_de(p['programa'], nivel)}")
+            return "\n".join(lineas)
 
     for keys, ans in _FAQ:
         if any(norm(k) in q for k in keys):
@@ -182,7 +191,9 @@ def _context(store):
     df = store.actas()
     filas = [f"{r['TÉCNICO O TECNOLOGÍA']} | {r['PROGRAMA']} | {r['SEMTR HOMOLOGADOS']} | {r['FALTANTES']}"
              for _, r in df.sort_values(["TÉCNICO O TECNOLOGÍA", "PROGRAMA"]).iterrows()]
-    precios = [f"{p['programa']} | {p['valor']} | {p.get('semestres')}" for p in store.precios()]
+    precios = [f"{'Pregrado' if p.get('nivel', 'pre') == 'pre' else 'Posgrado'} | {p['programa']} | {p['valor']} | "
+               f"{p.get('descuento') or 0}% | {p['descuento_sena'] if p.get('descuento_sena') is not None else 'no aplica'} | {p.get('semestres') or '?'}"
+               for p in store.precios()]
     return (
         "Eres el asistente interno de los asesores comerciales de la Universidad Areandina (Colombia) "
         "para homologaciones de egresados SENA. Responde en español, de forma breve y práctica, usando el "
@@ -192,7 +203,7 @@ def _context(store):
         f"GUÍA INTERNA:{GUIA}\n"
         "ACTAS DE HOMOLOGACIÓN VIRTUAL (título SENA | programa | semestres homologados | semestres por cursar):\n"
         + "\n".join(filas)
-        + "\n\nPRECIOS POR SEMESTRE ANTES DE DESCUENTO (programa | valor COP | semestres):\n" + "\n".join(precios)
+        + "\n\nPRECIOS POR SEMESTRE (nivel | programa | valor pleno COP | % descuento primera vez | % descuento SENA | semestres):\n" + "\n".join(precios)
         + "\n\nCALENDARIO DE COHORTES (parametrización vigente; las letras son las cohortes en que abre cada programa):\n"
         + calendario_texto(store)
     )

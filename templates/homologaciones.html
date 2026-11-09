@@ -229,7 +229,7 @@
         return `<article class="card prog-card fade-up">
             <div class="prog-top">
                 <div class="prog-icon"><i class="fa-solid fa-building-columns"></i></div>
-                <div style="min-width:0"><div class="prog-name">${escapeHtml(p.programa_display)}</div><div class="prog-meta">Virtual · ${p.total} semestres · ${pr ? pr.descuento + '% descuento SENA' : 'descuento SENA'}</div></div>
+                <div style="min-width:0"><div class="prog-name">${escapeHtml(p.programa_display)}</div><div class="prog-meta">Virtual · ${p.total} semestres · ${pr ? (pr.descuento ? pr.descuento + '% ' + (pr.tipo_descuento === 'SENA' ? 'descuento SENA' : 'descuento primera vez') : 'sin descuento SENA') : ''}</div></div>
                 ${ring(p.porcentaje)}
             </div>
             <div class="sem-legend"><span><b>${p.homologados}</b> semestres homologados</span><span><b>${p.faltantes}</b> por cursar</span></div>
@@ -298,7 +298,7 @@
             const p = last.grupos.flatMap((g) => g.programas).find((x) => x.programa_display === cp.dataset.copyProg);
             if (!p) return;
             let t = `🎓 *${p.programa_display}* (virtual)\n➡ Semestres homologados: ${p.homologados}\n➡ Semestres por cursar: ${p.faltantes}`;
-            if (p.precio) t += `\n💰 Semestre con ${p.precio.descuento}% SENA: *${money(p.precio.valor_final)}*\n💵 Inversión total: ${money(p.precio.inversion_total)}\n🎉 Ahorro estimado: ${money(p.precio.ahorro_total)}`;
+            if (p.precio) t += `\n💰 Semestre${p.precio.descuento ? ` con ${p.precio.descuento}% ${p.precio.tipo_descuento === 'SENA' ? 'SENA' : 'de descuento'}` : ''}: *${money(p.precio.valor_final)}*\n💵 Inversión total: ${money(p.precio.inversion_total)}\n🎉 Ahorro estimado: ${money(p.precio.ahorro_total)}`;
             copyText(t, 'Resumen copiado', last.query);
         }
     });

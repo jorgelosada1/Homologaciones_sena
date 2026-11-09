@@ -1,19 +1,21 @@
 {% extends "layout.html" %}
 {% block title %}Precios · Admin{% endblock %}
 {% block content %}
-<div class="page-head"><div><h2><span class="head-icon orange"><i class="fa-solid fa-tags"></i></span> Precios</h2><p>Valor por semestre, descuento general y duración de cada programa. Se usan en homologaciones, simulador y ofertas.</p></div>
+<div class="page-head"><div><h2><span class="head-icon orange"><i class="fa-solid fa-tags"></i></span> Precios</h2><p>Valor pleno por semestre, descuento de primera vez, descuento SENA (vacío = no aplica) y duración. Se usan en homologaciones, precios y ofertas.</p></div>
     <div class="actions"><button class="btn btn-primary" data-open-modal="newModal"><i class="fa-solid fa-plus"></i> Nuevo programa</button></div></div>
 {% include "_admin_nav.html" %}
 <div class="table-wrap">
     <table class="table">
-        <thead><tr><th>Programa</th><th>Valor semestre</th><th>Desc. %</th><th>Semestres</th><th class="num">Acciones</th></tr></thead>
+        <thead><tr><th>Nivel</th><th>Programa</th><th>Valor semestre</th><th>% primera vez</th><th>% SENA</th><th>Semestres</th><th class="num">Acciones</th></tr></thead>
         <tbody>
         {% for p in precios %}
         <tr>
+            <td><select form="u{{ loop.index0 }}" name="nivel" style="width:auto"><option value="pre" {% if p.nivel != 'pos' %}selected{% endif %}>Pregrado</option><option value="pos" {% if p.nivel == 'pos' %}selected{% endif %}>Posgrado</option></select></td>
             <td><input form="u{{ loop.index0 }}" type="text" name="programa" value="{{ p.programa }}" required style="min-width:220px"></td>
             <td><input form="u{{ loop.index0 }}" type="number" name="valor" value="{{ p.valor }}" min="0" step="1000" style="width:140px"></td>
             <td><input form="u{{ loop.index0 }}" type="number" name="descuento" value="{{ p.descuento }}" min="0" max="100" style="width:80px"></td>
-            <td><input form="u{{ loop.index0 }}" type="number" name="semestres" value="{{ p.semestres }}" min="1" max="14" style="width:80px"></td>
+            <td><input form="u{{ loop.index0 }}" type="number" name="descuento_sena" value="{{ p.descuento_sena if p.descuento_sena is not none }}" min="0" max="100" placeholder="—" style="width:80px"></td>
+            <td><input form="u{{ loop.index0 }}" type="number" name="semestres" value="{{ p.semestres if p.semestres is not none }}" min="1" max="14" placeholder="?" style="width:80px"></td>
             <td class="num nowrap">
                 <form id="u{{ loop.index0 }}" method="POST" style="display:inline"><input type="hidden" name="action" value="update"><input type="hidden" name="index" value="{{ loop.index0 }}"><button class="btn btn-primary btn-sm" title="Guardar"><i class="fa-solid fa-floppy-disk"></i></button></form>
                 <form method="POST" style="display:inline" data-confirm="¿Eliminar {{ p.programa }}?"><input type="hidden" name="action" value="delete"><input type="hidden" name="index" value="{{ loop.index0 }}"><button class="btn btn-danger-soft btn-sm" title="Eliminar"><i class="fa-regular fa-trash-can"></i></button></form>
@@ -28,11 +30,12 @@
         <div class="modal-head"><h3><i class="fa-solid fa-plus" style="color:var(--brand)"></i> Nuevo programa</h3><button type="button" class="icon-btn sm" data-close-modal><i class="fa-solid fa-xmark"></i></button></div>
         <div class="modal-body stack" style="gap:12px">
             <input type="hidden" name="action" value="add">
-            <div class="field"><label class="label">Programa</label><input type="text" name="programa" required></div>
-            <div class="grid grid-3" style="gap:10px">
-                <div class="field"><label class="label">Valor</label><input type="number" name="valor" min="0" step="1000" required></div>
-                <div class="field"><label class="label">Desc. %</label><input type="number" name="descuento" min="0" max="100" value="0"></div>
-                <div class="field"><label class="label">Semestres</label><input type="number" name="semestres" min="1" max="14" value="8"></div>
+            <div class="row"><select name="nivel" style="width:auto"><option value="pre">Pregrado</option><option value="pos">Posgrado</option></select><input type="text" name="programa" placeholder="Nombre del programa" required style="flex:1"></div>
+            <div class="grid grid-2" style="gap:10px">
+                <div class="field"><label class="label">Valor pleno por semestre</label><input type="number" name="valor" min="0" step="1000" required></div>
+                <div class="field"><label class="label">Semestres</label><input type="number" name="semestres" min="1" max="14" placeholder="?"></div>
+                <div class="field"><label class="label">% descuento primera vez</label><input type="number" name="descuento" min="0" max="100" value="0"></div>
+                <div class="field"><label class="label">% descuento SENA (vacío = no aplica)</label><input type="number" name="descuento_sena" min="0" max="100"></div>
             </div>
         </div>
         <div class="modal-foot"><button type="button" class="btn btn-secondary" data-close-modal>Cancelar</button><button class="btn btn-primary" type="submit">Crear</button></div>

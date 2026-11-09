@@ -106,3 +106,17 @@ def test_mensajes_con_fecha_de_su_programa():
     msgs = {m["titulo"]: m["texto"] for m in store.render_list(store.mensajes_programas())}
     assert "22 de febrero de 2027" in msgs["Economía"]
     assert "8 de marzo de 2027" in msgs["Maestría en Innovación"]
+
+
+def test_precios_con_descuento_sena_por_programa():
+    precios = {p["programa"]: p for p in store.precios()}
+    assert precios["Administración de Empresas"]["descuento_sena"] == 20
+    assert precios["Administración en Salud"]["descuento_sena"] is None
+    assert precios["Maestría en Innovación"]["nivel"] == "pos" and precios["Maestría en Innovación"]["descuento_sena"] == 25
+    # en homologación, un programa sin descuento SENA usa su descuento de primera vez
+    res = buscar_homologacion(store, "Tecnología en Gestión Administrativa del Sector Salud")
+    progs = {p["programa_display"]: p for p in res["grupos"][0]["programas"]}
+    assert progs["Administración de Empresas"]["precio"]["valor_final"] == 2088000
+    assert progs["Administración en Salud"]["precio"]["tipo_descuento"] == "primera vez"
+    txt = mensaje_homologacion(res, store.config)
+    assert "Descuento SENA del 20%* en Administración de Empresas" in txt

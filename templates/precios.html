@@ -3,44 +3,53 @@
 {% block head %}
 <style>
     .p-toolbar { display: flex; gap: 10px; flex-wrap: wrap; align-items: center; margin-bottom: 18px; }
-    .p-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(250px, 1fr)); gap: 14px; }
-    .p-card { padding: 18px; display: flex; flex-direction: column; gap: 10px; }
+    .p-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(270px, 1fr)); gap: 14px; }
+    .p-card { padding: 18px; display: flex; flex-direction: column; gap: 12px; }
     .p-card h3 { font-size: 15px; font-weight: 650; line-height: 1.3; min-height: 40px; }
-    .p-price { font-family: var(--font-display); font-size: 26px; font-weight: 750; letter-spacing: -0.02em; font-variant-numeric: tabular-nums; }
-    .p-old { color: var(--text-3); text-decoration: line-through; font-size: 13px; }
-    .p-meta { display: flex; justify-content: space-between; font-size: 12.5px; color: var(--text-2); }
-    .p-disc { display: flex; align-items: center; gap: 8px; font-size: 12.5px; color: var(--text-2); }
-    .p-disc input { width: 70px !important; height: 32px !important; text-align: center; padding: 0 6px !important; }
+    .p-full { font-size: 12.5px; color: var(--text-2); }
+    .p-full b { color: var(--text); font-size: 14px; }
+    .p-rows { display: grid; gap: 8px; }
+    .p-row { display: flex; align-items: center; gap: 10px; padding: 10px 12px; border-radius: 12px; border: 1px solid var(--border); background: var(--surface-2); }
+    .p-row .lbl { font-size: 12px; font-weight: 650; color: var(--text-2); }
+    .p-row .lbl small { display: block; font-weight: 500; color: var(--text-3); }
+    .p-row .val { margin-left: auto; text-align: right; }
+    .p-row .val strong { display: block; font-family: var(--font-display); font-size: 19px; font-variant-numeric: tabular-nums; }
+    .p-row .val span { font-size: 11.5px; color: var(--text-3); }
+    .p-row.sena { background: var(--pink-soft); border-color: transparent; }
+    .p-row.sena .val strong { color: var(--pink); }
+    .p-row.na { opacity: .6; }
+    .p-meta { display: flex; justify-content: space-between; gap: 8px; font-size: 12px; color: var(--text-2); flex-wrap: wrap; }
     .p-actions { display: flex; gap: 6px; margin-top: auto; }
     .p-actions .btn { flex: 1; }
-    .save-pill { font-size: 11.5px; font-weight: 700; color: var(--brand-ink); background: var(--brand-soft); padding: 2px 8px; border-radius: 20px; }
+    .t-sena { color: var(--pink); font-weight: 700; }
+    .t-pv { color: var(--brand-ink); font-weight: 700; }
 </style>
 {% endblock %}
 {% block content %}
 <div class="page-head">
     <div>
-        <h2><span class="head-icon orange"><i class="fa-solid fa-tags"></i></span> Precios pregrado {{ cfg.anio }}</h2>
-        <p>Valor por semestre de cada programa virtual. Ajusta el descuento y genera la oferta para el prospecto en un clic.</p>
+        <h2><span class="head-icon orange"><i class="fa-solid fa-tags"></i></span> Precios {{ cfg.anio }}</h2>
+        <p>Valor por semestre de cada programa virtual, con el precio para estudiante nuevo (primera vez) y para egresado SENA. Genera la oferta para el prospecto en un clic.</p>
     </div>
     <div class="actions">
-        <button class="btn btn-secondary" id="exportCsv"><i class="fa-solid fa-file-csv"></i> Exportar</button>
+        <button class="btn btn-secondary" id="exportCsv"><i class="fa-solid fa-file-excel" style="color:#1d7044"></i> Descargar en Excel</button>
         <button class="btn btn-secondary" id="copyAll"><i class="fa-regular fa-copy"></i> Copiar lista</button>
-        {% if mod_on('simulador') %}<a class="btn btn-primary" href="/simulador"><i class="fa-solid fa-calculator"></i> Simulador</a>{% else %}<a class="btn btn-primary" href="/brochures?nivel=pregrado"><i class="fa-solid fa-book-open"></i> Pensum</a>{% endif %}
     </div>
+</div>
+
+<div class="tabs" id="nivelTabs">
+    <button class="tab {{ 'active' if nivel != 'pos' }}" data-n="pre"><i class="fa-solid fa-user-graduate"></i> Pregrado <span class="badge">{{ programas|selectattr('nivel','equalto','pre')|list|length }}</span></button>
+    <button class="tab {{ 'active' if nivel == 'pos' }}" data-n="pos"><i class="fa-solid fa-award"></i> Posgrado <span class="badge">{{ programas|selectattr('nivel','equalto','pos')|list|length }}</span></button>
 </div>
 
 <div class="p-toolbar">
     <div class="input-icon" style="flex:1;min-width:220px"><i class="fa-solid fa-magnifying-glass"></i><input type="text" id="q" placeholder="Buscar programa…" data-page-search><button type="button" class="input-clear"><i class="fa-solid fa-xmark"></i></button></div>
+    <label class="switch"><input type="checkbox" id="soloSena"><span class="track"></span> Solo con descuento SENA</label>
     <select id="sort" style="width:auto">
         <option value="nombre">Ordenar: nombre</option>
         <option value="asc">Precio: menor a mayor</option>
         <option value="desc">Precio: mayor a menor</option>
-        <option value="sem">Duración</option>
     </select>
-    <div class="seg" id="discMode">
-        <button data-mode="prog" class="active" title="Descuento definido por programa">Desc. por programa</button>
-        <button data-mode="sena" title="Aplicar el descuento SENA a todos">{{ cfg.descuento_sena }}% SENA a todos</button>
-    </div>
     <div class="seg" id="view"><button data-v="grid" class="active" aria-label="Tarjetas"><i class="fa-solid fa-grip"></i></button><button data-v="table" aria-label="Tabla"><i class="fa-solid fa-list"></i></button></div>
 </div>
 
@@ -49,7 +58,11 @@
 <div class="modal" id="ofertaModal" aria-hidden="true">
     <div class="modal-box">
         <div class="modal-head"><h3><i class="fa-solid fa-paper-plane" style="color:var(--brand)"></i> Oferta para el prospecto</h3><button class="icon-btn sm" data-close-modal aria-label="Cerrar"><i class="fa-solid fa-xmark"></i></button></div>
-        <div class="wa-preview" style="border-radius:0"><div class="wa-bubble" id="ofertaTxt" data-time="ahora ✓✓"></div></div>
+        <div style="padding:14px 20px 0" class="row">
+            <div class="seg" id="ofTipo"><button data-t="pv" class="active">Primera vez</button><button data-t="sena">Egresado SENA</button></div>
+            <span class="small muted" id="ofNota"></span>
+        </div>
+        <div class="wa-preview" style="border-radius:0;margin-top:14px"><div class="wa-bubble" id="ofertaTxt" data-time="ahora ✓✓"></div></div>
         <div class="modal-foot">
             <div class="input-icon" style="flex:1;min-width:160px"><i class="fa-solid fa-phone"></i><input type="tel" id="phone" placeholder="Celular (opcional)"></div>
             <button class="btn btn-pink" id="ofCopy"><i class="fa-regular fa-copy"></i> Copiar</button>
@@ -63,71 +76,92 @@
 (() => {
     const { escapeHtml, money, normalize, highlight, waFormat, copyText, openWhatsApp, openModal, store, debounce } = App;
     const DATA = {{ programas | tojson }};
-    const SIM_ON = {{ mod_on('simulador') | tojson }};
-    const SENA = {{ cfg.descuento_sena | int }};
     const INICIO = {{ cfg.inicio_clases | tojson }};
     const $ = (id) => document.getElementById(id);
-    let view = store.get('precios-view', 'grid'), mode = 'prog', ofertaRaw = '';
-    const custom = {};
+    let nivel = {{ ('pos' if nivel == 'pos' else 'pre') | tojson }}, view = store.get('precios-view', 'grid');
+    let oferta = { p: null, tipo: 'pv' };
 
-    const disc = (p) => custom[p.id] ?? (mode === 'sena' ? SENA : p.descuento);
-    const fin = (p) => p.valor - Math.round(p.valor * disc(p) / 100);
+    const pv = (p) => p.valor - Math.round(p.valor * (p.descuento || 0) / 100);
+    const sena = (p) => p.descuento_sena == null ? null : p.valor - Math.round(p.valor * p.descuento_sena / 100);
+    const dur = (p) => p.semestres ? `${p.semestres} semestres` : 'Duración por confirmar';
 
     function list() {
         const q = normalize($('q').value.trim());
-        let l = DATA.filter((p) => !q || normalize(p.programa).includes(q));
+        let l = DATA.filter((p) => p.nivel === nivel && (!q || normalize(p.programa).includes(q)) && (!$('soloSena').checked || p.descuento_sena != null));
         const s = $('sort').value;
-        l.sort((a, b) => s === 'asc' ? fin(a) - fin(b) : s === 'desc' ? fin(b) - fin(a) : s === 'sem' ? a.semestres - b.semestres : a.programa.localeCompare(b.programa));
+        l.sort((a, b) => s === 'asc' ? pv(a) - pv(b) : s === 'desc' ? pv(b) - pv(a) : a.programa.localeCompare(b.programa));
         return l;
     }
     function render() {
         document.querySelectorAll('#view button').forEach((b) => b.classList.toggle('active', b.dataset.v === view));
+        document.querySelectorAll('#nivelTabs .tab').forEach((b) => b.classList.toggle('active', b.dataset.n === nivel));
         const l = list(); const q = $('q').value.trim();
         if (!l.length) { $('out').innerHTML = '<div class="card"><div class="empty"><div class="empty-icon"><i class="fa-solid fa-tags"></i></div><h4>Sin programas</h4></div></div>'; return; }
         if (view === 'grid') {
             $('out').innerHTML = `<div class="p-grid">${l.map((p) => `
                 <article class="card hoverable p-card" data-id="${p.id}">
-                    <div class="row" style="justify-content:space-between"><span class="badge">${p.semestres} semestres</span>${disc(p) ? `<span class="save-pill">Ahorra ${money(p.valor - fin(p))}</span>` : ''}</div>
+                    <div class="row" style="justify-content:space-between"><span class="badge">${dur(p)}</span>${p.inicio ? `<span class="badge green" title="Inicio de clases"><i class="fa-regular fa-calendar"></i> ${escapeHtml(p.inicio.replace(/ de (\\d{4})$/, ' $1'))}</span>` : ''}</div>
                     <h3>${highlight(p.programa, q)}</h3>
-                    <div><div class="p-old">${disc(p) ? money(p.valor) : '&nbsp;'}</div><div class="p-price">${money(fin(p))}</div><div class="small muted">por semestre</div></div>
-                    <div class="p-disc">Descuento <input type="number" min="0" max="100" value="${disc(p)}" data-disc> %</div>
-                    <div class="p-meta"><span>Carrera completa</span><b>${money(fin(p) * p.semestres)}</b></div>
-                    <div class="p-actions"><button class="btn btn-primary btn-sm" data-oferta><i class="fa-solid fa-paper-plane"></i> Oferta</button>${SIM_ON ? `<a class="btn btn-secondary btn-sm" href="/simulador?programa=${p.id}"><i class="fa-solid fa-calculator"></i> Simular</a>` : ''}</div>
+                    <div class="p-full">Valor pleno por semestre: <b>${money(p.valor)}</b></div>
+                    <div class="p-rows">
+                        <div class="p-row"><div class="lbl">Primera vez<small>${p.descuento ? `${p.descuento}% de descuento` : 'Sin descuento'}</small></div><div class="val"><strong>${money(pv(p))}</strong>${p.descuento ? `<span>ahorra ${money(p.valor - pv(p))}</span>` : ''}</div></div>
+                        ${sena(p) != null
+                            ? `<div class="p-row sena"><div class="lbl">Egresado SENA<small>${p.descuento_sena}% de descuento</small></div><div class="val"><strong>${money(sena(p))}</strong><span>ahorra ${money(p.valor - sena(p))}</span></div></div>`
+                            : `<div class="p-row na"><div class="lbl">Egresado SENA<small>No aplica descuento SENA</small></div></div>`}
+                    </div>
+                    <div class="p-actions">
+                        <button class="btn btn-primary btn-sm" data-oferta><i class="fa-solid fa-paper-plane"></i> Oferta</button>
+                        ${p.pensum ? `<a class="btn btn-secondary btn-sm" href="/brochures?nivel=${p.nivel === 'pos' ? 'posgrado' : 'pregrado'}&ver=${encodeURIComponent(p.pensum)}"><i class="fa-solid fa-book-open"></i> Pensum</a>` : ''}
+                    </div>
                 </article>`).join('')}</div>`;
         } else {
-            $('out').innerHTML = `<div class="table-wrap"><table class="table"><thead><tr><th>Programa</th><th class="num">Semestres</th><th class="num">Valor</th><th class="num">Desc. %</th><th class="num">Valor final</th><th class="num">Carrera completa</th><th></th></tr></thead><tbody>${l.map((p) => `
-                <tr data-id="${p.id}"><td><b>${highlight(p.programa, q)}</b></td><td class="num">${p.semestres}</td><td class="num">${money(p.valor)}</td>
-                <td class="num"><input type="number" min="0" max="100" value="${disc(p)}" data-disc style="width:70px;height:32px;text-align:center;padding:0 6px"></td>
-                <td class="num"><b style="color:var(--brand-ink)">${money(fin(p))}</b></td><td class="num">${money(fin(p) * p.semestres)}</td>
+            $('out').innerHTML = `<div class="table-wrap"><table class="table"><thead><tr><th>Programa</th><th class="num">Semestres</th><th class="num">Valor pleno</th><th class="num">% primera vez</th><th class="num">Valor primera vez</th><th class="num">% SENA</th><th class="num">Valor SENA</th><th></th></tr></thead><tbody>${l.map((p) => `
+                <tr data-id="${p.id}"><td><b>${highlight(p.programa, q)}</b></td><td class="num">${p.semestres || '—'}</td><td class="num">${money(p.valor)}</td>
+                <td class="num">${p.descuento || 0}%</td><td class="num"><span class="t-pv">${money(pv(p))}</span></td>
+                <td class="num">${p.descuento_sena != null ? p.descuento_sena + '%' : '—'}</td><td class="num">${sena(p) != null ? `<span class="t-sena">${money(sena(p))}</span>` : '<span class="muted">No aplica</span>'}</td>
                 <td class="num"><button class="btn btn-ghost btn-sm" data-oferta title="Oferta"><i class="fa-solid fa-paper-plane"></i></button></td></tr>`).join('')}</tbody></table></div>`;
         }
     }
-    $('out').addEventListener('change', (e) => {
-        const inp = e.target.closest('[data-disc]'); if (!inp) return;
-        const id = +inp.closest('[data-id]').dataset.id;
-        custom[id] = Math.max(0, Math.min(100, +inp.value || 0)); render();
-    });
+
+    function textoOferta() {
+        const p = oferta.p; if (!p) return '';
+        const esSena = oferta.tipo === 'sena' && p.descuento_sena != null;
+        const d = esSena ? p.descuento_sena : (p.descuento || 0);
+        const fin = p.valor - Math.round(p.valor * d / 100), ah = p.valor - fin;
+        let t = `🎓 *Oferta Universidad Areandina*\n*${p.programa}* – 100% virtual\n\n💰 Valor del semestre: *${money(p.valor)}*\n`;
+        if (d) t += `🏷️ ${esSena ? 'Como egresado SENA tienes' : 'Tienes'} un *${d}% de descuento*, ahorras *${money(ah)}* por semestre.\n✅ *Valor final por semestre: ${money(fin)}*\n`;
+        if (p.semestres) t += `📚 Duración: ${p.semestres} semestres\n`;
+        t += `\n📅 *Inicio de clases:* ${p.inicio || INICIO}\n📌 Cupos limitados. Aprovecha este beneficio.`;
+        return t;
+    }
+    function pintarOferta() {
+        const p = oferta.p;
+        $('ofTipo').querySelector('[data-t=sena]').disabled = p.descuento_sena == null;
+        if (p.descuento_sena == null && oferta.tipo === 'sena') oferta.tipo = 'pv';
+        $('ofTipo').querySelectorAll('button').forEach((b) => b.classList.toggle('active', b.dataset.t === oferta.tipo));
+        $('ofNota').textContent = p.descuento_sena == null ? 'Este programa no tiene descuento SENA.' : '';
+        $('ofertaTxt').innerHTML = waFormat(textoOferta());
+    }
     $('out').addEventListener('click', (e) => {
         if (!e.target.closest('[data-oferta]')) return;
-        const p = DATA.find((x) => x.id === +e.target.closest('[data-id]').dataset.id);
-        const d = disc(p), ah = p.valor - fin(p);
-        ofertaRaw = `🎓 *Oferta Universidad Areandina*\n*${p.programa}* en la *Universidad Areandina* tiene un valor regular de *${money(p.valor)}* por semestre.\n\n` +
-            (d ? `Actualmente cuentas con un *${d}% de descuento*, lo que representa un ahorro de *${money(ah)}*.\n\n` : '') +
-            `✅ El valor final de tu matrícula queda en *${money(fin(p))}*.\n📚 Duración: ${p.semestres} semestres · 100% virtual\n\n📅 *Inicio de clases:* ${p.inicio || INICIO}\n📌 Cupos limitados. Aprovecha este beneficio exclusivo.`;
-        $('ofertaTxt').innerHTML = waFormat(ofertaRaw); $('ofertaTxt').dataset.prog = p.programa;
-        openModal('ofertaModal');
+        oferta.p = DATA.find((x) => x.id === +e.target.closest('[data-id]').dataset.id);
+        oferta.tipo = oferta.p.descuento_sena != null ? 'sena' : 'pv';
+        pintarOferta(); openModal('ofertaModal');
     });
-    $('ofCopy').onclick = () => copyText(ofertaRaw, '¡Oferta copiada!', $('ofertaTxt').dataset.prog);
-    $('ofWa').onclick = () => openWhatsApp($('phone').value, ofertaRaw, $('ofertaTxt').dataset.prog);
+    $('ofTipo').addEventListener('click', (e) => { const b = e.target.closest('[data-t]'); if (b && !b.disabled) { oferta.tipo = b.dataset.t; pintarOferta(); } });
+    $('ofCopy').onclick = () => copyText(textoOferta(), '¡Oferta copiada!', oferta.p.programa);
+    $('ofWa').onclick = () => openWhatsApp($('phone').value, textoOferta(), oferta.p.programa);
     $('q').addEventListener('input', debounce(render, 120));
     $('sort').addEventListener('change', render);
+    $('soloSena').addEventListener('change', render);
+    $('nivelTabs').addEventListener('click', (e) => { const b = e.target.closest('[data-n]'); if (!b) return; nivel = b.dataset.n; const u = new URL(location); u.searchParams.set('nivel', nivel); history.replaceState(null, '', u); render(); });
     $('view').addEventListener('click', (e) => { const b = e.target.closest('[data-v]'); if (b) { view = b.dataset.v; store.set('precios-view', view); render(); } });
-    $('discMode').addEventListener('click', (e) => { const b = e.target.closest('[data-mode]'); if (!b) return; mode = b.dataset.mode; Object.keys(custom).forEach((k) => delete custom[k]); $('discMode').querySelectorAll('button').forEach((x) => x.classList.toggle('active', x === b)); render(); });
-    $('copyAll').onclick = () => copyText(`🎓 *Precios Universidad Areandina ${new Date().getFullYear()}*\n\n` + list().map((p) => `📌 *${p.programa}*: ${money(fin(p))}${disc(p) ? ` (antes ${money(p.valor)}, ${disc(p)}% dcto)` : ''}`).join('\n') + `\n\n📅 Inicio: ${INICIO}`, 'Lista copiada');
+    $('copyAll').onclick = () => copyText(`🎓 *Precios ${nivel === 'pos' ? 'posgrado' : 'pregrado'} Universidad Areandina*\n\n` + list().map((p) => `📌 *${p.programa}*: ${money(pv(p))}${p.descuento ? ` (${p.descuento}% dcto)` : ''}${sena(p) != null ? ` · SENA ${money(sena(p))}` : ''}`).join('\n'), 'Lista copiada');
     $('exportCsv').onclick = () => {
-        const rows = [['Programa', 'Semestres', 'Valor', 'Descuento %', 'Valor final'], ...list().map((p) => [p.programa, p.semestres, p.valor, disc(p), fin(p)])];
+        const rows = [['Nivel', 'Programa', 'Semestres', 'Valor pleno', '% primera vez', 'Valor primera vez', '% SENA', 'Valor SENA'],
+            ...list().map((p) => [p.nivel === 'pos' ? 'Posgrado' : 'Pregrado', p.programa, p.semestres || '', p.valor, p.descuento || 0, pv(p), p.descuento_sena ?? '', sena(p) ?? ''])];
         const csv = rows.map((r) => r.map((v) => `"${String(v).replace(/"/g, '""')}"`).join(';')).join('\n');
-        const a = document.createElement('a'); a.href = URL.createObjectURL(new Blob(['﻿' + csv], { type: 'text/csv;charset=utf-8' })); a.download = 'precios_areandina.csv'; a.click();
+        const a = document.createElement('a'); a.href = URL.createObjectURL(new Blob(['﻿' + csv], { type: 'text/csv;charset=utf-8' })); a.download = `precios_${nivel === 'pos' ? 'posgrado' : 'pregrado'}_areandina.csv`; a.click();
     };
     render();
 })();

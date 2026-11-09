@@ -53,13 +53,15 @@
     const PROGS = {{ programas | tojson }};
     const SIM_ON = {{ mod_on('simulador') | tojson }};
     const DESC = {{ cfg.descuento_sena | int }};
+    const descDe = (pr) => pr ? (pr.descuento_sena ?? pr.descuento ?? 0) : DESC;
     let cur = 0, filtro = '', minSem = 0;
 
     function render() {
         const p = PROGS[cur];
         const list = p.titulos.filter((t) => (!filtro || normalize(t.titulo).includes(normalize(filtro))) && t.homologados >= minSem);
         const pr = p.precio;
-        const fin = pr ? pr.valor - Math.round(pr.valor * DESC / 100) : 0;
+        const d = descDe(pr);
+        const fin = pr ? pr.valor - Math.round(pr.valor * d / 100) : 0;
         const semOpts = [...new Set(p.titulos.map((t) => t.homologados))].sort((a, b) => a - b);
         document.getElementById('detail').innerHTML = `
             <div class="detail-head">
@@ -75,7 +77,7 @@
                 <div class="mini"><small>Títulos SENA</small><strong>${p.total}</strong></div>
                 <div class="mini"><small>Máx. homologados</small><strong>${p.max_homologados} sem.</strong></div>
                 <div class="mini"><small>Promedio</small><strong>${p.promedio} sem.</strong></div>
-                <div class="mini"><small>Semestre con ${DESC}%</small><strong>${pr ? money(fin) : '—'}</strong></div>
+                <div class="mini"><small>Semestre${pr && d ? ` con ${d}%${pr.descuento_sena != null ? ' SENA' : ''}` : ''}</small><strong>${pr ? money(fin) : '—'}</strong></div>
             </div>
             <div style="padding:0 22px 14px" class="row">
                 <div class="input-icon" style="flex:1;min-width:220px"><i class="fa-solid fa-filter"></i><input type="text" id="flt" placeholder="Filtrar títulos…" value="${escapeHtml(filtro)}" data-page-search></div>

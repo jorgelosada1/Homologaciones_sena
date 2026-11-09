@@ -500,8 +500,14 @@ def sena():
 @app.route("/precios")
 @login_required
 def precios():
-    progs = [{**p, "inicio": store.inicio_de(p["programa"], "pre")} for p in store.precios()]
-    return render_template("precios.html", programas=progs)
+    from core.pensum import buscar_pensum
+    progs = []
+    for p in store.precios():
+        nivel = p.get("nivel", "pre")
+        pen = buscar_pensum(p["programa"], "posgrado" if nivel == "pos" else "pregrado")
+        progs.append({**p, "nivel": nivel, "inicio": store.inicio_de(p["programa"], nivel),
+                      "pensum": pen["archivo"] if pen else None})
+    return render_template("precios.html", programas=progs, nivel=request.args.get("nivel", "pre"))
 
 
 @app.route("/simulador")
@@ -513,7 +519,7 @@ def simulador():
         if p["precio"]:
             mapa[p["precio"]["id"]] = [{"titulo": t["titulo"], "homologados": t["homologados"], "faltantes": t["faltantes"]}
                                        for t in p["titulos"]]
-    return render_template("simulador.html", precios=store.precios(), homologaciones=mapa,
+    return render_template("simulador.html", precios=[p for p in store.precios() if p.get("nivel", "pre") == "pre"], homologaciones=mapa,
                            programa_id=request.args.get("programa", type=int), titulo=request.args.get("titulo", ""))
 
 
@@ -538,7 +544,7 @@ def api_oferta():
 @app.route("/dashboard")
 @login_required
 def dashboard():
-    precios_data = store.precios()
+    precios_data = [p for p in store.precios() if p.get("nivel", "pre") == "pre"]
     valores = [p["valor"] for p in precios_data] or [0]
     progs = explorar_programas(store)
     df = store.actas()
@@ -1074,7 +1080,7 @@ def admin_dashboard():
                            presencial_info=file_info(presencial_file()), actividad=activity.summary(7))
 
 
-def _crud_list(filename, fields, ints=()):
+def _crud_list(filename, fields, ints=(), opcionales=()):
     items = store.json(filename)
     items = list(items)
     action = request.form.get("action")
@@ -1084,7 +1090,10 @@ def _crud_list(filename, fields, ints=()):
         out = {}
         for f in fields:
             v = request.form.get(f, "")
-            out[f] = int(v or 0) if f in ints else v.replace("\r\n", "\n")
+            if f in opcionales:
+                out[f] = int(v) if v.strip() else None
+            else:
+                out[f] = int(v or 0) if f in ints else v.replace("\r\n", "\n")
         return out
 
     if action == "update" and idx is not None and 0 <= idx < len(items):
@@ -1129,7 +1138,8 @@ def admin_mensajes_sena():
 @admin_only
 def admin_precios():
     if request.method == "POST":
-        _crud_list("precios.json", ["programa", "valor", "descuento", "semestres"], ints=("valor", "descuento", "semestres"))
+        _crud_list("precios.json", ["nivel", "programa", "valor", "descuento", "descuento_sena", "semestres"],
+                   ints=("valor", "descuento"), opcionales=("descuento_sena", "semestres"))
         return redirect("/admin/precios")
     return render_template("admin_precios.html", precios=store.precios())
 

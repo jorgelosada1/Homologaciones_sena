@@ -347,9 +347,11 @@ class DataStore:
         return sorted({r["titulo"] for r in self.presencial()}, key=norm)
 
     # ---------- Precios ----------
-    def match_precio(self, programa):
+    def match_precio(self, programa, nivel="pre"):
         best, best_score = None, 0.0
         for p in self.precios():
+            if nivel and p.get("nivel", "pre") != nivel:
+                continue
             sc = program_similarity(programa, p.get("programa", ""))
             if sc > best_score:
                 best, best_score = p, sc
@@ -392,6 +394,16 @@ def resolve_titles(query, titles):
     return [], [r["titulo"] for r in ranked], "ninguno"
 
 
+def descuento_sena_de(precio, cfg=None):
+    """(porcentaje, etiqueta) del descuento para un egresado SENA según la lista de precios.
+
+    Si el programa no tiene descuento SENA en la lista, aplica su descuento general de primera vez.
+    """
+    if precio.get("descuento_sena") is not None:
+        return int(precio["descuento_sena"]), "SENA"
+    return int(precio.get("descuento") or 0), "primera vez"
+
+
 def build_programa(store, programa, homologados, faltantes, cfg, total=None):
     precio = store.match_precio(programa)
     item = {
@@ -404,13 +416,14 @@ def build_programa(store, programa, homologados, faltantes, cfg, total=None):
     }
     if precio:
         valor = int(precio.get("valor", 0))
-        desc = int(cfg.get("descuento_sena", 20))
+        desc, etiqueta = descuento_sena_de(precio, cfg)
         final = valor - round(valor * desc / 100)
         item["precio"] = {
             "id": precio.get("id"),
             "programa": precio.get("programa"),
             "valor": valor,
             "descuento": desc,
+            "tipo_descuento": etiqueta,
             "valor_final": final,
             "semestres": precio.get("semestres"),
             "inversion_total": final * faltantes,

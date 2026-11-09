@@ -34,17 +34,24 @@ def mensaje_homologacion(resultado, cfg, nombre="", incluir_precios=False, aseso
                 pr = p["precio"]
                 texto += (
                     f"💰 Valor semestre: {money(pr['valor'])}\n"
-                    f"✅ *Con {pr['descuento']}% SENA: {money(pr['valor_final'])}*\n"
+                    + (f"✅ *Con {pr['descuento']}% {'SENA' if pr.get('tipo_descuento', 'SENA') == 'SENA' else 'de descuento'}: {money(pr['valor_final'])}*\n"
+                       if pr['descuento'] else "")
                 )
             if incluir_precios and p.get("inicio"):
                 texto += f"📅 Inicio de clases: {p['inicio']}\n"
             texto += "\n"
-    if total == 1:
-        texto += "¿Te gustaría recibir más información sobre este programa?\n\n"
-        texto += f"💡 *Los egresados SENA cuentan con un {desc}% de descuento* en esta homologación."
-    else:
-        texto += "¿De cuál de estas opciones te gustaría recibir más información?\n\n"
-        texto += f"💡 *Los egresados SENA cuentan con un {desc}% de descuento* en estas homologaciones."
+    todos = [p for g in grupos for p in g["programas"]]
+    con_precio = [p for p in todos if p.get("precio")]
+    con_sena = [p for p in con_precio if p["precio"].get("tipo_descuento", "SENA") == "SENA" and p["precio"]["descuento"]]
+    texto += ("¿Te gustaría recibir más información sobre este programa?\n\n" if total == 1
+              else "¿De cuál de estas opciones te gustaría recibir más información?\n\n")
+    if not con_precio or len(con_sena) == len(con_precio):
+        pct = con_sena[0]["precio"]["descuento"] if con_sena else desc
+        texto += (f"💡 *Los egresados SENA cuentan con un {pct}% de descuento* en "
+                  + ("esta homologación." if total == 1 else "estas homologaciones."))
+    elif con_sena:
+        nombres = ", ".join(dict.fromkeys(p["programa_display"] for p in con_sena))
+        texto += f"💡 *Descuento SENA del {con_sena[0]['precio']['descuento']}%* en {nombres}."
     if incluir_precios:
         texto += "\n✔ Inscripción y estudio de homologación sin costo"
     return texto
@@ -57,14 +64,13 @@ def mensaje_precios(programas, cfg):
     texto = "🎓 *Precios Universidad Areandina*\n\n"
     for p in con_precio:
         pr = p["precio"]
-        texto += (
-            f"📌 *{pr['programa']}*\n"
-            f"💰 Valor: {money(pr['valor'])}\n"
-            f"🏷️ Descuento SENA: {pr['descuento']}%\n"
-            f"✅ *Valor con descuento: {money(pr['valor_final'])}*\n"
-            f"📚 Semestres por cursar: {p['faltantes']}\n"
-            f"📅 Inicio de clases: *{p.get('inicio') or cfg.get('inicio_clases')}*\n\n"
-        )
+        es_sena = pr.get("tipo_descuento", "SENA") == "SENA"
+        texto += f"📌 *{pr['programa']}*\n💰 Valor: {money(pr['valor'])}\n"
+        if pr["descuento"]:
+            texto += (f"🏷️ Descuento {'SENA' if es_sena else 'primera vez'}: {pr['descuento']}%\n"
+                      f"✅ *Valor con descuento: {money(pr['valor_final'])}*\n")
+        texto += (f"📚 Semestres por cursar: {p['faltantes']}\n"
+                  f"📅 Inicio de clases: *{p.get('inicio') or cfg.get('inicio_clases')}*\n\n")
     texto += (
         "✔ Inscripción y estudio de homologación sin costo\n\n"
         "_Contamos con diferentes formas de financiación_ 👌"

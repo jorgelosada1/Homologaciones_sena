@@ -132,8 +132,8 @@
     function loadProg(keepTitle) {
         const p = PRECIOS.find((x) => x.id === +$('prog').value);
         if (!p) return;
-        $('valor').value = p.valor; $('sems').value = p.semestres;
-        $('homo').max = p.semestres; fillTitulos(keepTitle);
+        $('valor').value = p.valor; $('sems').value = p.semestres || 8;
+        $('homo').max = p.semestres || 8; fillTitulos(keepTitle);
         applyTitulo();
     }
     function applyTitulo() {
