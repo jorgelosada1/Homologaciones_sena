@@ -18,7 +18,8 @@ from werkzeug.utils import secure_filename
 from core.activity import ActivityLog
 from core.assistant import answer as assistant_answer, claude_available
 from core.cruce import Cruce
-from core.data import (ACTAS_FILE, DATA_DIR, DEFAULT_CONFIG, PRESENCIAL_FILE, SEDES, DataStore,
+from core.data import (ACTAS_NOMBRE, DATA_DIR, DEFAULT_CONFIG, PRESENCIAL_NOMBRE, SEDES, DataStore, actas_file,
+                       presencial_file, ruta_archivo, ruta_subida,
                        buscar_homologacion, buscar_presencial, explorar_programas, rank_titles,
                        sanitize_workbook, validar_actas, validar_presencial)
 from core.pensum import PENSUM_DIRS, buscar_pensum, listar as listar_pensum
@@ -53,7 +54,7 @@ AGUACHICA_CLAVE_BORRADO = os.environ.get("AGUACHICA_CLAVE_BORRADO", "2907")
 STATIC_DIR = os.path.join(BASE_DIR, "static")
 BROCHURES_DIR = os.path.join(STATIC_DIR, "brochures")
 PIEZAS_DIR = os.path.join(STATIC_DIR, "piezas")
-AGUACHICA_FILE = os.path.join(BASE_DIR, "aguachica.xlsx")
+AGUACHICA_NOMBRE = "aguachica.xlsx"
 BACKUP_DIR = os.path.join(DATA_DIR, "backups")
 
 ALLOWED_IMAGE_EXTENSIONS = {"png", "jpg", "jpeg", "gif", "webp"}
@@ -840,8 +841,8 @@ METAS_EJECUTIVOS = {
 
 
 def _aguachica_df():
-    if os.path.exists(AGUACHICA_FILE):
-        df = pd.read_excel(AGUACHICA_FILE)
+    if os.path.exists(ruta_archivo(AGUACHICA_NOMBRE)):
+        df = pd.read_excel(ruta_archivo(AGUACHICA_NOMBRE))
     else:
         df = pd.DataFrame(columns=["fecha", "ejecutivo", "llamadas", "inscritos", "pagos"])
     df["fecha"] = pd.to_datetime(df["fecha"], errors="coerce")
@@ -891,7 +892,7 @@ def aguachica_dashboard():
         df = _aguachica_df()
         df = pd.concat([df, pd.DataFrame([nuevo])], ignore_index=True)
         df["fecha"] = df["fecha"].dt.date
-        df.to_excel(AGUACHICA_FILE, index=False)
+        df.to_excel(ruta_subida(AGUACHICA_NOMBRE), index=False)
         return redirect("/aguachica/dashboard?ejecutivo=" + nuevo["ejecutivo"])
 
     df = _aguachica_df()
@@ -925,10 +926,12 @@ def aguachica_dashboard():
 def aguachica_borrar():
     if not session.get("aguachica"):
         return redirect("/aguachica")
-    if check_password(request.form.get("clave"), AGUACHICA_CLAVE_BORRADO) and os.path.exists(AGUACHICA_FILE):
+    actual = ruta_archivo(AGUACHICA_NOMBRE)
+    if check_password(request.form.get("clave"), AGUACHICA_CLAVE_BORRADO) and os.path.exists(actual):
         os.makedirs(BACKUP_DIR, exist_ok=True)
-        shutil.copy2(AGUACHICA_FILE, os.path.join(BACKUP_DIR, f"aguachica_{datetime.now():%Y%m%d_%H%M%S}.xlsx"))
-        os.remove(AGUACHICA_FILE)
+        shutil.copy2(actual, os.path.join(BACKUP_DIR, f"aguachica_{datetime.now():%Y%m%d_%H%M%S}.xlsx"))
+        # se deja un archivo vacío en data/archivos para que no reaparezca el del repositorio
+        pd.DataFrame(columns=["fecha", "ejecutivo", "llamadas", "inscritos", "pagos"]).to_excel(ruta_subida(AGUACHICA_NOMBRE), index=False)
     return redirect("/aguachica/dashboard")
 
 
@@ -937,9 +940,9 @@ def aguachica_borrar():
 def aguachica_exportar():
     if not session.get("aguachica"):
         return redirect("/aguachica")
-    if not os.path.exists(AGUACHICA_FILE):
+    if not os.path.exists(ruta_archivo(AGUACHICA_NOMBRE)):
         return "No hay datos para exportar", 404
-    df = pd.read_excel(AGUACHICA_FILE)
+    df = pd.read_excel(ruta_archivo(AGUACHICA_NOMBRE))
     return Response("﻿" + df.to_csv(index=False), mimetype="text/csv",
                     headers={"Content-Disposition": "attachment;filename=aguachica_datos.csv"})
 
@@ -1066,9 +1069,9 @@ def admin_dashboard():
     }
     from core.parametrizacion import archivo_actual
     pa = archivo_actual()
-    return render_template("admin_dashboard.html", stats=stats, actas_info=file_info(ACTAS_FILE),
+    return render_template("admin_dashboard.html", stats=stats, actas_info=file_info(actas_file()),
                            param_info={"nombre": os.path.basename(pa) if pa else "Sin cargar", **(file_info(pa) if pa else {"size": 0, "mtime": ""})},
-                           presencial_info=file_info(PRESENCIAL_FILE), actividad=activity.summary(7))
+                           presencial_info=file_info(presencial_file()), actividad=activity.summary(7))
 
 
 def _crud_list(filename, fields, ints=()):
@@ -1197,7 +1200,7 @@ def _subir_parametrizacion(file):
     actual = archivo_actual()
     if actual:
         shutil.copy2(actual, os.path.join(BACKUP_DIR, f"parametrizacion_{datetime.now():%Y%m%d_%H%M%S}.xlsx"))
-    os.replace(tmp, os.path.join(BASE_DIR, f"PARAMETRIZACIÓN {anio}.xlsx"))
+    os.replace(tmp, ruta_subida(f"PARAMETRIZACIÓN {anio}.xlsx"))
     store.param.invalidate()
     n = len((d.get("pregrado") or {}).get("cohortes", [])) + sum(len((x or {}).get("cohortes", [])) for x in (d.get("posgrado") or {}).values() if isinstance(x, dict))
     return redirect(url_for("admin_dashboard", ok=f"Parametrización {anio} cargada: {n} cohortes. Las fechas de los mensajes ya se actualizaron."))
@@ -1210,7 +1213,9 @@ def admin_datos():
     file = request.files.get("archivo")
     if kind == "parametrizacion" and file and file.filename.lower().endswith(".xlsx"):
         return _subir_parametrizacion(file)
-    target, validator = {"actas": (ACTAS_FILE, validar_actas), "presencial": (PRESENCIAL_FILE, validar_presencial)}.get(kind, (None, None))
+    target, validator = {"actas": (ruta_subida(ACTAS_NOMBRE), validar_actas),
+                         "presencial": (ruta_subida(PRESENCIAL_NOMBRE), validar_presencial)}.get(kind, (None, None))
+    actual_kind = {"actas": actas_file, "presencial": presencial_file}.get(kind)
     if not target or not file or not file.filename.lower().endswith(".xlsx"):
         return redirect(url_for("admin_dashboard", error="Selecciona un archivo .xlsx válido"))
     os.makedirs(BACKUP_DIR, exist_ok=True)
@@ -1226,8 +1231,9 @@ def admin_datos():
     if not ok:
         os.remove(tmp)
         return redirect(url_for("admin_dashboard", error=msg))
-    if os.path.exists(target):
-        shutil.copy2(target, os.path.join(BACKUP_DIR, f"{kind}_{datetime.now():%Y%m%d_%H%M%S}.xlsx"))
+    previo = actual_kind()
+    if os.path.exists(previo):
+        shutil.copy2(previo, os.path.join(BACKUP_DIR, f"{kind}_{datetime.now():%Y%m%d_%H%M%S}.xlsx"))
     os.replace(tmp, target)
     store.invalidate()
     aviso = f"Archivo de {kind} actualizado: {msg if kind == 'actas' else str(filas) + ' filas'}."
@@ -1240,7 +1246,7 @@ def admin_datos():
 @admin_only
 def admin_datos_descargar(kind):
     from core.parametrizacion import archivo_actual
-    target = {"actas": ACTAS_FILE, "presencial": PRESENCIAL_FILE, "parametrizacion": archivo_actual()}.get(kind)
+    target = {"actas": actas_file(), "presencial": presencial_file(), "parametrizacion": archivo_actual()}.get(kind)
     if not target or not os.path.exists(target):
         abort(404)
     return send_file(target, as_attachment=True)

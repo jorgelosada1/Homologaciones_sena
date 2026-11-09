@@ -11,8 +11,36 @@ from .text import clean_df, norm, similarity, program_similarity, pretty_name, t
 
 BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 DATA_DIR = os.path.join(BASE_DIR, "data")
-ACTAS_FILE = os.path.join(BASE_DIR, "Actas SENA.xlsx")
-PRESENCIAL_FILE = os.path.join(BASE_DIR, "Presencial 2026.xlsx")
+# Los archivos que se suben desde el panel admin se guardan en data/archivos/ (carpeta que debe
+# persistir entre despliegues). Si no existen allí, se usan los que vienen en el repositorio.
+UPLOADS_DIR = os.path.join(DATA_DIR, "archivos")
+ACTAS_NOMBRE = "Actas SENA.xlsx"
+PRESENCIAL_NOMBRE = "Presencial 2026.xlsx"
+
+
+def ruta_archivo(nombre):
+    """Ruta vigente de un archivo de datos: primero data/archivos/, luego la raíz del repositorio."""
+    subido = os.path.join(UPLOADS_DIR, nombre)
+    return subido if os.path.exists(subido) else os.path.join(BASE_DIR, nombre)
+
+
+def ruta_subida(nombre):
+    """Dónde guardar un archivo que se sube desde el admin."""
+    os.makedirs(UPLOADS_DIR, exist_ok=True)
+    return os.path.join(UPLOADS_DIR, nombre)
+
+
+def actas_file():
+    return ruta_archivo(ACTAS_NOMBRE)
+
+
+def presencial_file():
+    return ruta_archivo(PRESENCIAL_NOMBRE)
+
+
+# Compatibilidad: rutas por defecto del repositorio
+ACTAS_FILE = os.path.join(BASE_DIR, ACTAS_NOMBRE)
+PRESENCIAL_FILE = os.path.join(BASE_DIR, PRESENCIAL_NOMBRE)
 CONFIG_FILE = os.path.join(DATA_DIR, "config.json")
 
 ACTAS_COLUMNS = ["PROGRAMA", "TÉCNICO O TECNOLOGÍA", "SEMTR HOMOLOGADOS", "FALTANTES"]
@@ -269,8 +297,8 @@ class DataStore:
         def load(missing=False):
             if missing:
                 return pd.DataFrame(columns=ACTAS_COLUMNS)
-            return load_actas_virtual(ACTAS_FILE)
-        return self._cached("actas", ACTAS_FILE, load)
+            return load_actas_virtual(actas_file())
+        return self._cached("actas:" + actas_file(), actas_file(), load)
 
     def titulos(self):
         df = self.actas()
@@ -284,9 +312,9 @@ class DataStore:
     def presencial(self):
         def load(missing=False):
             rows = []
-            if os.path.exists(ACTAS_FILE):
+            if os.path.exists(actas_file()):
                 try:
-                    rows = load_presencial_actas(ACTAS_FILE)
+                    rows = load_presencial_actas(actas_file())
                 except Exception as e:  # hoja ausente o con otro formato
                     print("Hoja PRESENCIAL del acta no disponible:", e)
                     rows = []
@@ -294,7 +322,7 @@ class DataStore:
                 return rows
             if missing:
                 return rows
-            df = clean_df(pd.read_excel(PRESENCIAL_FILE))
+            df = clean_df(pd.read_excel(presencial_file()))
             for key, s in SEDES.items():
                 if s["titulo"] not in df.columns:
                     continue
@@ -312,8 +340,8 @@ class DataStore:
                         "pendientes": _to_int(r.get(s["pend"])),
                     })
             return rows
-        key = f"presencial:{os.path.exists(ACTAS_FILE) and os.path.getmtime(ACTAS_FILE)}"
-        return self._cached(key, PRESENCIAL_FILE, load)
+        key = f"presencial:{actas_file()}:{os.path.exists(actas_file()) and os.path.getmtime(actas_file())}"
+        return self._cached(key, presencial_file(), load)
 
     def titulos_presencial(self):
         return sorted({r["titulo"] for r in self.presencial()}, key=norm)

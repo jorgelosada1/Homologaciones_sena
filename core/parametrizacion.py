@@ -21,12 +21,19 @@ RANGO_LARGO_RX = re.compile(r"(\d{1,2})\s+al\s+(\d{1,2})\s+de\s+([A-Za-zñÑ]+)\
 
 
 def archivo_actual():
-    """El Excel de parametrización más reciente del repositorio."""
-    cands = [f for f in os.listdir(BASE_DIR) if norm(f).startswith("PARAMETRIZACION") and f.lower().endswith(".xlsx")]
+    """El Excel de parametrización más reciente (el subido por el admin en data/archivos/ gana a igual año)."""
+    cands = []
+    for prioridad, carpeta in ((0, BASE_DIR), (1, os.path.join(BASE_DIR, "data", "archivos"))):
+        if not os.path.isdir(carpeta):
+            continue
+        for f in os.listdir(carpeta):
+            if norm(f).startswith("PARAMETRIZACION") and f.lower().endswith(".xlsx"):
+                anio = (re.findall(r"20\d\d", f) or ["0"])[-1]
+                cands.append((anio, prioridad, os.path.join(carpeta, f)))
     if not cands:
         return None
-    cands.sort(key=lambda f: (re.findall(r"20\d\d", f) or ["0"])[-1])
-    return os.path.join(BASE_DIR, cands[-1])
+    cands.sort()
+    return cands[-1][2]
 
 
 def fecha_larga(d):
